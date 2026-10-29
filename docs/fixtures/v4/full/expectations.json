@@ -85,5 +85,20 @@
     "aurora/beacon_orch": "fixture-root/beacon",
     "aurora/storage_orch": "fixture-root/vault",
     "aurora/vault_dev": "fixture-root/vault"
-  }
+  },
+  "additional_connections": {
+    "target-gr": {
+      "homeserver": "https://gr.relux.works/",
+      "server_name": "gr.relux.works"
+    }
+  },
+  "additional_bindings": {
+    "gr": {
+      "operator": "fixture",
+      "host": "station",
+      "connection": "target-gr",
+      "identity_domain": "gr.relux.works"
+    }
+  },
+  "admitted_root": "fixture-root"
 }

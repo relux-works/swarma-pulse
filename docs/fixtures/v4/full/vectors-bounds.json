@@ -1,0 +1,221 @@
+{
+  "schema": "fixture-vector-set/v1",
+  "family": "bounds",
+  "cases": [
+    {
+      "id": "bounds-bytes-1-over",
+      "valid_neighbor": {
+        "card": "converted-v4.json",
+        "source_pins": "manifest.json#/source_pins",
+        "operation": "parse-document",
+        "expected": "accept",
+        "raw_transform": {
+          "kind": "append-ascii-spaces-to-byte-count",
+          "base": "converted-v4.json",
+          "target_bytes": 1048576
+        },
+        "semantic_validation": "not-in-this-stage"
+      },
+      "counterexample": {
+        "raw_transform": {
+          "kind": "append-ascii-spaces-to-byte-count",
+          "base": "converted-v4.json",
+          "target_bytes": 1048577
+        }
+      },
+      "expected_refusal": "card_byte_limit",
+      "forbidden_effects": [
+        "registration or network request",
+        "credential-store access",
+        "room or subscription change",
+        "hook/session/binding write",
+        "partial stdout/result",
+        "input or existing destination mutation"
+      ],
+      "runtime_executed": false
+    },
+    {
+      "id": "bounds-projects-1-over",
+      "valid_neighbor": {
+        "card": "converted-v4.json",
+        "source_pins": "manifest.json#/source_pins",
+        "operation": "check-collection-bounds",
+        "expected": "accept",
+        "construction": {
+          "kind": "repeat-array-last-entry",
+          "base": "converted-v4.json",
+          "path": [
+            "projects"
+          ],
+          "target_count": 1000
+        },
+        "semantic_validation": "not-in-this-stage; repetition deliberately does not claim unique ids or valid whole-card semantics"
+      },
+      "counterexample": {
+        "construction": {
+          "kind": "repeat-array-last-entry",
+          "base": "converted-v4.json",
+          "path": [
+            "projects"
+          ],
+          "target_count": 1001
+        }
+      },
+      "expected_refusal": "card_projects_count_limit",
+      "forbidden_effects": [
+        "registration or network request",
+        "credential-store access",
+        "room or subscription change",
+        "hook/session/binding write",
+        "partial stdout/result",
+        "input or existing destination mutation"
+      ],
+      "runtime_executed": false
+    },
+    {
+      "id": "bounds-members-1-over",
+      "valid_neighbor": {
+        "card": "converted-v4.json",
+        "source_pins": "manifest.json#/source_pins",
+        "operation": "check-collection-bounds",
+        "expected": "accept",
+        "construction": {
+          "kind": "repeat-array-last-entry",
+          "base": "converted-v4.json",
+          "path": [
+            "members"
+          ],
+          "target_count": 10000
+        },
+        "semantic_validation": "not-in-this-stage; repetition deliberately does not claim unique ids or valid whole-card semantics"
+      },
+      "counterexample": {
+        "construction": {
+          "kind": "repeat-array-last-entry",
+          "base": "converted-v4.json",
+          "path": [
+            "members"
+          ],
+          "target_count": 10001
+        }
+      },
+      "expected_refusal": "card_members_count_limit",
+      "forbidden_effects": [
+        "registration or network request",
+        "credential-store access",
+        "room or subscription change",
+        "hook/session/binding write",
+        "partial stdout/result",
+        "input or existing destination mutation"
+      ],
+      "runtime_executed": false
+    },
+    {
+      "id": "bounds-depth-1-over",
+      "valid_neighbor": {
+        "card": "converted-v4.json",
+        "source_pins": "manifest.json#/source_pins",
+        "operation": "parse-document",
+        "expected": "accept",
+        "construction": {
+          "kind": "nested-mapping-depth",
+          "container_count_including_root": 32,
+          "wrapper_key": "fixture_depth",
+          "leaf_utf8": "leaf"
+        },
+        "semantic_validation": "not-in-this-stage; this parser-only document intentionally has no card fields"
+      },
+      "counterexample": {
+        "construction": {
+          "kind": "nested-mapping-depth",
+          "container_count_including_root": 33,
+          "wrapper_key": "fixture_depth",
+          "leaf_utf8": "leaf"
+        }
+      },
+      "expected_refusal": "document_depth_limit",
+      "forbidden_effects": [
+        "registration or network request",
+        "credential-store access",
+        "room or subscription change",
+        "hook/session/binding write",
+        "partial stdout/result",
+        "input or existing destination mutation"
+      ],
+      "runtime_executed": false
+    },
+    {
+      "id": "bounds-hops-1-over",
+      "valid_neighbor": {
+        "operation": "check-superior-hop-budget",
+        "construction": {
+          "kind": "acyclic-authorized-external-chain",
+          "start": "aurora/aurora_keeper",
+          "first_external": "constellation/external_keeper",
+          "subsequent_product_pattern": "realm-{index}",
+          "subsequent_member": "keeper",
+          "edge_count": 64,
+          "last_boundary": "unavailable"
+        },
+        "expected": "accept-64-edges-with-explicit-unavailable-boundary",
+        "semantic_validation": "authorized-projection fixtures, not local role-hierarchy cards"
+      },
+      "counterexample": {
+        "construction": {
+          "kind": "acyclic-authorized-external-chain",
+          "start": "aurora/aurora_keeper",
+          "first_external": "constellation/external_keeper",
+          "subsequent_product_pattern": "realm-{index}",
+          "subsequent_member": "keeper",
+          "edge_count": 65,
+          "last_boundary": "unavailable"
+        }
+      },
+      "expected_refusal": "reporting_hop_limit",
+      "forbidden_effects": [
+        "registration or network request",
+        "credential-store access",
+        "room or subscription change",
+        "hook/session/binding write",
+        "partial stdout/result",
+        "input or existing destination mutation"
+      ],
+      "runtime_executed": false
+    },
+    {
+      "id": "bounds-tuple-65",
+      "valid_neighbor": {
+        "card": "bounds-tuple-64-v4.json",
+        "source_pins": "manifest.json#/source_pins",
+        "operation": "validate-card-and-sources",
+        "expected": "accept",
+        "reviewed_reservation_premises": [
+          {
+            "holder": "aurora/boundary_dev",
+            "domain": "gr.relux.works",
+            "product": "aurora",
+            "primary_role": "developer",
+            "star": "altair"
+          }
+        ],
+        "expected_localpart_length": 64
+      },
+      "counterexample": {
+        "card": "bounds-tuple-65-v4.json",
+        "expected_localpart_length": 65
+      },
+      "expected_refusal": "identity_localpart_length_limit",
+      "forbidden_effects": [
+        "registration or network request",
+        "credential-store access",
+        "room or subscription change",
+        "hook/session/binding write",
+        "partial stdout/result",
+        "input or existing destination mutation",
+        "truncating or normalizing tuple",
+        "reserving or registering overflow identity"
+      ],
+      "runtime_executed": false
+    }
+  ]
+}

@@ -1,0 +1,52 @@
+{
+  "source_pins": [
+    {
+      "file": "compat-id-source-v3.json",
+      "revision": "fixture-compat-id-001",
+      "sha256": "e113d68237022c9635d5c2b05942534d74f5d8f70fb2b8cb2f45f17af3e299d7"
+    },
+    {
+      "file": "compat-repeated-required-source-v3.json",
+      "revision": "fixture-compat-repeated-required-001",
+      "sha256": "fa41a120e783f66ea17f2079d9767c9000fc50b8f7abe457bc0993052d1d3e2e"
+    },
+    {
+      "file": "compat-cross-group-source-v3.json",
+      "revision": "fixture-compat-cross-group-001",
+      "sha256": "39424215f5773d86a612e1ff73a900ef2ddd09674eaaa4a64d5571f8a4a9ce9b"
+    }
+  ],
+  "logical_id": {
+    "source": "compat-id-source-v3.json",
+    "converted": "compat-id-converted-v4.json",
+    "cutover": "compat-id-pilot-v4.json",
+    "unchanged_key": "aurora/beacon=orch",
+    "old_mxid": "@station_beacon=orch:relux.works",
+    "new_mxid": "@gr.relux.works_aurora_beacon_orch_rigel:gr.relux.works",
+    "pin_survives_cutover": true,
+    "conversion_inputs": "compat-id-expectations.json"
+  },
+  "repeated_required": {
+    "source": "compat-repeated-required-source-v3.json",
+    "converted": "compat-repeated-required-converted-v4.json",
+    "member_index": 1,
+    "required_indices_equal": [
+      1,
+      3
+    ],
+    "required_length": 4,
+    "self_length": 0,
+    "conversion_inputs": "compat-repeated-required-expectations.json"
+  },
+  "cross_group": {
+    "source": "compat-cross-group-source-v3.json",
+    "converted": "compat-cross-group-converted-v4.json",
+    "member_index": 1,
+    "required_index": 1,
+    "self_index": 0,
+    "required_length": 3,
+    "self_length": 1,
+    "conversion_inputs": "compat-cross-group-expectations.json"
+  },
+  "runtime_executed": false
+}

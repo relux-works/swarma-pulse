@@ -1,0 +1,81 @@
+{
+  "schema": "fixture-vector-set/v1",
+  "family": "service",
+  "cases": [
+    {
+      "id": "service-native-has-a2a",
+      "valid_neighbor": {
+        "card": "services-v4.json",
+        "source_pins": "manifest.json#/source_pins",
+        "operation": "validate-card-and-sources",
+        "expected": "accept"
+      },
+      "counterexample": {
+        "target_patches": [
+          {
+            "op": "add",
+            "path": [
+              "members",
+              5,
+              "a2a"
+            ],
+            "value": {
+              "connection": "target-gr",
+              "parent_route": "#vault:relux.works",
+              "rooms": [
+                "#vault:relux.works"
+              ],
+              "result_destination": "#vault:relux.works",
+              "subscriptions": {
+                "required": [],
+                "self": []
+              }
+            }
+          }
+        ]
+      },
+      "expected_refusal": "parent_native_a2a_forbidden",
+      "forbidden_effects": [
+        "registration or network request",
+        "credential-store access",
+        "room or subscription change",
+        "hook/session/binding write",
+        "partial stdout/result",
+        "input or existing destination mutation"
+      ],
+      "runtime_executed": false
+    },
+    {
+      "id": "service-conversational-profile",
+      "valid_neighbor": {
+        "card": "services-v4.json",
+        "source_pins": "manifest.json#/source_pins",
+        "operation": "validate-card-and-sources",
+        "expected": "accept"
+      },
+      "counterexample": {
+        "target_patches": [
+          {
+            "op": "add",
+            "path": [
+              "members",
+              4,
+              "profile"
+            ],
+            "value": "control"
+          }
+        ]
+      },
+      "expected_refusal": "service_profile_forbidden",
+      "forbidden_effects": [
+        "registration or network request",
+        "credential-store access",
+        "room or subscription change",
+        "hook/session/binding write",
+        "partial stdout/result",
+        "input or existing destination mutation"
+      ],
+      "runtime_executed": false
+    }
+  ]
+}

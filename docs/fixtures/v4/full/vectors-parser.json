@@ -1,0 +1,166 @@
+{
+  "schema": "fixture-vector-set/v1",
+  "family": "parser",
+  "cases": [
+    {
+      "id": "parser-duplicate-key",
+      "valid_neighbor": {
+        "card": "converted-v4.json",
+        "source_pins": "manifest.json#/source_pins",
+        "operation": "parse-document",
+        "expected": "accept",
+        "semantic_validation": "not-in-this-stage",
+        "expected_parsed_document": "converted-v4.json"
+      },
+      "counterexample": {
+        "raw_transform": {
+          "kind": "duplicate-json-object-key",
+          "object_path": [],
+          "key": "schema",
+          "second_value": "product-card/v4"
+        }
+      },
+      "expected_refusal": "duplicate_mapping_key",
+      "forbidden_effects": [
+        "registration or network request",
+        "credential-store access",
+        "room or subscription change",
+        "hook/session/binding write",
+        "partial stdout/result",
+        "input or existing destination mutation"
+      ],
+      "runtime_executed": false
+    },
+    {
+      "id": "parser-tag",
+      "valid_neighbor": {
+        "card": "converted-v4.json",
+        "source_pins": "manifest.json#/source_pins",
+        "operation": "parse-document",
+        "expected": "accept",
+        "semantic_validation": "not-in-this-stage",
+        "expected_parsed_document": "converted-v4.json"
+      },
+      "counterexample": {
+        "raw_transform": {
+          "kind": "yaml-tag-json-flow-value",
+          "path": [
+            "product",
+            "description"
+          ],
+          "tag": "!fixture",
+          "keep_string_value": true
+        }
+      },
+      "expected_refusal": "yaml_tag_forbidden",
+      "forbidden_effects": [
+        "registration or network request",
+        "credential-store access",
+        "room or subscription change",
+        "hook/session/binding write",
+        "partial stdout/result",
+        "input or existing destination mutation"
+      ],
+      "runtime_executed": false
+    },
+    {
+      "id": "parser-alias",
+      "valid_neighbor": {
+        "card": "converted-v4.json",
+        "source_pins": "manifest.json#/source_pins",
+        "operation": "parse-document",
+        "expected": "accept",
+        "semantic_validation": "not-in-this-stage",
+        "expected_parsed_document": "converted-v4.json"
+      },
+      "counterexample": {
+        "raw_transform": {
+          "kind": "yaml-anchor-alias-json-flow",
+          "anchor_path": [
+            "product",
+            "description"
+          ],
+          "anchor": "fixture_copy",
+          "alias_path": [
+            "product",
+            "privacy"
+          ]
+        }
+      },
+      "expected_refusal": "yaml_alias_forbidden",
+      "forbidden_effects": [
+        "registration or network request",
+        "credential-store access",
+        "room or subscription change",
+        "hook/session/binding write",
+        "partial stdout/result",
+        "input or existing destination mutation"
+      ],
+      "runtime_executed": false
+    },
+    {
+      "id": "parser-merge",
+      "valid_neighbor": {
+        "card": "converted-v4.json",
+        "source_pins": "manifest.json#/source_pins",
+        "operation": "parse-document",
+        "expected": "accept",
+        "semantic_validation": "not-in-this-stage",
+        "expected_parsed_document": "converted-v4.json"
+      },
+      "counterexample": {
+        "raw_transform": {
+          "kind": "yaml-merge-json-flow-object",
+          "object_path": [
+            "bindings",
+            "legacy"
+          ],
+          "merge_mapping": {
+            "operator": "fixture"
+          }
+        }
+      },
+      "expected_refusal": "yaml_merge_forbidden",
+      "forbidden_effects": [
+        "registration or network request",
+        "credential-store access",
+        "room or subscription change",
+        "hook/session/binding write",
+        "partial stdout/result",
+        "input or existing destination mutation"
+      ],
+      "runtime_executed": false
+    },
+    {
+      "id": "parser-multiple-documents",
+      "valid_neighbor": {
+        "card": "converted-v4.json",
+        "source_pins": "manifest.json#/source_pins",
+        "operation": "parse-document",
+        "expected": "accept",
+        "semantic_validation": "not-in-this-stage",
+        "expected_parsed_document": "converted-v4.json"
+      },
+      "counterexample": {
+        "raw_transform": {
+          "kind": "concatenate-yaml-documents",
+          "documents": [
+            "converted-v4.json",
+            "converted-v4.json"
+          ],
+          "separator_utf8": "\n---\n"
+        }
+      },
+      "expected_refusal": "multiple_documents_forbidden",
+      "forbidden_effects": [
+        "registration or network request",
+        "credential-store access",
+        "room or subscription change",
+        "hook/session/binding write",
+        "partial stdout/result",
+        "input or existing destination mutation"
+      ],
+      "runtime_executed": false
+    }
+  ]
+}

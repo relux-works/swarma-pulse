@@ -1,0 +1,42 @@
+{
+  "schema": "fixture-vector-index/v1",
+  "semantics": "VECTORS.md",
+  "families": {
+    "legacy": "vectors-legacy.json",
+    "mixed": "vectors-mixed.json",
+    "service": "vectors-service.json",
+    "locations": "vectors-locations.json",
+    "carry-over": "vectors-carry-over.json",
+    "parser": "vectors-parser.json",
+    "bounds": "vectors-bounds.json",
+    "compatibility": "vectors-compatibility.json"
+  },
+  "new_source_pins": [
+    {
+      "file": "compat-id-source-v3.json",
+      "revision": "fixture-compat-id-001",
+      "sha256": "e113d68237022c9635d5c2b05942534d74f5d8f70fb2b8cb2f45f17af3e299d7"
+    },
+    {
+      "file": "compat-repeated-required-source-v3.json",
+      "revision": "fixture-compat-repeated-required-001",
+      "sha256": "fa41a120e783f66ea17f2079d9767c9000fc50b8f7abe457bc0993052d1d3e2e"
+    },
+    {
+      "file": "compat-cross-group-source-v3.json",
+      "revision": "fixture-compat-cross-group-001",
+      "sha256": "39424215f5773d86a612e1ff73a900ef2ddd09674eaaa4a64d5571f8a4a9ce9b"
+    },
+    {
+      "file": "legacy-wrong-id-source-v3.json",
+      "revision": "fixture-rehashed-id-001",
+      "sha256": "8df37edb9a9403f2337970293748e5094e445a4eeeff6a45aa7f6359dad6bedc"
+    },
+    {
+      "file": "legacy-duplicate-source-v3.json",
+      "revision": "fixture-duplicate-001",
+      "sha256": "8732b809681f6ab3c7d9b36f3e1f0ffc37a5df19f69ba42b9545f2d7016d6067"
+    }
+  ],
+  "runtime_executed": false
+}

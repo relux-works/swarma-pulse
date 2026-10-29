@@ -1,0 +1,173 @@
+{
+  "schema": "fixture-coverage/v1",
+  "requirement_source": "../fixture-requirements.json",
+  "references": "Each leaf is an exact fixture filename or unique case id from vectors-*.json. Every refusal has an explicit valid neighbor in that case or negative-cases.json.",
+  "families": {
+    "legacy-conversion": {
+      "default-explicit-positive": [
+        "source-v3.json",
+        "converted-v4.json",
+        "expectations.json"
+      ],
+      "missing-source": [
+        "legacy-missing-source"
+      ],
+      "rehashed-wrong-id": [
+        "legacy-rehashed-wrong-logical-id"
+      ],
+      "changed-legacy-mapping": [
+        "reject-nonpilot-change.json",
+        "legacy-changed-endpoint",
+        "legacy-changed-key"
+      ],
+      "duplicate-identity": [
+        "legacy-duplicate-resolved-mxid"
+      ],
+      "old-reader-reinterpretation": [
+        "legacy-old-reader-schema"
+      ]
+    },
+    "mixed-cutover": {
+      "positive": [
+        "pilot-v4.json",
+        "rollback-v4.json"
+      ],
+      "non-pilot-mutation": [
+        "mixed-nonpilot-preservation"
+      ],
+      "partial-output": [
+        "mixed-partial-output"
+      ],
+      "implicit-registration": [
+        "mixed-no-registration",
+        "mixed-registration-tripwire-control"
+      ]
+    },
+    "service": {
+      "positive": [
+        "services-v4.json",
+        "legacy-service-source.json"
+      ],
+      "implicit-owner-selector": [
+        "reject-service-owner-selector.json"
+      ],
+      "service-session-forbidden": [
+        "operation-cases.json"
+      ],
+      "parent-native-a2a": [
+        "service-native-has-a2a"
+      ],
+      "conversational-profile": [
+        "service-conversational-profile"
+      ],
+      "model": [
+        "reject-service-model.json"
+      ]
+    },
+    "locations": {
+      "positive": [
+        "converted-v4.json",
+        "remote-v4.json",
+        "locations-remote-not-missing-locally"
+      ],
+      "path-escape": [
+        "locations-root-escape",
+        "locations-symlink-escape"
+      ],
+      "absolute-path": [
+        "locations-absolute"
+      ],
+      "home-path": [
+        "locations-home"
+      ],
+      "empty-path": [
+        "locations-empty"
+      ],
+      "remote-as-local": [
+        "locations-remote-as-local"
+      ]
+    },
+    "carry-over": {
+      "positive": [
+        "converted-v4.json",
+        "expectations.json",
+        "compatibility-expectations.json"
+      ],
+      "station-reference-loss": [
+        "reject-station-loss.json"
+      ],
+      "station-reference-change": [
+        "reject-station-change.json"
+      ],
+      "required-selector-loss": [
+        "carry-over-required-selector-loss"
+      ],
+      "profile-lock-change": [
+        "carry-over-profile-lock-change"
+      ],
+      "live-state": [
+        "carry-over-live-state"
+      ],
+      "credential-field": [
+        "carry-over-credentials"
+      ],
+      "unknown-key": [
+        "reject-unknown-field.json"
+      ]
+    },
+    "parser-bounds": {
+      "positive": [
+        "converted-v4.json",
+        "bounds-tuple-64-v4.json"
+      ],
+      "duplicate-key": [
+        "parser-duplicate-key"
+      ],
+      "tag": [
+        "parser-tag"
+      ],
+      "alias": [
+        "parser-alias"
+      ],
+      "merge-key": [
+        "parser-merge"
+      ],
+      "multiple-documents": [
+        "parser-multiple-documents"
+      ],
+      "byte-count-depth-hop-limit": [
+        "bounds-bytes-1-over",
+        "bounds-projects-1-over",
+        "bounds-members-1-over",
+        "bounds-depth-1-over",
+        "bounds-hops-1-over"
+      ],
+      "65-character-name": [
+        "bounds-tuple-65"
+      ]
+    },
+    "compatibility": {
+      "logical-id": [
+        "compat-id-source-v3.json",
+        "compat-id-converted-v4.json",
+        "compat-id-pilot-v4.json"
+      ],
+      "within-list-repeat": [
+        "compat-repeated-required-source-v3.json",
+        "compat-repeated-required-converted-v4.json"
+      ],
+      "cross-list-overlap": [
+        "compat-cross-group-source-v3.json",
+        "compat-cross-group-converted-v4.json"
+      ],
+      "pin-refusals": [
+        "compatibility-missing-logical-pin",
+        "compatibility-wrong-logical-key"
+      ],
+      "ownership-preservation-refusal": [
+        "compatibility-self-ownership-loss"
+      ]
+    }
+  },
+  "runtime_executed": false
+}

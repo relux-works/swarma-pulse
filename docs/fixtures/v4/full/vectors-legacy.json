@@ -1,0 +1,244 @@
+{
+  "schema": "fixture-vector-set/v1",
+  "family": "legacy",
+  "cases": [
+    {
+      "id": "legacy-missing-source",
+      "valid_neighbor": {
+        "card": "converted-v4.json",
+        "source_pins": "manifest.json#/source_pins",
+        "operation": "validate-card-and-sources",
+        "expected": "accept"
+      },
+      "counterexample": {
+        "remove_supplied_sources": [
+          "source-v3.json"
+        ]
+      },
+      "expected_refusal": "legacy_source_missing",
+      "forbidden_effects": [
+        "registration or network request",
+        "credential-store access",
+        "room or subscription change",
+        "hook/session/binding write",
+        "partial stdout/result",
+        "input or existing destination mutation"
+      ],
+      "runtime_executed": false
+    },
+    {
+      "id": "legacy-rehashed-wrong-logical-id",
+      "valid_neighbor": {
+        "card": "converted-v4.json",
+        "source_pins": "manifest.json#/source_pins",
+        "operation": "validate-card-and-sources",
+        "expected": "accept"
+      },
+      "counterexample": {
+        "replace_supplied_v3_source": {
+          "file": "legacy-wrong-id-source-v3.json",
+          "revision": "fixture-rehashed-id-001",
+          "sha256": "8df37edb9a9403f2337970293748e5094e445a4eeeff6a45aa7f6359dad6bedc"
+        },
+        "target_patches": [
+          {
+            "op": "replace",
+            "path": [
+              "members",
+              0,
+              "identity",
+              "source_ref",
+              "sha256"
+            ],
+            "value": "8df37edb9a9403f2337970293748e5094e445a4eeeff6a45aa7f6359dad6bedc"
+          },
+          {
+            "op": "replace",
+            "path": [
+              "members",
+              1,
+              "identity",
+              "source_ref",
+              "sha256"
+            ],
+            "value": "8df37edb9a9403f2337970293748e5094e445a4eeeff6a45aa7f6359dad6bedc"
+          },
+          {
+            "op": "replace",
+            "path": [
+              "members",
+              2,
+              "identity",
+              "source_ref",
+              "sha256"
+            ],
+            "value": "8df37edb9a9403f2337970293748e5094e445a4eeeff6a45aa7f6359dad6bedc"
+          },
+          {
+            "op": "replace",
+            "path": [
+              "members",
+              0,
+              "identity",
+              "source_ref",
+              "revision"
+            ],
+            "value": "fixture-rehashed-id-001"
+          },
+          {
+            "op": "replace",
+            "path": [
+              "members",
+              1,
+              "identity",
+              "source_ref",
+              "revision"
+            ],
+            "value": "fixture-rehashed-id-001"
+          },
+          {
+            "op": "replace",
+            "path": [
+              "members",
+              2,
+              "identity",
+              "source_ref",
+              "revision"
+            ],
+            "value": "fixture-rehashed-id-001"
+          }
+        ],
+        "retain_target_source_member_keys": true
+      },
+      "expected_refusal": "legacy_source_key_missing",
+      "forbidden_effects": [
+        "registration or network request",
+        "credential-store access",
+        "room or subscription change",
+        "hook/session/binding write",
+        "partial stdout/result",
+        "input or existing destination mutation"
+      ],
+      "runtime_executed": false
+    },
+    {
+      "id": "legacy-changed-endpoint",
+      "valid_neighbor": {
+        "card": "converted-v4.json",
+        "source_pins": "manifest.json#/source_pins",
+        "operation": "validate-card-and-sources",
+        "expected": "accept"
+      },
+      "counterexample": {
+        "target_patches": [
+          {
+            "op": "replace",
+            "path": [
+              "connections",
+              "legacy-relux",
+              "homeserver"
+            ],
+            "value": "https://alternate.example"
+          }
+        ]
+      },
+      "expected_refusal": "legacy_source_connection_mismatch",
+      "forbidden_effects": [
+        "registration or network request",
+        "credential-store access",
+        "room or subscription change",
+        "hook/session/binding write",
+        "partial stdout/result",
+        "input or existing destination mutation"
+      ],
+      "runtime_executed": false
+    },
+    {
+      "id": "legacy-changed-key",
+      "valid_neighbor": {
+        "card": "converted-v4.json",
+        "source_pins": "manifest.json#/source_pins",
+        "operation": "validate-card-and-sources",
+        "expected": "accept"
+      },
+      "counterexample": {
+        "target_patches": [
+          {
+            "op": "replace",
+            "path": [
+              "members",
+              1,
+              "identity",
+              "source_ref",
+              "member"
+            ],
+            "value": "aurora/storage_orch"
+          }
+        ]
+      },
+      "expected_refusal": "legacy_source_key_mismatch",
+      "forbidden_effects": [
+        "registration or network request",
+        "credential-store access",
+        "room or subscription change",
+        "hook/session/binding write",
+        "partial stdout/result",
+        "input or existing destination mutation"
+      ],
+      "runtime_executed": false
+    },
+    {
+      "id": "legacy-duplicate-resolved-mxid",
+      "valid_neighbor": {
+        "card": "converted-v4.json",
+        "source_pins": "manifest.json#/source_pins",
+        "operation": "validate-card-and-sources",
+        "expected": "accept"
+      },
+      "counterexample": {
+        "card": "legacy-reject-duplicate-v4.json",
+        "source_selection": [
+          {
+            "file": "legacy-duplicate-source-v3.json",
+            "revision": "fixture-duplicate-001",
+            "sha256": "8732b809681f6ab3c7d9b36f3e1f0ffc37a5df19f69ba42b9545f2d7016d6067"
+          }
+        ]
+      },
+      "expected_refusal": "duplicate_resolved_identity",
+      "forbidden_effects": [
+        "registration or network request",
+        "credential-store access",
+        "room or subscription change",
+        "hook/session/binding write",
+        "partial stdout/result",
+        "input or existing destination mutation"
+      ],
+      "runtime_executed": false,
+      "isolation": "Both source-derived legacy mappings independently resolve to the same full MXID; each key and byte pin is valid. Collision is the intended target refusal."
+    },
+    {
+      "id": "legacy-old-reader-schema",
+      "valid_neighbor": {
+        "operation": "existing-v3-reader",
+        "card": "source-v3.json",
+        "expected": "accept",
+        "expected_exit": 0
+      },
+      "counterexample": {
+        "card": "converted-v4.json",
+        "expected_exit": 2
+      },
+      "expected_refusal": "not-a-product-card/v3-document",
+      "forbidden_effects": [
+        "reinterpretation as v3",
+        "input rewrite",
+        "registration/network request",
+        "credential-store access",
+        "hook/session/binding write",
+        "partial output"
+      ],
+      "runtime_executed": false
+    }
+  ]
+}

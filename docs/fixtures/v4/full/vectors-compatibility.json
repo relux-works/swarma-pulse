@@ -1,0 +1,106 @@
+{
+  "schema": "fixture-vector-set/v1",
+  "family": "compatibility",
+  "cases": [
+    {
+      "id": "compatibility-missing-logical-pin",
+      "valid_neighbor": {
+        "operation": "validate-card-and-sources",
+        "card": "compat-id-pilot-v4.json",
+        "source_pins": "manifest.json#/source_pins",
+        "expected": "accept"
+      },
+      "counterexample": {
+        "target_patches": [
+          {
+            "op": "remove",
+            "path": [
+              "members",
+              1,
+              "logical_source_ref"
+            ]
+          }
+        ]
+      },
+      "expected_refusal": "logical_id_source_required",
+      "forbidden_effects": [
+        "registration/network request",
+        "credential-store access",
+        "room/subscription change",
+        "hook/session/binding write",
+        "partial output",
+        "input or destination mutation"
+      ],
+      "runtime_executed": false
+    },
+    {
+      "id": "compatibility-wrong-logical-key",
+      "valid_neighbor": {
+        "operation": "validate-card-and-sources",
+        "card": "compat-id-pilot-v4.json",
+        "source_pins": "manifest.json#/source_pins",
+        "expected": "accept"
+      },
+      "counterexample": {
+        "target_patches": [
+          {
+            "op": "replace",
+            "path": [
+              "members",
+              1,
+              "logical_source_ref",
+              "member"
+            ],
+            "value": "aurora/storage_orch"
+          }
+        ]
+      },
+      "expected_refusal": "logical_source_key_mismatch",
+      "forbidden_effects": [
+        "registration/network request",
+        "credential-store access",
+        "room/subscription change",
+        "hook/session/binding write",
+        "partial output",
+        "input or destination mutation"
+      ],
+      "runtime_executed": false
+    },
+    {
+      "id": "compatibility-self-ownership-loss",
+      "valid_neighbor": {
+        "operation": "verify-conversion-preservation",
+        "card": "compat-cross-group-converted-v4.json",
+        "source": "compat-cross-group-source-v3.json",
+        "source_pins": "manifest.json#/source_pins",
+        "expected": "accept",
+        "conversion_inputs": "compat-cross-group-expectations.json"
+      },
+      "counterexample": {
+        "target_patches": [
+          {
+            "op": "remove",
+            "path": [
+              "members",
+              1,
+              "a2a",
+              "subscriptions",
+              "self",
+              0
+            ]
+          }
+        ]
+      },
+      "expected_refusal": "conversion_selector_ownership_preservation",
+      "forbidden_effects": [
+        "registration/network request",
+        "credential-store access",
+        "room/subscription change",
+        "hook/session/binding write",
+        "partial output",
+        "input or destination mutation"
+      ],
+      "runtime_executed": false
+    }
+  ]
+}

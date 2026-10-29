@@ -1,0 +1,143 @@
+{
+  "schema": "fixture-vector-set/v1",
+  "family": "carry-over",
+  "cases": [
+    {
+      "id": "carry-over-required-selector-loss",
+      "valid_neighbor": {
+        "card": "converted-v4.json",
+        "source_pins": "manifest.json#/source_pins",
+        "operation": "verify-conversion-preservation",
+        "expected": "accept",
+        "source": "source-v3.json",
+        "conversion_inputs": "expectations.json"
+      },
+      "counterexample": {
+        "target_patches": [
+          {
+            "op": "remove",
+            "path": [
+              "members",
+              1,
+              "a2a",
+              "subscriptions",
+              "required",
+              1
+            ]
+          }
+        ]
+      },
+      "expected_refusal": "conversion_required_selectors_preservation",
+      "forbidden_effects": [
+        "registration or network request",
+        "credential-store access",
+        "room or subscription change",
+        "hook/session/binding write",
+        "partial stdout/result",
+        "input or existing destination mutation"
+      ],
+      "runtime_executed": false
+    },
+    {
+      "id": "carry-over-profile-lock-change",
+      "valid_neighbor": {
+        "card": "converted-v4.json",
+        "source_pins": "manifest.json#/source_pins",
+        "operation": "verify-conversion-preservation",
+        "expected": "accept",
+        "source": "source-v3.json",
+        "conversion_inputs": "expectations.json"
+      },
+      "counterexample": {
+        "target_patches": [
+          {
+            "op": "replace",
+            "path": [
+              "profiles",
+              "control",
+              "selected",
+              "lock_sha256"
+            ],
+            "value": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+          }
+        ]
+      },
+      "expected_refusal": "conversion_profile_selection_preservation",
+      "forbidden_effects": [
+        "registration or network request",
+        "credential-store access",
+        "room or subscription change",
+        "hook/session/binding write",
+        "partial stdout/result",
+        "input or existing destination mutation"
+      ],
+      "runtime_executed": false
+    },
+    {
+      "id": "carry-over-live-state",
+      "valid_neighbor": {
+        "card": "converted-v4.json",
+        "source_pins": "manifest.json#/source_pins",
+        "operation": "check-forbidden-desired-facts",
+        "expected": "accept"
+      },
+      "counterexample": {
+        "target_patches": [
+          {
+            "op": "add",
+            "path": [
+              "members",
+              1,
+              "pid"
+            ],
+            "value": 1234
+          }
+        ]
+      },
+      "expected_refusal": "live_state_forbidden",
+      "forbidden_effects": [
+        "registration or network request",
+        "credential-store access",
+        "room or subscription change",
+        "hook/session/binding write",
+        "partial stdout/result",
+        "input or existing destination mutation"
+      ],
+      "runtime_executed": false,
+      "isolation": "This stage checks forbidden desired facts before the closed-field stage; the full validator will also reject this unknown member field. No real sensitive value is used."
+    },
+    {
+      "id": "carry-over-credentials",
+      "valid_neighbor": {
+        "card": "converted-v4.json",
+        "source_pins": "manifest.json#/source_pins",
+        "operation": "check-forbidden-desired-facts",
+        "expected": "accept"
+      },
+      "counterexample": {
+        "target_patches": [
+          {
+            "op": "add",
+            "path": [
+              "members",
+              1,
+              "credential"
+            ],
+            "value": "SYNTHETIC-NOT-A-CREDENTIAL"
+          }
+        ]
+      },
+      "expected_refusal": "credential_field_forbidden",
+      "forbidden_effects": [
+        "registration or network request",
+        "credential-store access",
+        "room or subscription change",
+        "hook/session/binding write",
+        "partial stdout/result",
+        "input or existing destination mutation"
+      ],
+      "runtime_executed": false,
+      "isolation": "This stage checks forbidden desired facts before the closed-field stage; the full validator will also reject this unknown member field. No real sensitive value is used."
+    }
+  ]
+}

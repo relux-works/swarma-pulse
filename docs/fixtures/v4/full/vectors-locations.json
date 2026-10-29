@@ -1,0 +1,331 @@
+{
+  "schema": "fixture-vector-set/v1",
+  "family": "locations",
+  "cases": [
+    {
+      "id": "locations-absolute",
+      "valid_neighbor": {
+        "card": "converted-v4.json",
+        "source_pins": "manifest.json#/source_pins",
+        "operation": "validate-card-and-sources",
+        "expected": "accept"
+      },
+      "counterexample": {
+        "target_patches": [
+          {
+            "op": "replace",
+            "path": [
+              "projects",
+              1,
+              "location",
+              "path"
+            ],
+            "value": "/outside"
+          }
+        ]
+      },
+      "expected_refusal": "absolute_path_forbidden",
+      "forbidden_effects": [
+        "registration or network request",
+        "credential-store access",
+        "room or subscription change",
+        "hook/session/binding write",
+        "partial stdout/result",
+        "input or existing destination mutation"
+      ],
+      "runtime_executed": false
+    },
+    {
+      "id": "locations-home",
+      "valid_neighbor": {
+        "card": "converted-v4.json",
+        "source_pins": "manifest.json#/source_pins",
+        "operation": "validate-card-and-sources",
+        "expected": "accept"
+      },
+      "counterexample": {
+        "target_patches": [
+          {
+            "op": "replace",
+            "path": [
+              "projects",
+              1,
+              "location",
+              "path"
+            ],
+            "value": "~/outside"
+          }
+        ]
+      },
+      "expected_refusal": "home_path_forbidden",
+      "forbidden_effects": [
+        "registration or network request",
+        "credential-store access",
+        "room or subscription change",
+        "hook/session/binding write",
+        "partial stdout/result",
+        "input or existing destination mutation"
+      ],
+      "runtime_executed": false
+    },
+    {
+      "id": "locations-empty",
+      "valid_neighbor": {
+        "card": "converted-v4.json",
+        "source_pins": "manifest.json#/source_pins",
+        "operation": "validate-card-and-sources",
+        "expected": "accept"
+      },
+      "counterexample": {
+        "target_patches": [
+          {
+            "op": "replace",
+            "path": [
+              "projects",
+              1,
+              "location",
+              "path"
+            ],
+            "value": ""
+          }
+        ]
+      },
+      "expected_refusal": "empty_path_forbidden",
+      "forbidden_effects": [
+        "registration or network request",
+        "credential-store access",
+        "room or subscription change",
+        "hook/session/binding write",
+        "partial stdout/result",
+        "input or existing destination mutation"
+      ],
+      "runtime_executed": false
+    },
+    {
+      "id": "locations-root-escape",
+      "valid_neighbor": {
+        "card": "converted-v4.json",
+        "source_pins": "manifest.json#/source_pins",
+        "operation": "validate-layout",
+        "expected": "accept",
+        "layout_fixture": {
+          "card_directory": "sandbox/product/aurora-host",
+          "admitted_root": "sandbox/product",
+          "directories": [
+            "sandbox/product/aurora-host",
+            "sandbox/product/beacon",
+            "sandbox/product/vault",
+            "sandbox/product/profiles/control",
+            "sandbox/outside"
+          ],
+          "files": [
+            {
+              "path": "sandbox/product/aurora-host/tasks.md",
+              "utf8": "fixture tasks\n"
+            },
+            {
+              "path": "sandbox/product/beacon/tasks.md",
+              "utf8": "fixture tasks\n"
+            },
+            {
+              "path": "sandbox/product/vault/tasks.md",
+              "utf8": "fixture tasks\n"
+            }
+          ],
+          "symlinks": [],
+          "outside_access_spy": {
+            "deny_prefix": "sandbox/outside",
+            "record_attempts": true,
+            "activate_after_setup": true
+          }
+        }
+      },
+      "counterexample": {
+        "target_patches": [
+          {
+            "op": "replace",
+            "path": [
+              "projects",
+              1,
+              "location",
+              "path"
+            ],
+            "value": "../../outside"
+          }
+        ]
+      },
+      "expected_refusal": "path_root_escape",
+      "forbidden_effects": [
+        "registration or network request",
+        "credential-store access",
+        "room or subscription change",
+        "hook/session/binding write",
+        "partial stdout/result",
+        "input or existing destination mutation",
+        "outside destination inspected or opened"
+      ],
+      "runtime_executed": false
+    },
+    {
+      "id": "locations-symlink-escape",
+      "valid_neighbor": {
+        "card": "converted-v4.json",
+        "source_pins": "manifest.json#/source_pins",
+        "operation": "validate-layout",
+        "expected": "accept",
+        "layout_fixture": {
+          "card_directory": "sandbox/product/aurora-host",
+          "admitted_root": "sandbox/product",
+          "directories": [
+            "sandbox/product/aurora-host",
+            "sandbox/product/beacon",
+            "sandbox/product/vault",
+            "sandbox/product/profiles/control",
+            "sandbox/outside"
+          ],
+          "files": [
+            {
+              "path": "sandbox/product/aurora-host/tasks.md",
+              "utf8": "fixture tasks\n"
+            },
+            {
+              "path": "sandbox/product/beacon/tasks.md",
+              "utf8": "fixture tasks\n"
+            },
+            {
+              "path": "sandbox/product/vault/tasks.md",
+              "utf8": "fixture tasks\n"
+            }
+          ],
+          "symlinks": [
+            {
+              "path": "sandbox/product/link-safe",
+              "target": "beacon"
+            }
+          ],
+          "outside_access_spy": {
+            "deny_prefix": "sandbox/outside",
+            "record_attempts": true,
+            "activate_after_setup": true
+          }
+        },
+        "target_patches": [
+          {
+            "op": "replace",
+            "path": [
+              "projects",
+              1,
+              "location",
+              "path"
+            ],
+            "value": "../link-safe"
+          }
+        ]
+      },
+      "counterexample": {
+        "replace_symlink": {
+          "path": "sandbox/product/link-safe",
+          "target": "../outside"
+        }
+      },
+      "expected_refusal": "path_symlink_escape",
+      "forbidden_effects": [
+        "registration or network request",
+        "credential-store access",
+        "room or subscription change",
+        "hook/session/binding write",
+        "partial stdout/result",
+        "input or existing destination mutation",
+        "outside destination inspected or opened"
+      ],
+      "runtime_executed": false
+    },
+    {
+      "id": "locations-remote-as-local",
+      "valid_neighbor": {
+        "card": "remote-v4.json",
+        "source_pins": "manifest.json#/source_pins",
+        "operation": "validate-card-and-sources",
+        "expected": "accept"
+      },
+      "counterexample": {
+        "target_patches": [
+          {
+            "op": "add",
+            "path": [
+              "projects",
+              2,
+              "location",
+              "path"
+            ],
+            "value": "../vault"
+          }
+        ]
+      },
+      "expected_refusal": "remote_local_path_forbidden",
+      "forbidden_effects": [
+        "registration or network request",
+        "credential-store access",
+        "room or subscription change",
+        "hook/session/binding write",
+        "partial stdout/result",
+        "input or existing destination mutation",
+        "remote locator or checkout opened on local host"
+      ],
+      "runtime_executed": false
+    },
+    {
+      "id": "locations-remote-not-missing-locally",
+      "valid_neighbor": {
+        "card": "remote-v4.json",
+        "source_pins": "manifest.json#/source_pins",
+        "operation": "validate-card-and-sources",
+        "expected": "accept"
+      },
+      "operation": {
+        "card": "remote-v4.json",
+        "source_pins": "manifest.json#/source_pins",
+        "operation": "validate-layout",
+        "expected": "accept",
+        "layout_fixture": {
+          "card_directory": "sandbox/product/aurora-host",
+          "admitted_root": "sandbox/product",
+          "directories": [
+            "sandbox/product/aurora-host",
+            "sandbox/product/beacon",
+            "sandbox/product/profiles/control",
+            "sandbox/outside"
+          ],
+          "files": [
+            {
+              "path": "sandbox/product/aurora-host/tasks.md",
+              "utf8": "fixture tasks\n"
+            },
+            {
+              "path": "sandbox/product/beacon/tasks.md",
+              "utf8": "fixture tasks\n"
+            }
+          ],
+          "symlinks": [],
+          "outside_access_spy": {
+            "deny_prefix": "sandbox/outside",
+            "record_attempts": true,
+            "activate_after_setup": true
+          }
+        }
+      },
+      "expected": "accept-local-declarations-and-skip-remote-project-layout",
+      "forbidden_effects": [
+        "registration or network request",
+        "credential-store access",
+        "room or subscription change",
+        "hook/session/binding write",
+        "partial stdout/result",
+        "input or existing destination mutation",
+        "opening remote task locator as local path",
+        "reporting remote project missing locally"
+      ],
+      "runtime_executed": false
+    }
+  ]
+}

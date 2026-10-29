@@ -1,0 +1,104 @@
+{
+  "kind": "synthetic-conversion-expectations",
+  "source_revision": "fixture-compat-cross-group-001",
+  "source_sha256": "39424215f5773d86a612e1ff73a900ef2ddd09674eaaa4a64d5571f8a4a9ce9b",
+  "external_parent_mapping": {
+    "external_keeper": {
+      "product": "constellation",
+      "member": "external_keeper"
+    }
+  },
+  "host_project": "aurora-host",
+  "source_card_root": "fixture-root/legacy-card",
+  "target_card_root": "fixture-root/aurora-host",
+  "profiles_target": "fixture-root/profiles/control",
+  "local_project_targets": {
+    "aurora-host": "fixture-root/aurora-host",
+    "beacon": "fixture-root/beacon",
+    "vault": "fixture-root/vault"
+  },
+  "task_targets": {
+    "aurora-host": "fixture-root/aurora-host/tasks.md",
+    "beacon": "fixture-root/beacon/tasks.md",
+    "vault": "fixture-root/vault/tasks.md"
+  },
+  "legacy_chat_resolution": {
+    "aurora/aurora_keeper": "@station_aurora_keeper:relux.works",
+    "aurora/beacon_orch": "@station_beacon_orch:relux.works",
+    "aurora/storage_orch": "@station_storage_orch:relux.works"
+  },
+  "pilot_resolution": {
+    "aurora/aurora_keeper": "@station_aurora_keeper:relux.works",
+    "aurora/beacon_orch": "@gr.relux.works_aurora_beacon_orch_rigel:gr.relux.works",
+    "aurora/storage_orch": "@station_storage_orch:relux.works"
+  },
+  "nonchat_members": [
+    "aurora/vault_dev",
+    "aurora/health_service"
+  ],
+  "preserved_station": {
+    "member": "aurora/beacon_orch",
+    "value": "registered-task-board-station"
+  },
+  "station_absent_valid": [
+    "aurora/aurora_keeper",
+    "aurora/storage_orch",
+    "aurora/vault_dev"
+  ],
+  "rollback_exact_file": "converted-v4.json",
+  "remote_is_distinct_disposition": true,
+  "runtime_evidence": "not-run-no-implementation",
+  "prospective_nonchat_choices": {
+    "aurora/vault_dev": {
+      "binding": "gr",
+      "identity": {
+        "scheme": "domain-star-v1",
+        "star": "vega"
+      }
+    }
+  },
+  "reviewed_reservation_premises": [
+    {
+      "holder": "aurora/beacon_orch",
+      "domain": "gr.relux.works",
+      "product": "aurora",
+      "primary_role": "orchestrator",
+      "star": "rigel"
+    },
+    {
+      "holder": "aurora/vault_dev",
+      "domain": "gr.relux.works",
+      "product": "aurora",
+      "primary_role": "developer",
+      "star": "vega"
+    },
+    {
+      "holder": "aurora/health_service",
+      "domain": "gr.relux.works",
+      "product": "aurora",
+      "primary_role": "service",
+      "star": "deneb"
+    }
+  ],
+  "member_clone_targets": {
+    "aurora/aurora_keeper": "fixture-root/aurora-host",
+    "aurora/beacon_orch": "fixture-root/beacon",
+    "aurora/storage_orch": "fixture-root/vault",
+    "aurora/vault_dev": "fixture-root/vault"
+  },
+  "additional_connections": {
+    "target-gr": {
+      "homeserver": "https://gr.relux.works/",
+      "server_name": "gr.relux.works"
+    }
+  },
+  "additional_bindings": {
+    "gr": {
+      "operator": "fixture",
+      "host": "station",
+      "connection": "target-gr",
+      "identity_domain": "gr.relux.works"
+    }
+  },
+  "admitted_root": "fixture-root"
+}

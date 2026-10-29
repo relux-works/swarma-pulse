@@ -1,0 +1,138 @@
+{
+  "schema": "fixture-vector-set/v1",
+  "family": "mixed",
+  "cases": [
+    {
+      "id": "mixed-nonpilot-preservation",
+      "valid_neighbor": {
+        "card": "pilot-v4.json",
+        "source_pins": "manifest.json#/source_pins",
+        "operation": "verify-pilot-preservation",
+        "expected": "accept",
+        "prior": "converted-v4.json",
+        "pilot": "aurora/beacon_orch"
+      },
+      "counterexample": {
+        "card": "mixed-reject-nonpilot-state.json"
+      },
+      "expected_refusal": "nonpilot_preservation",
+      "forbidden_effects": [
+        "registration or network request",
+        "credential-store access",
+        "room or subscription change",
+        "hook/session/binding write",
+        "partial stdout/result",
+        "input or existing destination mutation"
+      ],
+      "runtime_executed": false,
+      "standalone_card_expected": "accept",
+      "isolated_change": [
+        "members",
+        2,
+        "desired_state"
+      ],
+      "standalone_control_operation": "validate-card-and-sources"
+    },
+    {
+      "id": "mixed-partial-output",
+      "valid_neighbor": {
+        "card": "source-v3.json",
+        "source_pins": "manifest.json#/source_pins",
+        "operation": "convert-atomic",
+        "expected": "accept",
+        "conversion_inputs": "expectations.json",
+        "expected_output": "converted-v4.json",
+        "destination_initial_utf8": "PRIOR-OUTPUT\n",
+        "source_revision": "fixture-v3-001",
+        "source_materialized_path": "fixture-root/legacy-card/product-card.yaml",
+        "destination": "fixture-root/aurora-host/product-card.yaml",
+        "test_root": "fresh isolated temporary directory"
+      },
+      "counterexample": {
+        "fault": {
+          "point": "after-member-conversion-before-publication",
+          "completed_members": 2,
+          "raise": "fixture_conversion_fault"
+        }
+      },
+      "expected_refusal": "conversion_interrupted",
+      "forbidden_effects": [
+        "registration or network request",
+        "credential-store access",
+        "room or subscription change",
+        "hook/session/binding write",
+        "partial stdout/result",
+        "input or existing destination mutation",
+        "destination differs from initial bytes",
+        "remaining output temp file",
+        "output fragment on stdout"
+      ],
+      "runtime_executed": false,
+      "successful_neighbor_allowed_effect": "one atomic replacement with complete converted-v4 bytes; no other writes"
+    },
+    {
+      "id": "mixed-no-registration",
+      "operation": {
+        "card": "source-v3.json",
+        "source_pins": "manifest.json#/source_pins",
+        "operation": "convert-atomic",
+        "expected": "accept",
+        "conversion_inputs": "expectations.json",
+        "expected_output": "converted-v4.json",
+        "destination_initial_utf8": "PRIOR-OUTPUT\n",
+        "source_revision": "fixture-v3-001",
+        "registration_tripwire": "armed",
+        "expected_registration_attempts": 0,
+        "source_materialized_path": "fixture-root/legacy-card/product-card.yaml",
+        "destination": "fixture-root/aurora-host/product-card.yaml",
+        "test_root": "fresh isolated temporary directory"
+      },
+      "valid_neighbor": {
+        "card": "source-v3.json",
+        "source_pins": "manifest.json#/source_pins",
+        "operation": "convert-atomic",
+        "expected": "accept",
+        "conversion_inputs": "expectations.json",
+        "expected_output": "converted-v4.json",
+        "destination_initial_utf8": "PRIOR-OUTPUT\n",
+        "source_revision": "fixture-v3-001",
+        "source_materialized_path": "fixture-root/legacy-card/product-card.yaml",
+        "destination": "fixture-root/aurora-host/product-card.yaml",
+        "test_root": "fresh isolated temporary directory"
+      },
+      "expected": "accept-complete-conversion-with-zero-registration-attempts",
+      "forbidden_effects": [
+        "registration or network request",
+        "credential-store access",
+        "room or subscription change",
+        "hook/session/binding write",
+        "any registration attempt, including rejected attempts"
+      ],
+      "runtime_executed": false
+    },
+    {
+      "id": "mixed-registration-tripwire-control",
+      "valid_neighbor": {
+        "operation": "registration-tripwire-self-check",
+        "synthetic_attempts": 0,
+        "expected": "accept"
+      },
+      "counterexample": {
+        "operation": "registration-tripwire-self-check",
+        "synthetic_attempts": 1,
+        "transport": "inert-synthetic-recorder-no-endpoint"
+      },
+      "expected_refusal": "forbidden_registration_attempt",
+      "forbidden_effects": [
+        "registration or network request",
+        "credential-store access",
+        "room or subscription change",
+        "hook/session/binding write",
+        "partial stdout/result",
+        "input or existing destination mutation"
+      ],
+      "runtime_executed": false,
+      "purpose": "Known violation control for the future no-registration instrument; not a Matrix call or a converter fault claim."
+    }
+  ]
+}
