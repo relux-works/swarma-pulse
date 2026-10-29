@@ -265,3 +265,85 @@ func TestCLIReviewRegressionWitnesses(t *testing.T) {
 		check(raw, 1, "", "RULE https_origin: $.connections[1].homeserver\n")
 	}
 }
+
+// The CLI accepts the matching service source, then refuses a consistently
+// rehashed foreign-server source/target without output or input mutation.
+// Restoring only the target retains the distinct source/target mismatch refusal.
+func TestCLILegacyServiceServerAgreement(t *testing.T) {
+	dir := t.TempDir()
+	entries, e := os.ReadDir(fixtureRoot)
+	if e != nil {
+		t.Fatal(e)
+	}
+	for _, entry := range entries {
+		if !strings.HasSuffix(entry.Name(), ".json") {
+			continue
+		}
+		raw, e := os.ReadFile(filepath.Join(fixtureRoot, entry.Name()))
+		if e != nil {
+			t.Fatal(e)
+		}
+		if e := os.WriteFile(filepath.Join(dir, entry.Name()), raw, 0600); e != nil {
+			t.Fatal(e)
+		}
+	}
+	read := func(file string) map[string]any {
+		t.Helper()
+		raw, e := os.ReadFile(filepath.Join(dir, file))
+		var d map[string]any
+		if e != nil || json.Unmarshal(raw, &d) != nil {
+			t.Fatal("isolated fixture decode")
+		}
+		return d
+	}
+	write := func(file string, d map[string]any) string {
+		t.Helper()
+		raw, e := json.Marshal(d)
+		if e != nil {
+			t.Fatal(e)
+		}
+		if e := os.WriteFile(filepath.Join(dir, file), raw, 0600); e != nil {
+			t.Fatal(e)
+		}
+		sum := sha256.Sum256(raw)
+		return hex.EncodeToString(sum[:])
+	}
+	args := []string{"--source-manifest", filepath.Join(dir, "manifest.json"), "--reservations", filepath.Join(dir, "expectations.json"), filepath.Join(dir, "services-v4.json")}
+	check := func(exit int, stdout, diagnostic string) {
+		t.Helper()
+		before := inventory(t, dir)
+		var out, diag bytes.Buffer
+		if got := run(args, &out, &diag); got != exit || out.String() != stdout || diag.String() != diagnostic {
+			t.Fatalf("exit %d stdout %q diagnostic %q", got, out.String(), diag.String())
+		}
+		if !reflect.DeepEqual(before, inventory(t, dir)) {
+			t.Fatal("CLI changed service inputs")
+		}
+	}
+	check(0, "valid\n", "")
+	source, manifest, card := read("legacy-service-source.json"), read("manifest.json"), read("services-v4.json")
+	source["mxid"] = "@station_signal_service:other.example"
+	hash := write("legacy-service-source.json", source)
+	manifest["files"].(map[string]any)["legacy-service-source.json"] = hash
+	patched := false
+	for _, v := range manifest["source_pins"].([]any) {
+		pin := v.(map[string]any)
+		if pin["file"] == "legacy-service-source.json" {
+			pin["sha256"] = hash
+			patched = true
+		}
+	}
+	if !patched {
+		t.Fatal("source pin mutation not applied")
+	}
+	identity := card["members"].([]any)[4].(map[string]any)["identity"].(map[string]any)
+	identity["source_ref"].(map[string]any)["sha256"] = hash
+	identity["mxid"] = source["mxid"]
+	manifest["files"].(map[string]any)["services-v4.json"] = write("services-v4.json", card)
+	write("manifest.json", manifest)
+	check(1, "", "RULE legacy_source_connection_mismatch: $.members[4].identity.mxid\n")
+	identity["mxid"] = "@station_signal_service:relux.works"
+	manifest["files"].(map[string]any)["services-v4.json"] = write("services-v4.json", card)
+	write("manifest.json", manifest)
+	check(1, "", "RULE legacy_source_mismatch: $.members[4].identity.mxid\n")
+}

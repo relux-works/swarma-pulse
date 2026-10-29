@@ -318,6 +318,10 @@ func relations(c Object, o Options, version int) *Issue {
 				if !reflect.DeepEqual(conn, connections[str(binding["connection"])]) {
 					return fail("legacy_source_connection_mismatch", at+".identity.source_ref")
 				}
+				_, server, _ := strings.Cut(mx, ":")
+				if server != str(conn["server_name"]) {
+					return fail("legacy_source_connection_mismatch", at+".identity.mxid")
+				}
 				name = mx
 			} else {
 				domain := str(binding["identity_domain"])

@@ -144,6 +144,54 @@ func TestSourceAuthorityControls(t *testing.T) {
 	}
 }
 
+// A pinned service source and an equal target MXID still need the selected
+// connection's exact server. Rehashing the source cannot attest that agreement.
+// Existing target/source and source/connection refusal precedence is preserved.
+func TestLegacyServiceServerAgreement(t *testing.T) {
+	for _, tc := range []struct{ name, server, target, homeserver, rule, location string }{
+		{"matching rehashed source", "relux.works", "relux.works", "https://matrix.relux.works", "", ""},
+		{"foreign server", "other.example", "other.example", "https://matrix.relux.works", "legacy_source_connection_mismatch", "$.members[4].identity.mxid"},
+		{"server suffix", "relux.works.other.example", "relux.works.other.example", "https://matrix.relux.works", "legacy_source_connection_mismatch", "$.members[4].identity.mxid"},
+		{"server subdomain", "sub.relux.works", "sub.relux.works", "https://matrix.relux.works", "legacy_source_connection_mismatch", "$.members[4].identity.mxid"},
+		{"target differs", "other.example", "relux.works", "https://matrix.relux.works", "legacy_source_mismatch", "$.members[4].identity.mxid"},
+		{"source connection differs", "relux.works", "relux.works", "https://other.example", "legacy_source_connection_mismatch", "$.members[4].identity.source_ref"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			c, o := fixture(t, "services-v4.json"), fixtureOptions(t)
+			if e := Validate(encoded(t, c), o); e != nil {
+				t.Fatal(e)
+			}
+			source := fixture(t, "legacy-service-source.json")
+			source["mxid"] = "@station_signal_service:" + tc.server
+			obj(source["connection"])["homeserver"] = tc.homeserver
+			raw := encoded(t, source)
+			sum := sha256.Sum256(raw)
+			hash := hex.EncodeToString(sum[:])
+			found := false
+			for i := range o.Sources {
+				if o.Sources[i].Kind == "service-descriptor" {
+					o.Sources[i].Bytes, o.Sources[i].SHA256 = raw, hash
+					found = true
+				}
+			}
+			if !found {
+				t.Fatal("service source mutation not applied")
+			}
+			identity := obj(obj(list(c["members"])[4])["identity"])
+			obj(identity["source_ref"])["sha256"] = hash
+			identity["mxid"] = "@station_signal_service:" + tc.target
+			e := Validate(encoded(t, c), o)
+			if tc.rule == "" {
+				if e != nil {
+					t.Fatal(e)
+				}
+			} else if e == nil || e.Rule != tc.rule || e.Location != tc.location || e.Exit != 1 {
+				t.Fatalf("expected %s at %s, exit1; got %v", tc.rule, tc.location, e)
+			}
+		})
+	}
+}
+
 // Comparators operate on arbitrary-length decimal components, without an
 // undocumented machine-integer limit or numeric wraparound.
 func TestVersionGrammar(t *testing.T) {
