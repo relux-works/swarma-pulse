@@ -14,26 +14,43 @@ import (
 	"github.com/relux-works/swarma-pulse/internal/cardpublish"
 )
 
-// This inert recorder has no transport, endpoint or credential capability.
-// Its known-violation plant is separate from the actual conversion fault.
-type registrationTripwire struct{ attempts int }
-
-func (r *registrationTripwire) attempt() *Issue {
-	r.attempts++
-	return fail("forbidden_registration_attempt", "$")
-}
-
+// The same source/API gate admits complete conversion/publication and denies
+// one inert registration plant before either call, preserving the prior tree.
 func executeConversionVector(t *testing.T, spec Object) *Issue {
 	t.Helper()
-	tripwire := &registrationTripwire{}
-	if spec["operation"] == "registration-tripwire-self-check" {
-		if number(spec["synthetic_attempts"]) == 1 {
-			return tripwire.attempt()
+	selfCheck := spec["operation"] == "registration-tripwire-self-check"
+	synthetic, expectedAttempts := 0, 0
+	if selfCheck {
+		synthetic = number(spec["synthetic_attempts"])
+		if synthetic != 0 && synthetic != 1 {
+			t.Fatal("unsupported synthetic registration count")
 		}
-		if tripwire.attempts != 0 {
-			t.Fatal("tripwire positive")
+		if synthetic == 1 && spec["transport"] != "inert-synthetic-recorder-no-endpoint" {
+			t.Fatal("self-check requires inert transport premise")
 		}
-		return nil
+		expectedAttempts = synthetic
+		// Both self-check neighbors use the real conversion/publication setup;
+		// only an in-memory forbidden API plant differs in the admission input.
+		for _, v := range list(fixture(t, "vectors-mixed.json")["cases"]) {
+			if c := obj(v); c["id"] == "mixed-no-registration" {
+				spec = obj(c["operation"])
+				break
+			}
+		}
+		if spec["operation"] != "convert-atomic" {
+			t.Fatal("missing conversion control setup")
+		}
+	}
+	if armed, present := spec["registration_tripwire"]; present {
+		if armed != "armed" {
+			t.Fatal("registration tripwire not armed")
+		}
+		if _, present := spec["expected_registration_attempts"]; !present {
+			t.Fatal("missing registration count oracle")
+		}
+		if !selfCheck {
+			expectedAttempts = number(spec["expected_registration_attempts"])
+		}
 	}
 	rootPath := t.TempDir()
 	sourcePath := strings.TrimPrefix(str(spec["source_materialized_path"]), "fixture-root/")
@@ -73,42 +90,62 @@ func executeConversionVector(t *testing.T, spec Object) *Issue {
 			return nil
 		}
 	}
-	complete, issue := convert(raw, in, checkpoint)
-	if issue != nil {
-		if len(complete) != 0 || completed != 2 || !reflect.DeepEqual(before, inventory(t, rootPath)) || tripwire.attempts != 0 {
-			t.Fatal("partial conversion effect")
+	// Admission is connected to this operation: the same recorder scans the
+	// actual converter/core/publisher sources before either production call.
+	// A plant is parsed and denied, never compiled, called or transported.
+	boundary := &registrationAdmission{}
+	entered := false
+	issue := boundary.run(t, synthetic == 1, func() *Issue {
+		entered = true
+		complete, issue := convert(raw, in, checkpoint)
+		if issue != nil {
+			if len(complete) != 0 || completed != 2 || !reflect.DeepEqual(before, inventory(t, rootPath)) {
+				t.Fatal("partial conversion effect")
+			}
+			return issue
 		}
-		return issue
+		expected := fixture(t, str(spec["expected_output"]))
+		canonical, e := json.MarshalIndent(expected, "", "  ")
+		if e != nil {
+			t.Fatal(e)
+		}
+		canonical = append(canonical, '\n')
+		if !bytes.Equal(complete, canonical) {
+			t.Fatal("complete canonical expected bytes differ")
+		}
+		root, e := os.OpenRoot(rootPath)
+		if e != nil {
+			t.Fatal(e)
+		}
+		defer root.Close()
+		result, pubIssue := cardpublish.Publish(root, destination, sourceInfo, complete)
+		if pubIssue != nil || !result.Published || !result.Durable || result.TemporaryRemains {
+			t.Fatal("actual publication", result, pubIssue)
+		}
+		// Only this complete destination replacement is allowed; input and directory
+		// inventories (including absence of temporary files) remain otherwise exact.
+		sum := sha256.Sum256(complete)
+		before[destination] = hex.EncodeToString(sum[:])
+		if !reflect.DeepEqual(before, inventory(t, rootPath)) {
+			t.Fatal("unexpected publication effect")
+		}
+		return nil
+	})
+	t.Logf("source/API admission: registration attempts=%d, operation entered=%t", boundary.attempts, entered)
+	if boundary.attempts != expectedAttempts {
+		t.Fatalf("registration attempts: got %d, want %d", boundary.attempts, expectedAttempts)
 	}
-	expected := fixture(t, str(spec["expected_output"]))
-	canonical, e := json.MarshalIndent(expected, "", "  ")
-	if e != nil {
-		t.Fatal(e)
+	if synthetic == 1 {
+		if entered || issue == nil || issue.Rule != "forbidden_registration_attempt" || issue.Location != "$" || issue.Exit != 1 {
+			t.Fatal("inert registration plant was not denied before execution", issue)
+		}
+		if !reflect.DeepEqual(before, inventory(t, rootPath)) {
+			t.Fatal("registration refusal changed source/destination or left temporary output")
+		}
+	} else if !entered {
+		t.Fatal("conversion/publication operation never admitted", issue)
 	}
-	canonical = append(canonical, '\n')
-	if !bytes.Equal(complete, canonical) {
-		t.Fatal("complete canonical expected bytes differ")
-	}
-	root, e := os.OpenRoot(rootPath)
-	if e != nil {
-		t.Fatal(e)
-	}
-	defer root.Close()
-	result, pubIssue := cardpublish.Publish(root, destination, sourceInfo, complete)
-	if pubIssue != nil || !result.Published || !result.Durable || result.TemporaryRemains {
-		t.Fatal("actual publication", result, pubIssue)
-	}
-	// Only this complete destination replacement is allowed; input and directory
-	// inventories (including absence of temporary files) remain otherwise exact.
-	sum := sha256.Sum256(complete)
-	before[destination] = hex.EncodeToString(sum[:])
-	if !reflect.DeepEqual(before, inventory(t, rootPath)) {
-		t.Fatal("unexpected publication effect")
-	}
-	if tripwire.attempts != 0 {
-		t.Fatal("registration attempted")
-	}
-	return nil
+	return issue
 }
 
 // A fault after two real member transformations returns no document; a normal
