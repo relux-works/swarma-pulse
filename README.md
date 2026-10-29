@@ -15,7 +15,9 @@ Product-specific cards belong in their declared host project; the swarm host pro
 
 ## Build and run
 
-Use Go 1.25 or newer. Native validation is tested on macOS arm64 with Go 1.25.5. The only module dependency is
+Use Go 1.25.12 or a newer fixed toolchain (the Go 1.26 branch requires 1.26.5 or newer). This includes the rooted-filesystem fix for
+[CVE-2026-39822](https://github.com/golang/go/issues/79005); the module directive makes an older local-only compiler
+refuse the build. Native validation is tested on macOS arm64 with Go 1.25.12. The only module dependency is
 [go.yaml.in/yaml/v3 v3.0.5](https://pkg.go.dev/go.yaml.in/yaml/v3@v3.0.5), the maintained YAML v3 Node API, pinned in
 go.mod/go.sum. No language adapter, child process or network client is used by the validator.
 
