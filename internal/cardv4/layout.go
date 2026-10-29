@@ -13,6 +13,27 @@ import (
 type LayoutFS interface {
 	Lstat(string) (fs.FileInfo, error)
 	Readlink(string) (string, error)
+	OpenRoot(string) (LayoutRoot, error)
+}
+
+// LayoutRoot pins a directory handle; operations remain confined to that handle
+// across ancestor renames and reject escaped links before destination access.
+type LayoutRoot interface {
+	LayoutFS
+	Close() error
+}
+
+// CheckLayoutVersion uses the same production boundary for static/layout v3
+// rule vocabulary. Callers must not apply the legacy mapping themselves.
+func CheckLayoutVersion(card Object, cardDir string, access LayoutFS, version int) *Issue {
+	if version != 3 && version != 4 {
+		return shape("usage", "$")
+	}
+	e := CheckLayout(card, cardDir, access)
+	if version == 3 && e != nil {
+		return legacyIssue(e)
+	}
+	return e
 }
 
 // CheckLayout never opens remote locators or requires member checkouts to exist.
@@ -25,23 +46,28 @@ func CheckLayout(card Object, cardDir string, access LayoutFS) *Issue {
 	if e != nil {
 		return e
 	}
-	profiles, e := resolvePath(access, ".", filepath.Join(base, str(card["profiles_root"])), true, false, "$.profiles_root")
-	if e != nil {
-		return e
+	profiles := filepath.Clean(filepath.Join(base, str(card["profiles_root"])))
+	if !localPath(profiles) {
+		return fail("path_root_escape", "$.profiles_root")
 	}
+	// Acquire the narrow boundary before inspecting any profile descendants.
+	// Do not Lstat a path and subsequently reopen it through the broader root.
+	profileRoot, err := access.OpenRoot(profiles)
+	if err != nil {
+		// A failed handle acquisition never becomes acceptance. A bounded metadata
+		// walk may only refine missing/escape diagnostics after that failed open.
+		if _, e := resolvePath(access, ".", profiles, true, false, "$.profiles_root"); e != nil {
+			return e
+		}
+		return fail("layout_unreadable", "$.profiles_root")
+	}
+	defer profileRoot.Close()
 	for i, k := range sorted(obj(card["profiles"])) {
 		p := obj(obj(card["profiles"])[k])
 		if path, ok := p["path"]; ok {
-			candidate := filepath.Join(profiles, str(path))
-			if !beneath(profiles, candidate) {
-				return fail("path_root_escape", index("$.profiles", i)+".path")
-			}
-			target, e := resolveBounded(access, profiles, profiles, str(path), true, false, index("$.profiles", i)+".path")
+			_, e := resolvePath(profileRoot, ".", str(path), true, false, index("$.profiles", i)+".path")
 			if e != nil {
 				return e
-			}
-			if !beneath(profiles, target) {
-				return fail("path_symlink_escape", index("$.profiles", i)+".path")
 			}
 		}
 	}
@@ -113,6 +139,9 @@ func resolveBounded(access LayoutFS, boundary, base, path string, directory, mis
 		if err != nil {
 			if missingOK && errors.Is(err, fs.ErrNotExist) {
 				return target, nil
+			}
+			if !errors.Is(err, fs.ErrNotExist) {
+				return "", fail("layout_unreadable", at)
 			}
 			return "", fail("layout_missing", at)
 		}

@@ -48,7 +48,7 @@ func admittedSource(src []byte, cli bool, spy *processSpy) bool {
 			accepted = false
 		}
 	}
-	readOS := words("Open OpenRoot Exit Args Stdout Stderr")
+	readOS := words("Open OpenRoot Root Exit Args Stdout Stderr")
 	writeMethods := words("Write WriteFile WriteString Remove RemoveAll Rename Mkdir MkdirAll Symlink Link Chmod Chown Truncate Create OpenFile StartProcess")
 	ast.Inspect(tree, func(n ast.Node) bool {
 		sel, ok := n.(*ast.SelectorExpr)

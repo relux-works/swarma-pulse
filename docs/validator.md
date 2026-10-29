@@ -14,12 +14,23 @@ documents before conversion to generic maps. UTF-8, byte, depth, count and repor
 
 Validation deliberately reports the first failure in this deterministic order:
 
-1. Raw size/UTF-8, YAML document shape and syntax, then Node-tree restrictions/depth in input order.
+1. Raw size/UTF-8, YAML document shape/syntax and additional-document check. V4 Node restrictions then run in input
+   order: the current node's explicit tag, anchor/alias and merge restriction; container depth; each mapping key's same
+   restrictions, string-key shape and duplicate check, followed immediately by its value subtree. Sequence children
+   run in declared order. Legacy v3 is different: merge inputs are expanded in a mapping prepass before explicit
+   entries, retaining legacy merge precedence; v4 has no merge prepass.
 2. Schema discriminator; forbidden credentials/live facts in sorted mapping-key order; collection bounds.
 3. Closed object shape, unknown fields in sorted-key order, required then optional fields in sorted-key order;
-   named maps use sorted keys, arrays use their declared order.
-4. Cross-references and binding/topology facts, then members and projects in document order; local graph walks use
-   sorted logical keys. Source checks run where the referencing member is checked.
+   named maps use sorted keys, arrays use their declared order. Two service branch checks precede this generic order:
+   a service member first rejects `profile`, `staffing`, `independent_of_producer`, `chat_admission`, in that order;
+   when its runtime is reached, `model` then `effort` are rejected before generic runtime fields. Profile source
+   exclusivity and version satisfaction run after that profile's generic fields. Discriminators select a branch
+   before its field traversal; fields from the other branch are not merged into the selected branch.
+4. Member then project uniqueness; default binding; sorted binding/connection consistency; topology connection;
+   keeper role; host-project anchor; external declarations. Members then run in document order: binding and v3 prefix;
+   profile/project references; v4 scope/host/logical pin; reporting; reviewer/staffing; result route/service constraints;
+   a2a constraints; identity/source/reservation/resolved-name checks. Source checks run at the referencing member.
+   Finally keeper count, sorted local graph walks and project-manager consistency in project order are checked.
 5. Optional local layout, only after static acceptance.
 
 Diagnostics contain implementation-owned rule names and indexed locations. Mapping keys controlled by the input never
@@ -52,7 +63,11 @@ pins, station and all non-pilot facts remain exact. Rollback data specifies comp
 restoration, schema downgrade or file replacement.
 
 `CheckLayout` takes an already admitted root through a read-only interface. Lexical paths and each symlink target are
-checked before target metadata access. Profile directories have the narrower profiles_root boundary. Rooted filesystem
+checked before target metadata access. It acquires a directory handle rooted at profiles_root before inspecting profile
+descendants. All profile operations use that narrow handle, retained across ancestor renames; native rooted traversal
+refuses link escape atomically rather than trusting earlier Lstat results. Opening the boundary selects the root at that
+operation; it does not reopen a previously inspected path through the broader product root. `CheckLayoutVersion` is the
+version-aware production entry point, including FORMAT R7 mapping for v3 layout diagnostics. Rooted filesystem
 access prevents an out-of-product-root dereference even if links change during a check. Remote locations/task locators
 are skipped; an independently declared member clone may share their old local spelling and remains a bounded declaration.
 No checkout, directory or task file is created to make a check pass.
@@ -71,6 +86,10 @@ reference/parent failures, arbitrary-length version comparisons, invalid encodin
 Known-violation controls establish that the byte-inventory and captured-output checks detect a changed file/extra partial
 file and a planted partial value. The outside-access spy is armed after isolated tree setup; an inert forbidden inspection
 must be recorded by the control, while escaped-link operations record zero destination attempts.
+The component-swap control additionally identifies actual returned destination inodes: the vulnerable broad-root
+walk records an existing outside target after substitution, while the production narrow handle retains the original
+inside target. A separate nested-component substitution escapes that narrow handle and must refuse with zero outside
+destination reads. These are deterministic isolated filesystem races, not a live-tree mutation or an OS tracing claim.
 
 The static import/API admission scan records and denies every process API in production source; its planted process
 import/call is a failing control. It also rejects writes, network-client/unsafe/plugin imports and unadmitted dependencies.

@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"crypto/sha256"
 	"encoding/hex"
+	"encoding/json"
 	"io/fs"
 	"os"
 	"path/filepath"
@@ -165,5 +166,102 @@ func TestCLIIsolatedLayout(t *testing.T) {
 	diag.Reset()
 	if run(args, &out, &diag) != 1 || out.Len() != 0 || diag.String() != "RULE layout_missing: $.projects[1].task_system.path\n" {
 		t.Fatal("layout negative", diag.String())
+	}
+}
+
+// The production v3 CLI, rather than a test-side mapper, emits exact FORMAT R7
+// diagnostics for a missing task and a missing profile root after valid controls.
+func TestV3CLIProductionLayoutRules(t *testing.T) {
+	dir := t.TempDir()
+	for _, p := range []string{"legacy-card", "aurora-host", "beacon", "vault", "profiles/control"} {
+		if e := os.MkdirAll(filepath.Join(dir, p), 0700); e != nil {
+			t.Fatal(e)
+		}
+	}
+	for _, p := range []string{"aurora-host", "beacon", "vault"} {
+		if e := os.WriteFile(filepath.Join(dir, p, "tasks.md"), []byte("fixture\n"), 0600); e != nil {
+			t.Fatal(e)
+		}
+	}
+	args := []string{"--version", "3", "--check-layout", "--root", dir, "--card-directory", "legacy-card", filepath.Join(fixtureRoot, "source-v3.json")}
+	check := func(wantExit int, wantOut, wantDiagnostic string) {
+		t.Helper()
+		var out, diag bytes.Buffer
+		before := inventory(t, dir)
+		if exit := run(args, &out, &diag); exit != wantExit || out.String() != wantOut || diag.String() != wantDiagnostic {
+			t.Fatalf("exit %d stdout %q safe diagnostic %q", exit, out.String(), diag.String())
+		}
+		if !reflect.DeepEqual(before, inventory(t, dir)) {
+			t.Fatal("v3 CLI changed tree")
+		}
+	}
+	check(0, "valid\n", "")
+	if e := os.Remove(filepath.Join(dir, "beacon/tasks.md")); e != nil {
+		t.Fatal(e)
+	}
+	check(1, "", "RULE R7: $.projects[1].task_system.path\n")
+	if e := os.WriteFile(filepath.Join(dir, "beacon/tasks.md"), []byte("fixture\n"), 0600); e != nil {
+		t.Fatal(e)
+	}
+	check(0, "valid\n", "")
+	if e := os.Rename(filepath.Join(dir, "profiles"), filepath.Join(dir, "profiles-held")); e != nil {
+		t.Fatal(e)
+	}
+	check(1, "", "RULE R7: $.profiles_root\n")
+}
+
+// The real CLI rejects the reviewed parser/repository/origin witnesses against
+// the same complete positive card and source/reservation premises.
+func TestCLIReviewRegressionWitnesses(t *testing.T) {
+	dir := t.TempDir()
+	baseline, e := os.ReadFile(filepath.Join(fixtureRoot, "converted-v4.json"))
+	if e != nil {
+		t.Fatal(e)
+	}
+	path := filepath.Join(dir, "card.json")
+	args := []string{"--source-manifest", filepath.Join(fixtureRoot, "manifest.json"), "--reservations", filepath.Join(fixtureRoot, "expectations.json"), path}
+	check := func(raw []byte, wantExit int, wantOut, wantDiagnostic string) {
+		t.Helper()
+		if e := os.WriteFile(path, raw, 0600); e != nil {
+			t.Fatal(e)
+		}
+		before := inventory(t, dir)
+		var out, diag bytes.Buffer
+		if exit := run(args, &out, &diag); exit != wantExit || out.String() != wantOut || diag.String() != wantDiagnostic {
+			t.Fatalf("exit %d stdout %q diagnostic %q", exit, out.String(), diag.String())
+		}
+		if !reflect.DeepEqual(before, inventory(t, dir)) {
+			t.Fatal("CLI mutated witness")
+		}
+	}
+	check(baseline, 0, "valid\n", "")
+	anchored := bytes.Replace(baseline, []byte(`"schema":`), []byte(`&key "schema":`), 1)
+	if bytes.Equal(anchored, baseline) {
+		t.Fatal("anchor plant not applied")
+	}
+	check(anchored, 2, "", "RULE yaml_alias: $[0]\n")
+	for _, space := range []string{"\v", "\u00a0"} {
+		var c map[string]any
+		if json.Unmarshal(baseline, &c) != nil {
+			t.Fatal("witness decode")
+		}
+		c["projects"].([]any)[0].(map[string]any)["repo"] = "git.example/owner/na" + space + "me"
+		raw, e := json.Marshal(c)
+		if e != nil {
+			t.Fatal(e)
+		}
+		check(raw, 1, "", "RULE repository_format: $.projects[0].repo\n")
+	}
+	for _, fragment := range []string{"#", "#fragment"} {
+		var c map[string]any
+		if json.Unmarshal(baseline, &c) != nil {
+			t.Fatal("witness decode")
+		}
+		c["connections"].(map[string]any)["target-gr"].(map[string]any)["homeserver"] = "https://gr.relux.works/" + fragment
+		raw, e := json.Marshal(c)
+		if e != nil {
+			t.Fatal(e)
+		}
+		check(raw, 1, "", "RULE https_origin: $.connections[1].homeserver\n")
 	}
 }

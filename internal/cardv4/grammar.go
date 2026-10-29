@@ -53,13 +53,16 @@ func mxid(v any) bool {
 }
 func origin(v any) bool {
 	u, e := url.Parse(str(v))
-	return e == nil && u.Scheme == "https" && u.Host != "" && u.User == nil && u.RawQuery == "" && !u.ForceQuery && u.Fragment == "" && (u.Path == "" || u.Path == "/") && dns(u.Hostname()) && u.Opaque == ""
+	return e == nil && !strings.Contains(str(v), "#") && u.Scheme == "https" && u.Host != "" && u.User == nil && u.RawQuery == "" && !u.ForceQuery && u.Fragment == "" && (u.Path == "" || u.Path == "/") && dns(u.Hostname()) && u.Opaque == ""
 }
 func relative(v any) bool {
 	s := str(v)
 	return text(v) && !strings.HasPrefix(s, "/") && !strings.HasPrefix(s, "~")
 }
 func repo(v any) bool {
+	if !text(v) || strings.ContainsFunc(str(v), unicode.IsSpace) {
+		return false
+	}
 	p := strings.Split(str(v), "/")
 	if len(p) != 3 || !dns(p[0]) {
 		return false

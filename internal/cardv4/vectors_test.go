@@ -366,6 +366,54 @@ type accessSpy struct {
 	denied   []string
 }
 
+func (s *accessSpy) OpenRoot(p string) (LayoutRoot, error) {
+	s.calls = append(s.calls, p)
+	if !localPath(p) {
+		s.attempts++
+		return nil, fs.ErrPermission
+	}
+	child, e := s.root.OpenRoot(p)
+	if e != nil {
+		return nil, e
+	}
+	return &childAccessSpy{accessSpy: s, root: child, prefix: p}, nil
+}
+
+// Child metadata calls are projected back to the shared instrument before the
+// root-relative operation; the production boundary itself stays on the child FD.
+type childAccessSpy struct {
+	accessSpy *accessSpy
+	root      *os.Root
+	prefix    string
+}
+
+func (s *childAccessSpy) Lstat(p string) (fs.FileInfo, error) {
+	s.accessSpy.calls = append(s.accessSpy.calls, filepath.Join(s.prefix, p))
+	return s.root.Lstat(p)
+}
+func (s *childAccessSpy) Readlink(p string) (string, error) {
+	s.accessSpy.calls = append(s.accessSpy.calls, filepath.Join(s.prefix, p))
+	return s.root.Readlink(p)
+}
+func (s *childAccessSpy) OpenRoot(p string) (LayoutRoot, error) {
+	child, e := s.root.OpenRoot(p)
+	if e != nil {
+		return nil, e
+	}
+	return &childAccessSpy{s.accessSpy, child, filepath.Join(s.prefix, p)}, nil
+}
+func (s *childAccessSpy) Close() error { return s.root.Close() }
+
+type testLayoutRoot struct{ *os.Root }
+
+func (r testLayoutRoot) OpenRoot(p string) (LayoutRoot, error) {
+	child, e := r.Root.OpenRoot(p)
+	if e != nil {
+		return nil, e
+	}
+	return testLayoutRoot{child}, nil
+}
+
 func (s *accessSpy) Lstat(p string) (fs.FileInfo, error) {
 	s.calls = append(s.calls, p)
 	blocked := !localPath(p)

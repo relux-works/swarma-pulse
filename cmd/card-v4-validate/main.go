@@ -13,6 +13,16 @@ import (
 )
 
 func main() { os.Exit(run(os.Args[1:], os.Stdout, os.Stderr)) }
+
+type readOnlyRoot struct{ *os.Root }
+
+func (r readOnlyRoot) OpenRoot(name string) (cardv4.LayoutRoot, error) {
+	child, e := r.Root.OpenRoot(name)
+	if e != nil {
+		return nil, e
+	}
+	return readOnlyRoot{child}, nil
+}
 func readBounded(path string) ([]byte, error) {
 	f, e := os.Open(path)
 	if e != nil {
@@ -124,7 +134,7 @@ func run(args []string, out, diagnostics io.Writer) (code int) {
 			fmt.Fprintln(diagnostics, issue)
 			return issue.Exit
 		}
-		if issue := cardv4.CheckLayout(card, *directory, access); issue != nil {
+		if issue := cardv4.CheckLayoutVersion(card, *directory, readOnlyRoot{access}, *version); issue != nil {
 			fmt.Fprintln(diagnostics, issue)
 			return issue.Exit
 		}

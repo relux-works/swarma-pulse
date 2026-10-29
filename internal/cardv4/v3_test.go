@@ -59,14 +59,14 @@ func TestV3R7Layout(t *testing.T) {
 		t.Fatal(e)
 	}
 	defer r.Close()
-	if issue := CheckLayout(c, "legacy-card", r); issue != nil {
+	if issue := CheckLayoutVersion(c, "legacy-card", testLayoutRoot{r}, 3); issue != nil {
 		t.Fatal(issue)
 	}
 	if e := os.Remove(filepath.Join(dir, "beacon/tasks.md")); e != nil {
 		t.Fatal(e)
 	}
-	issue := CheckLayout(c, "legacy-card", r)
-	if issue == nil || legacyIssue(issue).Rule != "R7" || issue.Location != "$.projects[1].task_system.path" {
+	issue := CheckLayoutVersion(c, "legacy-card", testLayoutRoot{r}, 3)
+	if issue == nil || issue.Rule != "R7" || issue.Location != "$.projects[1].task_system.path" {
 		t.Fatal("R7 missing-entry refusal", issue)
 	}
 }

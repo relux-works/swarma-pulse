@@ -78,11 +78,8 @@ func nodeValue(n *yaml.Node, at string, depth, version int, active map[*yaml.Nod
 	active[n] = true
 	defer delete(active, n)
 	if version == 4 {
-		if n.Style&yaml.TaggedStyle != 0 {
-			return nil, shape("explicit_tag", at)
-		}
-		if n.Anchor != "" || n.Kind == yaml.AliasNode {
-			return nil, shape("yaml_alias", at)
+		if e := v4NodeRestriction(n, at); e != nil {
+			return nil, e
 		}
 	}
 	if n.Kind == yaml.AliasNode {
@@ -99,12 +96,9 @@ func nodeValue(n *yaml.Node, at string, depth, version int, active map[*yaml.Nod
 		out := Object{}
 		seen := map[string]bool{}
 		// Legacy YAML merges are expanded before explicit entries; no v4 merge survives.
-		for i := 0; i < len(n.Content); i += 2 {
+		for i := 0; version == 3 && i < len(n.Content); i += 2 {
 			k := n.Content[i]
 			if k.Tag == "!!merge" {
-				if version == 4 {
-					return nil, shape("yaml_merge", index(at, i/2))
-				}
 				v, e := nodeValue(n.Content[i+1], index(at, i/2), depth, version, active, budget)
 				if e != nil {
 					return nil, e
@@ -128,14 +122,16 @@ func nodeValue(n *yaml.Node, at string, depth, version int, active map[*yaml.Nod
 		for i := 0; i < len(n.Content); i += 2 {
 			k := n.Content[i]
 			loc := index(at, i/2)
+			if version == 4 {
+				if e := v4NodeRestriction(k, loc); e != nil {
+					return nil, e
+				}
+			}
 			if k.Tag == "!!merge" {
 				continue
 			}
 			if k.Kind != yaml.ScalarNode || k.Tag != "!!str" {
 				return nil, shape("non_string_key", loc)
-			}
-			if version == 4 && k.Style&yaml.TaggedStyle != 0 {
-				return nil, shape("explicit_tag", loc)
 			}
 			if seen[k.Value] {
 				return nil, shape("duplicate_key", loc)
@@ -184,6 +180,18 @@ func nodeValue(n *yaml.Node, at string, depth, version int, active map[*yaml.Nod
 		}
 	}
 	return nil, shape("parse_document", at)
+}
+func v4NodeRestriction(n *yaml.Node, at string) *Issue {
+	if n.Style&yaml.TaggedStyle != 0 {
+		return shape("explicit_tag", at)
+	}
+	if n.Anchor != "" || n.Kind == yaml.AliasNode {
+		return shape("yaml_alias", at)
+	}
+	if n.Tag == "!!merge" {
+		return shape("yaml_merge", at)
+	}
+	return nil
 }
 
 // CheckCollectionBounds is separate so count guards can be exercised without

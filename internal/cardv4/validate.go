@@ -71,6 +71,9 @@ func legacyIssue(e *Issue) *Issue {
 	if e.Rule == "retired_workspace" {
 		return &Issue{"R13", e.Location, e.Exit}
 	}
+	if e.Rule == "layout_unreadable" {
+		return &Issue{"R7", e.Location, e.Exit}
+	}
 	if strings.Contains(e.Location, ".a2a") && e.Rule != "binding_connection_mismatch" && e.Rule != "route_contract" {
 		return &Issue{"R10", e.Location, e.Exit}
 	}
