@@ -20,9 +20,8 @@ explicit runtime custody boundary still gate the corresponding live operation. U
 existing card may carry a reviewed pending-conversion note in a supported desired-fact field; actual migration evidence
 stays outside the card. This ordering clarification leaves the specification's identity and preservation contracts intact.
 
-The bounded [v4 format outline](docs/format-v4-outline.md) identifies the next schema and fixture work; it is not a complete
-schema or implementation acceptance.
-
-The [complete format candidate](docs/format-v4.md) and [full synthetic fixtures](docs/fixtures/v4/full/README.md) now
-supply concrete inputs for that review. Their acceptance remains pending; the validator/converter implementation gate
-is unchanged.
+The [complete v4 format](docs/format-v4.md) and [synthetic inputs](docs/fixtures/v4/full/README.md) are accepted design
+contracts. The read-only Go validator is now supplied;
+converter, Pulse and live integration acceptance are separate. Future Go consumers may import the reviewed
+`internal/cardv4` package from this module; consumers outside this module need a separately reviewed public-package split.
+No consumer adoption, v3 retirement or live migration follows from validator availability.

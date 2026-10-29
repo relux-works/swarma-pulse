@@ -1,0 +1,9 @@
+[
+ {"id":"carry-over-reject-station-loss","result":"refuse","rule":"conversion_station_preservation","location":"$.members[1].station","exit":1},
+ {"id":"carry-over-reject-station-change","result":"refuse","rule":"conversion_station_preservation","location":"$.members[1].station","exit":1},
+ {"id":"legacy-reject-nonpilot-change","result":"refuse","rule":"legacy_source_mismatch","location":"$.members[2].identity.mxid","exit":1},
+ {"id":"service-reject-service-owner-selector","result":"refuse","rule":"service_selector_policy_required","location":"$.members[4].a2a.subscriptions","exit":1},
+ {"id":"service-reject-service-model","result":"refuse","rule":"service_runtime_forbidden","location":"$.members[5].runtime","exit":1},
+ {"id":"carry-over-reject-unknown-field","result":"refuse","rule":"unknown_field","location":"$.members[1][15]","exit":1},
+ {"id":"legacy-reject-source-pin","result":"refuse","rule":"source_digest_mismatch","location":"$.members[1].identity.source_ref","exit":1}
+]

@@ -1,7 +1,8 @@
-# Product-card v4 — complete format candidate
+# Product-card v4 — complete format
 
-Status: design candidate, 2026-10-29; independent review pending. No v4 validator or converter is supplied. This contract
-and the [full fixtures](fixtures/v4/full/README.md) must be accepted before implementing either. The accepted
+Status: design accepted, 2026-10-29. The [read-only Go validator](validator.md) implements static checks;
+conversion and runtime qualification remain separate operations. The [full fixtures](fixtures/v4/full/README.md)
+retain their authored inputs and expected outcomes. The accepted
 [specification](specs/product-card-identity-pulse-v1.md) defines identity naming, preservation, eligibility and migration
 semantics. The [outline](format-v4-outline.md) records its scope. Neither format acceptance nor a card authorizes a live
 registration, room, credential, installation or runtime operation. The gr pilot does not wait for this format.

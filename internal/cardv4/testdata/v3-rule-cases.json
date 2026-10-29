@@ -1,0 +1,17 @@
+[
+ {"id":"v3-R1-absolute","citation":"FORMAT v3.1 R1; Paths are relative","patches":[{"op":"replace","path":["profiles_root"],"value":"/outside"}],"rule":"R1","location":"$.profiles_root","exit":1},
+ {"id":"v3-R2-profile","citation":"FORMAT v3.1 R2","patches":[{"op":"replace","path":["members",3,"profile"],"value":"missing"}],"rule":"R2","location":"$.members[3].profile","exit":1},
+ {"id":"v3-R3-id","citation":"FORMAT v3.1 R3","patches":[{"op":"replace","path":["members",3,"id"],"value":"beacon_orch"}],"rule":"R3","location":"$.members[3].id","exit":1},
+ {"id":"v3-R4-reviewer","citation":"FORMAT v3.1 R4; Roles staffing and lifecycle","positive_patches":[{"op":"replace","path":["members",3,"role"],"value":"reviewer"},{"op":"replace","path":["members",3,"context_mode"],"value":"fresh"},{"op":"add","path":["members",3,"independent_of_producer"],"value":true}],"patches":[{"op":"replace","path":["members",3,"independent_of_producer"],"value":false}],"rule":"R4","location":"$.members[3]","exit":1},
+ {"id":"v3-R5-parent","citation":"FORMAT v3.1 R5","patches":[{"op":"replace","path":["members",3,"parent"],"value":"beacon_orch"}],"rule":"R5","location":"$.members[3].parent","exit":1},
+ {"id":"v3-R6-field","citation":"FORMAT v3.1 R6","patches":[{"op":"add","path":["members",3,"credential"],"value":"SYNTHETIC-NOT-A-CREDENTIAL"}],"rule":"R6","location":"$[3][3][2]","exit":1},
+ {"id":"v3-R8-live","citation":"FORMAT v3.1 R8","patches":[{"op":"add","path":["members",3,"pid"],"value":1234}],"rule":"R8","location":"$[3][3][6]","exit":1},
+ {"id":"v3-R9-prefix","citation":"FORMAT v3.1 R9; Members are portable","patches":[{"op":"replace","path":["members",3,"id"],"value":"station_vault_dev"}],"rule":"R9","location":"$.members[3].id","exit":1},
+ {"id":"v3-R10-human","citation":"FORMAT v3.1 R10; Matrix subscriptions","patches":[{"op":"replace","path":["members",1,"a2a","subscriptions","required",1,"from_mxid"],"value":"alexis"}],"rule":"R10","location":"$.members[1].a2a.subscriptions.required[1].from_mxid","exit":1},
+ {"id":"v3-R11-enum","citation":"FORMAT v3.1 R11","patches":[{"op":"replace","path":["members",3,"lifecycle"],"value":"ephemeral"}],"rule":"R11","location":"$.members[3].lifecycle","exit":1},
+ {"id":"v3-R12-binding","citation":"FORMAT v3.1 R12","patches":[{"op":"add","path":["members",3,"binding"],"value":"missing"}],"rule":"R12","location":"$.members[3].binding","exit":1},
+ {"id":"v3-R13-required","citation":"FORMAT v3.1 R13; Profiles","patches":[{"op":"remove","path":["profiles","control","selected","lock_sha256"]}],"rule":"R13","location":"$.profiles[0].selected.lock_sha256","exit":1},
+ {"id":"v3-R14-route","citation":"FORMAT v3.1 R14; Routes","patches":[{"op":"remove","path":["members",3,"result_route"]}],"rule":"R14","location":"$.members[3].result_route","exit":1},
+ {"id":"v3-R15-topology","citation":"FORMAT v3.1 R15","patches":[{"op":"replace","path":["product","topology","connection"],"value":"missing"}],"rule":"R15","location":"$.product.topology.connection","exit":1},
+ {"id":"v3-R16-version","citation":"FORMAT v3.1 R16","patches":[{"op":"replace","path":["profiles","control","selected","version"],"value":"0.2.0"}],"rule":"R16","location":"$.profiles[0].selected.version","exit":1}
+]
