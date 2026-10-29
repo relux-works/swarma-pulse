@@ -43,6 +43,8 @@ installation evidence. Any unlisted field in the eventual closed schema must be 
 - Conversational member: id, role, project, parent, profile, runtime kind/model/optional effort, lifecycle, desired_state,
   optional desired_state_ref, context_mode, optional capabilities, clone/git_dir, binding, staffing and independence fields.
   Carry worker result_route/chat_admission where applicable; naming never grants chat admission.
+- Native task-system reference on any member: retain optional station as the reference to its registered task-board station.
+  Preserve its exact value when populated, and keep absence valid. It is not live assignment state.
 - A2a declaration: connection, parent_route, rooms, optional spaces, subscriptions.required/self. Retain both exact full-MXID
   owner selectors where required; preserve required/self ownership. Human selector rooms/all_events and room selector
   kinds/subtypes retain v3.1 meanings. A service exception must be explicit, not inherited conversational policy.
@@ -80,7 +82,7 @@ conversion and preserve logical ids, relation targets, profile selection, route 
 | Mixed cutover | One new-tuple pilot, unchanged non-pilots, exact prior-record rollback. | Non-pilot mutation or partially written card refuses; no registration follows from conversion. |
 | Service | Complete zero-selector a2a service and parent-native service; seven-stage evidence remains outside the card. | Implicit owner selectors, a profile/model/session, or a2a on parent-native refuses specifically. |
 | Location | Local sibling and declared remote reference preserve original targets. | Absolute/home/empty path, symlink escape or remote interpreted as missing local path refuses. |
-| Carry-over | Profile locks, manager modes, topology, room/owner selectors and existing non-chat routes remain equal. | Changed required selectors, profile selection, live state, credential fields or unknown keys refuse. |
+| Carry-over | Profile locks, manager modes, topology, room/owner selectors, existing non-chat routes and a populated optional member station remain equal; absence of station remains valid. | Loss or change of the source station reference, changed required selectors, profile selection, live state, credential fields or unknown keys refuse. |
 | Parser and bounds | UTF-8 document within explicit byte/count/depth/hop bounds; valid 64-character tuple. | Duplicate keys, tags/aliases/merge keys/multiple documents, oversized/deep input, 65-character tuple or truncation refuses. |
 
 Expectations must distinguish explicit conversion policy from validation. A v3 source may contain anchors accepted by
