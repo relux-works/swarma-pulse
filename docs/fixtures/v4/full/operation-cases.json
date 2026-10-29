@@ -1,0 +1,22 @@
+[
+  {
+    "operation": "agent-session-launch",
+    "card": "services-v4.json",
+    "member": "aurora/signal_service",
+    "expected_refusal": "service_session_forbidden",
+    "forbidden_effects": [
+      "agent-hooks",
+      "conversation-session",
+      "model-invocation"
+    ],
+    "runtime_executed": false
+  },
+  {
+    "operation": "agent-session-launch",
+    "card": "converted-v4.json",
+    "member": "aurora/beacon_orch",
+    "expected_result": "eligible only after independent profile/lock/runtime/identity and custody admission",
+    "card_alone_authorizes_launch": false,
+    "runtime_executed": false
+  }
+]

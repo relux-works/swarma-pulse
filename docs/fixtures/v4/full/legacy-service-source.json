@@ -1,0 +1,10 @@
+{
+  "member": "aurora/signal_service",
+  "mxid": "@station_signal_service:relux.works",
+  "connection_name": "legacy-relux",
+  "connection": {
+    "homeserver": "https://matrix.relux.works",
+    "server_name": "relux.works"
+  },
+  "admission_ref": "synthetic-service-admission"
+}

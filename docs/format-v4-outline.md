@@ -97,3 +97,6 @@ implement and independently qualify validator/converter behavior; run all select
 first gr pilot may use separately qualified existing a2a primitives while this work proceeds. A source or installation
 gap blocks only the affected runtime operation, and no format draft authorizes a registration, consumer switch or room
 creation. Nonessential projection implementation remains behind ready migration work.
+
+The subsequent [complete format candidate](format-v4.md) and [full synthetic fixtures](fixtures/v4/full/README.md) supply
+concrete review inputs for the next gate. They remain design candidates until separately accepted.

@@ -1,0 +1,37 @@
+{
+  "kind": "synthetic-full-card-fixture-manifest",
+  "no_real_accounts_or_registrations": true,
+  "source_pins": [
+    {
+      "file": "source-v3.json",
+      "revision": "fixture-v3-001",
+      "sha256": "70ec21346a86efda80dfcf0433b0405acf41ab25751b00b1fdcad25ee504fc11"
+    },
+    {
+      "file": "legacy-service-source.json",
+      "revision": "fixture-service-001",
+      "sha256": "dd32670b7e6ef1695c512f226ad32a79d102908bdd6114cf6c58eab285170d5e"
+    }
+  ],
+  "files": {
+    "converted-v4.json": "dae2b66a6b38ce9bed4dd916acff53c88f4bb2a046c2d56d49d98cc4cc4ded82",
+    "expectations.json": "ba8d4c9ef02f6e185b703ad65b304ed6ea8184e20d7b63b1ca3b515356e65b28",
+    "legacy-service-source.json": "dd32670b7e6ef1695c512f226ad32a79d102908bdd6114cf6c58eab285170d5e",
+    "negative-cases.json": "4bb0f09836c067371b939e99dd848ebe1eb00049447b7a12dd5484e626c234dc",
+    "operation-cases.json": "0dc5e408a70c014b7f22cdaa8f0ab65d9a6dcb1de2fe67986bfe8ee10f1a1158",
+    "pilot-v4.json": "75986ca3681212cce85be2c5ba1b116d13de20e066674470f0675129871b500c",
+    "reject-nonpilot-change.json": "ebb3d965c863098c88db84353fd19e6d79e877a152cc3a49745bed182bf3e019",
+    "reject-service-model.json": "99ea8800529ffd722cbdc9fb6e2cd17ec2de42290f56df7a921e0e209e3cd0ad",
+    "reject-service-owner-selector.json": "7d6380ebdbcc0b103eb955a60ad28b28408d7ba06dd386846a2e4e0bf535553f",
+    "reject-source-pin.json": "0eda9b535df61b87ce4b9147d81ca422b69b4cd26f0d6ab673fb48a3753887c0",
+    "reject-station-change.json": "ce0f2ff82b67a8d634cf6a2e5abe52d2f7d19f3aac2a30422ae2c8d9b4ba20eb",
+    "reject-station-loss.json": "85cfa5bcdd18ab9d73a2d977725e0988d359db7a42d42d25bdc59f57c6cc8a87",
+    "reject-unknown-field.json": "28da68c427bca8cf9a5e660396686d7e853bcef6a1bf93edbc60ed0921cb55ac",
+    "remote-v4.json": "ff3b29bc46c4cb007100c61ce95bbb9e09bfdcdb414347350f83ca4183e05aa4",
+    "rollback-v4.json": "dae2b66a6b38ce9bed4dd916acff53c88f4bb2a046c2d56d49d98cc4cc4ded82",
+    "services-v4.json": "33fa917f8644ba8f7678316efd213985cec6fadf0e8ddb0e707e6d8e6eef06e7",
+    "source-v3.json": "70ec21346a86efda80dfcf0433b0405acf41ab25751b00b1fdcad25ee504fc11"
+  },
+  "conversion_requires_explicit_target_choices": true,
+  "runtime_qualification": "not-run"
+}

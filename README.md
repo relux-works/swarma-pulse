@@ -19,9 +19,17 @@ star suffix. Existing identities retain their exact legacy mapping until an expl
 
 Documentation whitespace can be checked with `git diff --check`. Conformance data can be parsed with
 `python3 -m json.tool docs/specs/conformance-v1.json`; it prints the formatted fixture to stdout and exercises no product
-implementation. Candidate signature inspection uses `git verify-commit HEAD` and `git log -1 --show-signature`.
+implementation. Full card fixture syntax can be checked with
+`python3 -m json.tool docs/fixtures/v4/full/source-v3.json`. With the compatibility repository alongside this one, run
+`ruby ../product-card/validate.rb docs/fixtures/v4/full/source-v3.json` using Ruby 3.1 or newer; omit layout checks because
+fixture filesystem roots are symbolic. Candidate signature inspection uses `git verify-commit HEAD` and `git log -1 --show-signature`.
 No build command is available. Temporary local outputs, when needed, belong in ignored `.temp/`.
 
 The [v4 format outline](docs/format-v4-outline.md) and its fixture requirements describe the next bounded design work.
 They are not a complete schema or an available validator/converter. Format work proceeds independently of the first gr
 account pilot through separately qualified existing a2a primitives.
+
+The [complete v4 format candidate](docs/format-v4.md) and [full synthetic fixtures](docs/fixtures/v4/full/README.md) are
+available for design review. Neither has implementation acceptance; no v4 validator/converter is supplied. The fixtures
+can be parsed as JSON, and source-v3.json can be checked with the existing v3 reader without layout checks. The fixture
+manifest pins input bytes and expected mappings; no account or runtime qualification follows from those checks.

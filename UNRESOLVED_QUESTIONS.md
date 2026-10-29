@@ -22,3 +22,7 @@ stays outside the card. This ordering clarification leaves the specification's i
 
 The bounded [v4 format outline](docs/format-v4-outline.md) identifies the next schema and fixture work; it is not a complete
 schema or implementation acceptance.
+
+The [complete format candidate](docs/format-v4.md) and [full synthetic fixtures](docs/fixtures/v4/full/README.md) now
+supply concrete inputs for that review. Their acceptance remains pending; the validator/converter implementation gate
+is unchanged.

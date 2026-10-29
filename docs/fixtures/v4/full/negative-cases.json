@@ -1,0 +1,51 @@
+[
+  {
+    "file": "reject-station-loss.json",
+    "expected_refusal": "conversion_station_preservation",
+    "unchanged_valid_control": "converted-v4.json",
+    "runtime_executed": false,
+    "operation": "verify-conversion-preservation"
+  },
+  {
+    "file": "reject-station-change.json",
+    "expected_refusal": "conversion_station_preservation",
+    "unchanged_valid_control": "converted-v4.json",
+    "runtime_executed": false,
+    "operation": "verify-conversion-preservation"
+  },
+  {
+    "file": "reject-nonpilot-change.json",
+    "expected_refusal": "legacy_source_mismatch",
+    "unchanged_valid_control": "converted-v4.json",
+    "runtime_executed": false,
+    "operation": "validate-card-and-supplied-sources"
+  },
+  {
+    "file": "reject-service-owner-selector.json",
+    "expected_refusal": "service_selector_policy_required",
+    "unchanged_valid_control": "services-v4.json",
+    "runtime_executed": false,
+    "operation": "validate-card-and-supplied-sources"
+  },
+  {
+    "file": "reject-service-model.json",
+    "expected_refusal": "service_runtime_forbidden",
+    "unchanged_valid_control": "services-v4.json",
+    "runtime_executed": false,
+    "operation": "validate-card-and-supplied-sources"
+  },
+  {
+    "file": "reject-unknown-field.json",
+    "expected_refusal": "unknown_field",
+    "unchanged_valid_control": "converted-v4.json",
+    "runtime_executed": false,
+    "operation": "validate-card-and-supplied-sources"
+  },
+  {
+    "file": "reject-source-pin.json",
+    "expected_refusal": "source_digest_mismatch",
+    "unchanged_valid_control": "converted-v4.json",
+    "runtime_executed": false,
+    "operation": "validate-card-and-supplied-sources"
+  }
+]

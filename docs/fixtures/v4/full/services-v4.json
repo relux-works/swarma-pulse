@@ -1,0 +1,379 @@
+{
+  "schema": "product-card/v4",
+  "product": {
+    "id": "aurora",
+    "description": "Synthetic preservation fixture",
+    "privacy": "private",
+    "keeper": "aurora_keeper",
+    "default_binding": "legacy",
+    "topology": {
+      "connection": "legacy-relux",
+      "space": "!auroraSpace01:relux.works",
+      "lobby": "#aurora-lobby:relux.works",
+      "escalations": "#aurora-escalations:relux.works"
+    },
+    "host_project": "aurora-host"
+  },
+  "external_members": [
+    {
+      "product": "constellation",
+      "member": "external_keeper"
+    }
+  ],
+  "connections": {
+    "legacy-relux": {
+      "homeserver": "https://matrix.relux.works",
+      "server_name": "relux.works"
+    },
+    "target-gr": {
+      "homeserver": "https://gr.relux.works/",
+      "server_name": "gr.relux.works"
+    }
+  },
+  "bindings": {
+    "legacy": {
+      "operator": "fixture",
+      "host": "station",
+      "connection": "legacy-relux",
+      "identity_domain": "relux.works"
+    },
+    "gr": {
+      "operator": "fixture",
+      "host": "station",
+      "connection": "target-gr",
+      "identity_domain": "gr.relux.works"
+    }
+  },
+  "profiles_root": "../profiles",
+  "profiles": {
+    "control": {
+      "path": "control",
+      "requirement": {
+        "context": "fixture-context",
+        "compatible": ">=0.1.0 <0.2.0"
+      },
+      "selected": {
+        "version": "0.1.0",
+        "source_rev": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "lock_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+      }
+    }
+  },
+  "projects": [
+    {
+      "id": "aurora-host",
+      "description": "Synthetic aurora-host project",
+      "repo": "local",
+      "desired_state": "active",
+      "orchestrator": "aurora_keeper",
+      "task_system": {
+        "kind": "tasks-md",
+        "path": "tasks.md"
+      },
+      "channels": {
+        "mode": "shared",
+        "team_room": "#aurora-host:relux.works"
+      },
+      "orchestrator_mode": "keeper",
+      "orchestrator_ref": "Synthetic fixture combined management",
+      "location": {
+        "kind": "local",
+        "path": "."
+      }
+    },
+    {
+      "id": "beacon",
+      "description": "Synthetic beacon project",
+      "repo": "local",
+      "desired_state": "active",
+      "orchestrator": "beacon_orch",
+      "task_system": {
+        "kind": "tasks-md",
+        "path": "tasks.md"
+      },
+      "channels": {
+        "mode": "shared",
+        "team_room": "#beacon:relux.works"
+      },
+      "location": {
+        "kind": "local",
+        "path": "../beacon"
+      }
+    },
+    {
+      "id": "vault",
+      "description": "Synthetic vault project",
+      "repo": "local",
+      "desired_state": "active",
+      "orchestrator": "storage_orch",
+      "task_system": {
+        "kind": "tasks-md",
+        "path": "tasks.md"
+      },
+      "channels": {
+        "mode": "shared",
+        "team_room": "#vault:relux.works"
+      },
+      "location": {
+        "kind": "local",
+        "path": "../vault"
+      }
+    }
+  ],
+  "members": [
+    {
+      "id": "aurora_keeper",
+      "role": "keeper",
+      "parent": {
+        "product": "constellation",
+        "member": "external_keeper"
+      },
+      "profile": "control",
+      "runtime": {
+        "kind": "codex_cli",
+        "model": "fixture-model",
+        "effort": "high"
+      },
+      "lifecycle": "persistent",
+      "desired_state": "active",
+      "context_mode": "continue",
+      "clone": ".",
+      "a2a": {
+        "connection": "legacy-relux",
+        "parent_route": "#aurora-host:relux.works",
+        "rooms": [
+          "#aurora-host:relux.works"
+        ],
+        "subscriptions": {
+          "required": [
+            {
+              "rooms": [
+                "#aurora-host:relux.works"
+              ],
+              "kinds": [
+                "system",
+                "owner-needed",
+                "decision"
+              ]
+            },
+            {
+              "from_mxid": "@alexis:relux.works"
+            },
+            {
+              "from_mxid": "@alexis:gr.relux.works"
+            }
+          ],
+          "self": []
+        }
+      },
+      "project": "aurora-host",
+      "scope": "product",
+      "binding": "legacy",
+      "identity": {
+        "scheme": "legacy-exact",
+        "mxid": "@station_aurora_keeper:relux.works",
+        "source_ref": {
+          "kind": "v3-card",
+          "revision": "fixture-v3-001",
+          "sha256": "70ec21346a86efda80dfcf0433b0405acf41ab25751b00b1fdcad25ee504fc11",
+          "member": "aurora/aurora_keeper"
+        }
+      }
+    },
+    {
+      "id": "beacon_orch",
+      "role": "orchestrator",
+      "parent": "aurora_keeper",
+      "profile": "control",
+      "runtime": {
+        "kind": "codex_cli",
+        "model": "fixture-model",
+        "effort": "high"
+      },
+      "lifecycle": "persistent",
+      "desired_state": "active",
+      "context_mode": "continue",
+      "clone": "../beacon",
+      "project": "beacon",
+      "a2a": {
+        "connection": "legacy-relux",
+        "parent_route": "#beacon:relux.works",
+        "rooms": [
+          "#beacon:relux.works"
+        ],
+        "subscriptions": {
+          "required": [
+            {
+              "rooms": [
+                "#beacon:relux.works"
+              ],
+              "kinds": [
+                "system",
+                "owner-needed",
+                "decision"
+              ]
+            },
+            {
+              "from_mxid": "@alexis:relux.works"
+            },
+            {
+              "from_mxid": "@alexis:gr.relux.works"
+            }
+          ],
+          "self": []
+        }
+      },
+      "binding": "legacy",
+      "station": "registered-task-board-station",
+      "scope": "project",
+      "identity": {
+        "scheme": "legacy-exact",
+        "mxid": "@station_beacon_orch:relux.works",
+        "source_ref": {
+          "kind": "v3-card",
+          "revision": "fixture-v3-001",
+          "sha256": "70ec21346a86efda80dfcf0433b0405acf41ab25751b00b1fdcad25ee504fc11",
+          "member": "aurora/beacon_orch"
+        }
+      }
+    },
+    {
+      "id": "storage_orch",
+      "role": "orchestrator",
+      "parent": "aurora_keeper",
+      "profile": "control",
+      "runtime": {
+        "kind": "codex_cli",
+        "model": "fixture-model",
+        "effort": "high"
+      },
+      "lifecycle": "persistent",
+      "desired_state": "active",
+      "context_mode": "continue",
+      "clone": "../vault",
+      "project": "vault",
+      "a2a": {
+        "connection": "legacy-relux",
+        "parent_route": "#vault:relux.works",
+        "rooms": [
+          "#vault:relux.works"
+        ],
+        "subscriptions": {
+          "required": [
+            {
+              "rooms": [
+                "#vault:relux.works"
+              ],
+              "kinds": [
+                "system",
+                "owner-needed",
+                "decision"
+              ]
+            },
+            {
+              "from_mxid": "@alexis:relux.works"
+            },
+            {
+              "from_mxid": "@alexis:gr.relux.works"
+            }
+          ],
+          "self": []
+        }
+      },
+      "scope": "project",
+      "binding": "legacy",
+      "identity": {
+        "scheme": "legacy-exact",
+        "mxid": "@station_storage_orch:relux.works",
+        "source_ref": {
+          "kind": "v3-card",
+          "revision": "fixture-v3-001",
+          "sha256": "70ec21346a86efda80dfcf0433b0405acf41ab25751b00b1fdcad25ee504fc11",
+          "member": "aurora/storage_orch"
+        }
+      }
+    },
+    {
+      "id": "vault_dev",
+      "role": "developer",
+      "parent": "storage_orch",
+      "profile": "control",
+      "runtime": {
+        "kind": "codex_cli",
+        "model": "fixture-model",
+        "effort": "high"
+      },
+      "lifecycle": "persistent",
+      "desired_state": "active",
+      "context_mode": "continue",
+      "clone": "../vault",
+      "project": "vault",
+      "result_route": "parent-native",
+      "scope": "member",
+      "binding": "gr",
+      "identity": {
+        "scheme": "domain-star-v1",
+        "star": "vega"
+      }
+    },
+    {
+      "id": "signal_service",
+      "role": "service",
+      "project": "beacon",
+      "parent": "beacon_orch",
+      "scope": "member",
+      "binding": "legacy",
+      "identity": {
+        "scheme": "legacy-exact",
+        "mxid": "@station_signal_service:relux.works",
+        "source_ref": {
+          "kind": "service-descriptor",
+          "revision": "fixture-service-001",
+          "sha256": "dd32670b7e6ef1695c512f226ad32a79d102908bdd6114cf6c58eab285170d5e",
+          "member": "aurora/signal_service"
+        }
+      },
+      "lifecycle": "persistent",
+      "desired_state": "active",
+      "context_mode": "none",
+      "runtime": {
+        "kind": "none"
+      },
+      "service_contract_ref": "synthetic-service-admission",
+      "result_route": "a2a",
+      "a2a": {
+        "connection": "legacy-relux",
+        "parent_route": "#beacon:relux.works",
+        "rooms": [
+          "#beacon:relux.works"
+        ],
+        "result_destination": "#beacon:relux.works",
+        "subscriptions": {
+          "required": [],
+          "self": []
+        }
+      }
+    },
+    {
+      "id": "health_service",
+      "role": "service",
+      "project": "vault",
+      "parent": "storage_orch",
+      "scope": "member",
+      "binding": "gr",
+      "identity": {
+        "scheme": "domain-star-v1",
+        "star": "deneb"
+      },
+      "lifecycle": "persistent",
+      "desired_state": "active",
+      "context_mode": "none",
+      "runtime": {
+        "kind": "none"
+      },
+      "service_contract_ref": "synthetic-native-health",
+      "result_route": "parent-native",
+      "native_result_ref": "synthetic-native-health/results"
+    }
+  ]
+}
