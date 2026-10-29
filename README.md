@@ -17,4 +17,19 @@ identity follows the scheme above.
 
 ## Tools
 
-None yet. Scratch, logs and worktrees go to `.temp/`, which git ignores.
+No implementation toolchain is selected yet. Documentation checks use `git diff --check`; candidate signature
+verification uses `git verify-commit HEAD` and `git log -1 --show-signature`.
+
+Coordination entry points are `a2a inbox`, `a2a bind status`, `a2a post ROOM --topic TOPIC --to RECIPIENT TEXT`,
+`a2a attach ROOM --topic TOPIC FILE` and `a2a read ROOM --topic TOPIC`. Full inbox/readback logs, task evidence and
+scratch go to ignored `.temp/` with numbered filenames. Private operational receipts stay outside product files.
+
+## Proposed specification
+
+[Product cards, stable identities and Pulse — v1](docs/specs/product-card-identity-pulse-v1.md) proposes the card upgrade,
+full-domain star identities, a read-only member projection and the migration to `gr.relux.works`. It is a review
+candidate. No implementation or migration has been built or activated. Pending external inputs and decisions are in
+[UNRESOLVED_QUESTIONS.md](UNRESOLVED_QUESTIONS.md).
+
+The handover baseline remains FORMAT v3.1 (`product-card/v3`). The proposed `product-card/v4` and `pulse` interface are
+not shipped commands. Product-specific cards belong in their declared host project; swarm uses `swarma-host`.
