@@ -92,8 +92,8 @@ func overlay(a, b Object) Object {
 	return out
 }
 
-// These cases execute the actual named stages and paired neighbors. Converter
-// publication/effects and agent-session launch are explicitly outside this unit.
+// These cases execute all 37 named stages and paired neighbors. Actual agent
+// session launch remains a separate external qualification.
 func TestAcceptedVectors(t *testing.T) {
 	var oracles []caseOracle
 	if e := json.Unmarshal(mustRead(t, "testdata/vector-oracles.json"), &oracles); e != nil {
@@ -106,16 +106,11 @@ func TestAcceptedVectors(t *testing.T) {
 		}
 		expected[o.ID] = o
 	}
-	deferred := words("mixed-partial-output mixed-no-registration mixed-registration-tripwire-control")
 	seen := map[string]bool{}
 	for _, family := range []string{"legacy", "mixed", "service", "locations", "carry-over", "parser", "bounds", "compatibility"} {
 		for _, v := range list(fixture(t, "vectors-"+family+".json")["cases"]) {
 			c := obj(v)
 			id := str(c["id"])
-			if deferred[id] {
-				t.Logf("DEFERRED converter: %s", id)
-				continue
-			}
 			seen[id] = true
 			t.Run(id, func(t *testing.T) {
 				oracle, ok := expected[id]
@@ -136,7 +131,7 @@ func TestAcceptedVectors(t *testing.T) {
 			})
 		}
 	}
-	if len(seen) != 34 || len(expected) != 34 {
+	if len(seen) != 37 || len(expected) != 37 {
 		t.Fatalf("selected vector count %d, oracles %d", len(seen), len(expected))
 	}
 	for id := range expected {
@@ -170,6 +165,9 @@ func mustRead(t *testing.T, path string) []byte {
 }
 func executeVector(t *testing.T, spec, counter Object) *Issue {
 	t.Helper()
+	if spec["operation"] == "convert-atomic" || spec["operation"] == "registration-tripwire-self-check" {
+		return executeConversionVector(t, spec)
+	}
 	o := fixtureOptions(t)
 	if premise := str(spec["reservation_premises_source"]); premise != "" {
 		file, key, _ := strings.Cut(premise, "#/")

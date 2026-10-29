@@ -5,8 +5,9 @@ superiors. Product cards describe desired teams and project locations; they do n
 
 The [specification](docs/specs/product-card-identity-pulse-v1.md), [v4 format](docs/format-v4.md) and
 [synthetic fixtures](docs/fixtures/v4/full/README.md) define full-domain star identities, preservation and migration.
-The Go read-only validator implements static v4 validation and the v3.1 source-reading rules. Pulse, conversion,
-publication, account migration and service/session launch are separate operations and are not supplied by this command.
+The Go read-only validator implements static v4 validation and the v3.1 source-reading rules. An explicitly invoked
+[converter](docs/converter.md) preserves a supplied v3 card into a separately selected destination with atomic publication.
+Pulse, account migration and service/session launch remain separate operations.
 [Open inputs](UNRESOLVED_QUESTIONS.md) describe their remaining prerequisites.
 
 Members are stable across stories. Their names use a full Matrix domain, product, project, primary role and readable
@@ -41,14 +42,32 @@ member clone/git_dir declarations are checked for containment without requiring 
 Success prints `valid` and exits 0. A rule refusal exits 1; usage, encoding, parse and collection-shape failures exit 2.
 Refusal writes one safe rule/indexed-location diagnostic to stderr and no stdout. See [validator boundaries and tests](docs/validator.md).
 
+For an isolated synthetic conversion example:
+
+```sh
+mkdir -p .temp/conversion/legacy-card .temp/conversion/aurora-host
+cp docs/fixtures/v4/full/source-v3.json .temp/conversion/legacy-card/product-card.yaml
+go build -o .temp/bin/card-v4-convert ./cmd/card-v4-convert
+.temp/bin/card-v4-convert --root .temp/conversion \
+  --source legacy-card/product-card.yaml \
+  --inputs docs/fixtures/v4/full/expectations.json \
+  --destination aurora-host/product-card.yaml
+```
+
+Success prints `converted`; the complete file is published only at the explicit destination. A leftover exclusive temp
+refuses, never becomes an input. Exit 3 means the complete destination was published but directory durability could not
+be confirmed; inspect the result before any retry. See [converter inputs and publication results](docs/converter.md).
+
 ## Tools
 
 | Tool | Exact entry point | Output |
 | --- | --- | --- |
 | Go build | `go build -o .temp/bin/card-v4-validate ./cmd/card-v4-validate` | Ignored `.temp/bin/` executable |
 | Validator | `.temp/bin/card-v4-validate [options] card.yaml` | Verdict on stdout, safe refusal on stderr |
+| Converter build | `go build -o .temp/bin/card-v4-convert ./cmd/card-v4-convert` | Ignored `.temp/bin/` executable |
+| Converter | `.temp/bin/card-v4-convert --root ROOT --source SOURCE --inputs INPUTS --destination DESTINATION` | Explicit complete destination; fixed receipt or safe refusal |
 | Go tests | `go test -count=1 ./...` | All selected test lanes; isolated temporary fixtures |
-| Race checks | `go test -race -count=1 ./...` | Race-enabled results for both packages |
+| Race checks | `go test -race -count=1 ./...` | Race-enabled results for all packages |
 | Go vet | `go vet ./...` | Static diagnostics |
 | Coverage | `go test -coverprofile=.temp/coverage.out ./...` | `.temp/coverage.out`; inspect with `go tool cover -func=.temp/coverage.out` |
 | Git | `git diff --check`; `git verify-commit HEAD` | Whitespace/signature diagnostics |

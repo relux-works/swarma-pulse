@@ -21,7 +21,7 @@ existing card may carry a reviewed pending-conversion note in a supported desire
 stays outside the card. This ordering clarification leaves the specification's identity and preservation contracts intact.
 
 The [complete v4 format](docs/format-v4.md) and [synthetic inputs](docs/fixtures/v4/full/README.md) are accepted design
-contracts. The read-only Go validator is now supplied;
-converter, Pulse and live integration acceptance are separate. Future Go consumers may import the reviewed
+contracts. The read-only Go validator and explicit converter are now supplied;
+Pulse, changed-location conversion dispositions and live integration acceptance remain separate. Future Go consumers may import the reviewed
 `internal/cardv4` package from this module; consumers outside this module need a separately reviewed public-package split.
 No consumer adoption, v3 retirement or live migration follows from validator availability.

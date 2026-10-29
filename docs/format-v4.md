@@ -1,7 +1,8 @@
 # Product-card v4 — complete format
 
 Status: design accepted, 2026-10-29. The [read-only Go validator](validator.md) implements static checks;
-conversion and runtime qualification remain separate operations. The [full fixtures](fixtures/v4/full/README.md)
+the explicit [Go converter](converter.md) implements preservation and atomic destination publication. Runtime qualification
+remains separate. The [full fixtures](fixtures/v4/full/README.md)
 retain their authored inputs and expected outcomes. The accepted
 [specification](specs/product-card-identity-pulse-v1.md) defines identity naming, preservation, eligibility and migration
 semantics. The [outline](format-v4-outline.md) records its scope. Neither format acceptance nor a card authorizes a live

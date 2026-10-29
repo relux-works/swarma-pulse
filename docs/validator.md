@@ -6,6 +6,12 @@ The minimum toolchain is Go 1.25.12; the Go 1.26 branch requires 1.26.5 or newer
 CLI profile-root and manifest-source paths also have adversarial trailing-separator tests. Linux execution remains
 unverified; the native checks described here were run on macOS arm64.
 
+Production profile-root acquisition uses cleaned joined names; descendant `Lstat` and `Readlink` names are also built
+with cleaned joins. The explicit manifest directory goes through `filepath.Dir` before `os.OpenRoot`. Manifest source
+filenames reach `Root.Open` without trimming a trailing separator, so the repaired native implementation remains required.
+The CLI uses `File.Stat`, not `Root.Stat`; the latter has an additional upstream regression control. Tests cover all five
+Root read/metadata methods with trailing-separator escapes and a second symlink hop, alongside valid in-root neighbors.
+
 `cmd/card-v4-validate` is a thin Go CLI over `internal/cardv4`. The library accepts bytes and explicit source/reservation
 premises. It has no filesystem, network, process, credential, registration or runtime API except the optional metadata-only
 `LayoutFS` interface. The CLI reads named files and opens an admitted filesystem root; it creates no product artifacts.
@@ -80,7 +86,8 @@ No checkout, directory or task file is created to make a check pass.
 
 ## Executable evidence and limits
 
-Go tests execute all 34 selected accepted vectors, their positive neighbors and the seven original full-card negatives.
+The validator stages retain their 34 selected vectors; the [converter](converter.md) adds the three publication/effect
+vectors, so the repository tests execute all 37, their positive neighbors and the seven original full-card negatives.
 `internal/cardv4/testdata/vector-oracles.json` and `negative-oracles.json` record language-neutral case IDs, expected
 result, rule, location and exit code. The original fixture files remain unchanged. Parser, collection and hop-boundary
 pairs exercise their actual isolated stages, not unrelated whole-card failures. Six v3 fixture sources retain recorded
@@ -102,7 +109,7 @@ import/call is a failing control. It also rejects writes, network-client/unsafe/
 There is no production process-executor interface or child allowance. This is a source admission instrument, not an OS
 sandbox or a trace of arbitrary dependency machine code. The YAML module is pinned; tests exercise its real Node parser.
 
-The three atomic-converter/registration-tripwire vectors are explicitly deferred to the converter unit. The actual
+The three atomic-converter/registration-tripwire vectors execute through the converter/publication tests. The actual
 service agent-launch refusal and conversational control require an external launcher integration; they are unverified
 here. Static service acceptance does not claim that runtime pair passed. Pulse caller/admission and live migration are
 also outside this validator. Go's test runner executes every selected subtest after an earlier failure; a failed selected
