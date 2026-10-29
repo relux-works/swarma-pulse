@@ -35,7 +35,9 @@ the check. A rooted descriptor does not freeze mutable files or make a check saf
 The manifest supplies `source_pins`, an array of `{file, revision, sha256}` objects. Every actual source file is read
 and its digest checked. The reservations file supplies `reviewed_reservation_premises`, using the validator's existing
 reservation shape. Unknown fields inside these list entries refuse. Other top-level fixture observation fields are
-ignored; they grant no authority. Metadata uses the bounded duplicate-free v4 mapping parser and its YAML restrictions.
+ignored; they grant no authority. All list-entry keys are case-sensitive and required; case variants next to or replacing
+canonical keys also refuse. Values must be nonempty strings. Metadata uses the bounded duplicate-free v4 mapping parser
+and its YAML restrictions.
 
 After CLI input/metadata admission, the pure `cardv4.CheckChange` API checks prior, candidate and rollback in that order.
 For each snapshot it checks the byte budget, required lowercase SHA-256, actual digest and complete v4 validation

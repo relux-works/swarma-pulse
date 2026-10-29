@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"os"
 	"path/filepath"
 	"reflect"
@@ -145,5 +146,62 @@ func TestCLIRefusals(t *testing.T) {
 				t.Fatal("refusal mutated inputs/destination")
 			}
 		})
+	}
+}
+
+// Operational premise names and nested reservation fields are exact even though
+// the inputs also carry ignored fixture observations. No folded alias may choose
+// authority or be merged into a canonical value; refusal preserves prior output.
+func TestCLIConversionExactPremiseKeys(t *testing.T) {
+	for _, nested := range []bool{false, true} {
+		fields := strings.Fields("source_revision source_sha256 host_project source_card_root target_card_root admitted_root external_parent_mapping additional_connections additional_bindings prospective_nonchat_choices reviewed_reservation_premises project_locations")
+		if nested {
+			fields = strings.Fields("holder domain product primary_role star")
+		}
+		for _, field := range fields {
+			for _, replace := range []bool{false, true} {
+				t.Run(field+fmt.Sprint(nested, replace), func(t *testing.T) {
+					root, a := setup(t)
+					if code, out, diag := cardtest.Capture(run, a); code != 0 || out != "converted\n" || diag != "" {
+						t.Fatal("valid neighbor", code, diag)
+					}
+					path := filepath.Join(root, "inputs.json")
+					raw, e := os.ReadFile(path)
+					if e != nil {
+						t.Fatal(e)
+					}
+					var doc map[string]any
+					if e := json.Unmarshal(raw, &doc); e != nil {
+						t.Fatal(e)
+					}
+					entry := doc
+					if nested {
+						entry = doc["reviewed_reservation_premises"].([]any)[0].(map[string]any)
+					}
+					if field == "project_locations" {
+						entry[field] = map[string]any{}
+					}
+					entry[strings.ToUpper(field)] = entry[field]
+					if replace {
+						delete(entry, field)
+					}
+					raw, e = json.Marshal(doc)
+					if e != nil {
+						t.Fatal(e)
+					}
+					if e := os.WriteFile(path, raw, 0600); e != nil {
+						t.Fatal(e)
+					}
+					before := cardtest.Inventory(t, root)
+					code, out, diag := cardtest.Capture(run, a)
+					if code != 2 || out != "" || diag != "RULE conversion_inputs_invalid: $\n" {
+						t.Fatal("exact premise refusal", code, diag)
+					}
+					if !reflect.DeepEqual(before, cardtest.Inventory(t, root)) {
+						t.Fatal("premise refusal changed files")
+					}
+				})
+			}
+		}
 	}
 }

@@ -47,7 +47,7 @@ func readWithin(root *os.Root, name string) ([]byte, error) {
 
 // Metadata uses the same bounded, duplicate-free mapping parser. Fixture
 // observation fields are not authority; only the named list is decoded.
-func readList(root *os.Root, file, key string, destination any) error {
+func readList(root *os.Root, file, key string, destination any, fields ...string) error {
 	raw, e := readWithin(root, file)
 	if e != nil {
 		return e
@@ -56,7 +56,7 @@ func readList(root *os.Root, file, key string, destination any) error {
 	if issue != nil {
 		return fs.ErrInvalid
 	}
-	if _, ok := doc[key].([]any); !ok {
+	if !cardv4.ExactStringRecords(doc[key], fields...) {
 		return fs.ErrInvalid
 	}
 	raw, e = json.Marshal(doc[key])
@@ -78,7 +78,7 @@ func readOptions(root *os.Root, manifest, reservations string) (cardv4.Options, 
 		Revision string `json:"revision"`
 		SHA256   string `json:"sha256"`
 	}
-	if readList(root, manifest, "source_pins", &pins) != nil {
+	if readList(root, manifest, "source_pins", &pins, "file", "revision", "sha256") != nil {
 		return refuse("source_manifest_invalid", 2)
 	}
 	// Each source stays inside the pinned manifest's directory as well as the
@@ -113,7 +113,7 @@ func readOptions(root *os.Root, manifest, reservations string) (cardv4.Options, 
 		}
 		o.Sources = append(o.Sources, cardv4.Source{Kind: kind, Revision: pin.Revision, SHA256: pin.SHA256, Bytes: raw})
 	}
-	if readList(root, reservations, "reviewed_reservation_premises", &o.Reservations) != nil {
+	if readList(root, reservations, "reviewed_reservation_premises", &o.Reservations, "holder", "domain", "product", "primary_role", "star") != nil {
 		return refuse("reservations_invalid", 2)
 	}
 	return o, nil

@@ -39,6 +39,11 @@ the authored fixture files themselves are unchanged. Fixture expectation files a
 an operational input. Conversion does not execute a per-member cutover or rollback. Its expected complete prior document
 and pilot/rollback preservation comparisons remain independently tested.
 
+Operational premise keys use the exact documented spelling. Case-folded variants, including an alias beside its canonical
+key, refuse before conversion. Each reservation record requires exactly `holder`, `domain`, `product`, `primary_role` and
+`star`, with nonempty string values; unknown or differently cased keys refuse. Other top-level fixture observation fields
+remain ignored and cannot select operational values.
+
 ## Publication and failure results
 
 The publisher opens and retains the admitted destination directory through native `os.Root`, using the patched toolchain

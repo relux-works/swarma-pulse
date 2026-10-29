@@ -2,7 +2,6 @@
 package main
 
 import (
-	"encoding/json"
 	"flag"
 	"fmt"
 	"io"
@@ -49,8 +48,8 @@ func run(args []string, out, diagnostics io.Writer) int {
 	if e != nil {
 		return refuse("conversion_inputs_unreadable", 2)
 	}
-	var in cardv4.ConversionInputs
-	if json.Unmarshal(premises, &in) != nil {
+	in, issue := cardv4.DecodeConversionInputs(premises)
+	if issue != nil {
 		return refuse("conversion_inputs_invalid", 2)
 	}
 	// Roots in premises are explicit lexical coordinates. The output-root flag

@@ -220,3 +220,56 @@ func TestCLIChangeRefusals(t *testing.T) {
 		})
 	}
 }
+
+// Struct decoding must never fold an alias into an exact metadata field. Every
+// required field is tested both beside its canonical key and replacing it;
+// missing canonical fields and an ordinary unknown reservation key also refuse.
+func TestCLIChangeExactMetadataKeys(t *testing.T) {
+	for _, family := range []struct{ file, key, fields, rule string }{
+		{"manifest.json", "source_pins", "file revision sha256", "source_manifest_invalid"},
+		{"expectations.json", "reviewed_reservation_premises", "holder domain product primary_role star", "reservations_invalid"},
+	} {
+		for _, field := range strings.Fields(family.fields) {
+			modes := []string{"adjacent", "replacement", "missing"}
+			if field == strings.Fields(family.fields)[0] {
+				modes = append(modes, "unknown")
+			}
+			for _, mode := range modes {
+				t.Run(family.key+"/"+field+"/"+mode, func(t *testing.T) {
+					root, a := setup(t)
+					if code, out, diag := cardtest.Capture(run, args(a)); code != 0 || out != "change-valid\n" || diag != "" {
+						t.Fatal("valid neighbor", code, diag)
+					}
+					path := filepath.Join(root, "fx", family.file)
+					var doc map[string]any
+					if e := json.Unmarshal(read(t, path), &doc); e != nil {
+						t.Fatal(e)
+					}
+					entry := doc[family.key].([]any)[0].(map[string]any)
+					if mode == "unknown" {
+						entry["unexpected"] = "SYNTHETIC-CANARY"
+					}
+					if mode == "adjacent" || mode == "replacement" {
+						entry[strings.ToUpper(field)] = entry[field]
+					}
+					if mode == "replacement" || mode == "missing" {
+						delete(entry, field)
+					}
+					raw, e := json.Marshal(doc)
+					if e != nil {
+						t.Fatal(e)
+					}
+					mustWrite(t, path, raw)
+					before := cardtest.Inventory(t, root)
+					code, out, diag := cardtest.Capture(run, args(a))
+					if code != 2 || out != "" || diag != "RULE "+family.rule+": $\n" {
+						t.Fatal("exact metadata refusal", code, diag)
+					}
+					if !reflect.DeepEqual(before, cardtest.Inventory(t, root)) {
+						t.Fatal("metadata refusal changed inputs")
+					}
+				})
+			}
+		}
+	}
+}
