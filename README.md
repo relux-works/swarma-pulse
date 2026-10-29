@@ -7,6 +7,7 @@ The [specification](docs/specs/product-card-identity-pulse-v1.md), [v4 format](d
 [synthetic fixtures](docs/fixtures/v4/full/README.md) define full-domain star identities, preservation and migration.
 The Go read-only validator implements static v4 validation and the v3.1 source-reading rules. An explicitly invoked
 [converter](docs/converter.md) preserves a supplied v3 card into a separately selected destination with atomic publication.
+The optional [desired-change checker](docs/change-check.md) verifies a pinned candidate and exact rollback without writing.
 Pulse, account migration and service/session launch remain separate operations.
 [Open inputs](UNRESOLVED_QUESTIONS.md) describe their remaining prerequisites.
 
@@ -66,6 +67,8 @@ be confirmed; inspect the result before any retry. See [converter inputs and pub
 | Validator | `.temp/bin/card-v4-validate [options] card.yaml` | Verdict on stdout, safe refusal on stderr |
 | Converter build | `go build -o .temp/bin/card-v4-convert ./cmd/card-v4-convert` | Ignored `.temp/bin/` executable |
 | Converter | `.temp/bin/card-v4-convert --root ROOT --source SOURCE --inputs INPUTS --destination DESTINATION` | Explicit complete destination; fixed receipt or safe refusal |
+| Change-check build | `go build -o .temp/bin/card-v4-check-change ./cmd/card-v4-check-change` | Ignored `.temp/bin/` executable |
+| Change checker | `.temp/bin/card-v4-check-change --root ROOT --prior PRIOR --prior-sha256 HASH --candidate CANDIDATE --candidate-sha256 HASH --rollback ROLLBACK --rollback-sha256 HASH --pilot PRODUCT/MEMBER --source-manifest MANIFEST --reservations PREMISES` | Fixed receipt or safe refusal; no writes |
 | Go tests | `go test -count=1 ./...` | All selected test lanes; isolated temporary fixtures |
 | Race checks | `go test -race -count=1 ./...` | Race-enabled results for all packages |
 | Go vet | `go vet ./...` | Static diagnostics |

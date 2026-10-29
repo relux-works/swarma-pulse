@@ -81,7 +81,7 @@ func admittedSource(src []byte, cli bool, spy *processSpy) bool {
 // A planted process import/call must trip the deny-all process recorder; a
 // planted write must fail admission, while a pure function passes unchanged.
 func TestProductionEffectBoundary(t *testing.T) {
-	roots := []string{".", "../../cmd/card-v4-validate"}
+	roots := []string{".", "../../cmd/card-v4-validate", "../../cmd/card-v4-check-change"}
 	for _, root := range roots {
 		entries, e := os.ReadDir(root)
 		if e != nil {

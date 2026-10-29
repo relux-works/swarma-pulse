@@ -95,7 +95,11 @@ func executeConversionVector(t *testing.T, spec Object) *Issue {
 	// A plant is parsed and denied, never compiled, called or transported.
 	boundary := &registrationAdmission{}
 	entered := false
-	issue := boundary.run(t, synthetic == 1, func() *Issue {
+	plant := ""
+	if synthetic == 1 {
+		plant = "../cardpublish/publication.go"
+	}
+	issue := boundary.run(t, plant, func() *Issue {
 		entered = true
 		complete, issue := convert(raw, in, checkpoint)
 		if issue != nil {

@@ -22,6 +22,7 @@ stays outside the card. This ordering clarification leaves the specification's i
 
 The [complete v4 format](docs/format-v4.md) and [synthetic inputs](docs/fixtures/v4/full/README.md) are accepted design
 contracts. The read-only Go validator and explicit converter are now supplied;
+The optional read-only [desired-change checker](docs/change-check.md) verifies a candidate and exact prior rollback;
 Pulse, changed-location conversion dispositions and live integration acceptance remain separate. Future Go consumers may import the reviewed
 `internal/cardv4` package from this module; consumers outside this module need a separately reviewed public-package split.
 No consumer adoption, v3 retirement or live migration follows from validator availability.

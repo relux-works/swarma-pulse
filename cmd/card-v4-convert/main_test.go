@@ -1,44 +1,18 @@
 package main
 
 import (
-	"bytes"
 	"encoding/json"
-	"io/fs"
 	"os"
 	"path/filepath"
 	"reflect"
 	"strings"
 	"testing"
+
+	"github.com/relux-works/swarma-pulse/internal/cardtest"
 )
 
 const fixtures = "../../docs/fixtures/v4/full"
 
-func inventory(t *testing.T, root string) map[string]string {
-	t.Helper()
-	out := map[string]string{}
-	e := filepath.WalkDir(root, func(p string, d fs.DirEntry, e error) error {
-		if e != nil {
-			return e
-		}
-		rel, _ := filepath.Rel(root, p)
-		if d.Type()&fs.ModeSymlink != 0 {
-			link, e := os.Readlink(p)
-			out[rel] = "link:" + link
-			return e
-		}
-		if d.IsDir() {
-			out[rel] = "dir"
-			return nil
-		}
-		raw, e := os.ReadFile(p)
-		out[rel] = string(raw)
-		return e
-	})
-	if e != nil {
-		t.Fatal(e)
-	}
-	return out
-}
 func setup(t *testing.T) (string, []string) {
 	t.Helper()
 	root := t.TempDir()
@@ -67,11 +41,11 @@ func setup(t *testing.T) (string, []string) {
 // activate the unexported test seams in the production path.
 func TestCLIConversion(t *testing.T) {
 	root, args := setup(t)
-	before := inventory(t, root)
+	before := cardtest.Inventory(t, root)
 	t.Setenv("CARD_V4_CONVERT_FAULT_AFTER_MEMBER", "2")
-	var out, diag bytes.Buffer
-	if exit := run(args, &out, &diag); exit != 0 || out.String() != "converted\n" || diag.Len() != 0 {
-		t.Fatal(exit, diag.String())
+	exit, out, diag := cardtest.Capture(run, args)
+	if exit != 0 || out != "converted\n" || diag != "" {
+		t.Fatal(exit, diag)
 	}
 	expected, e := os.ReadFile(filepath.Join(fixtures, "converted-v4.json"))
 	if e != nil {
@@ -86,7 +60,7 @@ func TestCLIConversion(t *testing.T) {
 		t.Fatal("complete expected output differs")
 	}
 	before["aurora-host/product-card.yaml"] = string(actual)
-	if !reflect.DeepEqual(before, inventory(t, root)) {
+	if !reflect.DeepEqual(before, cardtest.Inventory(t, root)) {
 		t.Fatal("unexpected CLI effects")
 	}
 }
@@ -162,13 +136,12 @@ func TestCLIRefusals(t *testing.T) {
 					args[7] = "aurora-host//product-card.yaml"
 				}
 			}
-			before, external := inventory(t, root), inventory(t, outside)
-			var out, diag bytes.Buffer
-			exit := run(args, &out, &diag)
-			if exit != tc.exit || out.Len() != 0 || diag.String() != "RULE "+tc.rule+": $\n" {
-				t.Fatal(exit, diag.String())
+			before, external := cardtest.Inventory(t, root), cardtest.Inventory(t, outside)
+			exit, out, diag := cardtest.Capture(run, args)
+			if exit != tc.exit || out != "" || diag != "RULE "+tc.rule+": $\n" {
+				t.Fatal(exit, diag)
 			}
-			if !reflect.DeepEqual(before, inventory(t, root)) || !reflect.DeepEqual(external, inventory(t, outside)) {
+			if !reflect.DeepEqual(before, cardtest.Inventory(t, root)) || !reflect.DeepEqual(external, cardtest.Inventory(t, outside)) {
 				t.Fatal("refusal mutated inputs/destination")
 			}
 		})

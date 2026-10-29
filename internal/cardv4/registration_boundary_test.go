@@ -16,10 +16,10 @@ import (
 // it is not syscall tracing or a sandbox for dependency machine code.
 type registrationAdmission struct{ attempts int }
 
-func (r *registrationAdmission) run(t *testing.T, plant bool, operation func() *Issue) *Issue {
+func (r *registrationAdmission) run(t *testing.T, plant string, operation func() *Issue) *Issue {
 	t.Helper()
 	accepted := true
-	for _, root := range []string{".", "../cardpublish", "../../cmd/card-v4-convert"} {
+	for _, root := range []string{".", "../cardpublish", "../../cmd/card-v4-convert", "../../cmd/card-v4-check-change"} {
 		entries, e := os.ReadDir(root)
 		if e != nil {
 			t.Fatal(e)
@@ -31,8 +31,8 @@ func (r *registrationAdmission) run(t *testing.T, plant bool, operation func() *
 			}
 			files++
 			raw := mustRead(t, filepath.Join(root, entry.Name()))
-			if plant && root == "../cardpublish" && entry.Name() == "publication.go" {
-				// Add one inert forbidden call to the actual scanned publisher.
+			if plant != "" && filepath.Join(root, entry.Name()) == filepath.Clean(plant) {
+				// Add one inert forbidden call to the actual scanned operation source.
 				// It has no implementation, endpoint or credential capability.
 				raw = append(raw, []byte("\nfunc inertRegistrationPlant(r interface{ Register() }) { r.Register() }\n")...)
 			}
@@ -61,7 +61,7 @@ func (r *registrationAdmission) admit(raw []byte, core bool) bool {
 	accepted := true
 	// Core uses its existing pure-source admission checker. The only admitted
 	// local imports in the adapters are the two packages scanned by run above.
-	allow := words("errors io io/fs os path/filepath encoding/json flag fmt github.com/relux-works/swarma-pulse/internal/cardv4 github.com/relux-works/swarma-pulse/internal/cardpublish")
+	allow := words("bytes crypto/sha256 encoding/hex errors io io/fs os path/filepath encoding/json flag fmt github.com/relux-works/swarma-pulse/internal/cardv4 github.com/relux-works/swarma-pulse/internal/cardpublish")
 	if core && !admittedSource(raw, false, &processSpy{}) {
 		accepted = false
 	}
