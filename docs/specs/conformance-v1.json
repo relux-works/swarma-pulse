@@ -1,0 +1,527 @@
+{
+  "schema": "pulse-spec-conformance/v1",
+  "status": "specification data only; no product implementation or executed conformance suite",
+  "fixture_scope": [
+    "All names, sources and admissions below are synthetic examples, not operational appointments.",
+    "Identity members are binding-resolution excerpts, not complete v4 cards; unchanged required fields belong in future full-card fixtures.",
+    "Pulse snapshots are relation-only excerpts; hashes use sorted compact UTF-8 JSON plus one newline for these fixture objects.",
+    "Cryptographic setup is a conformance premise, not a product option: the future isolated harness must sign exact caller bytes with a fixture key, configure its public trust anchor and prove wrong-key refusal. No bypass flag is admitted."
+  ],
+  "identity": {
+    "product": "aurora",
+    "connections": {
+      "legacy-relux": {
+        "server_name": "relux.works"
+      },
+      "gr": {
+        "server_name": "gr.relux.works"
+      }
+    },
+    "bindings": {
+      "old": {
+        "operator": "fixture-operator",
+        "execution_host": "fixture-host",
+        "connection": "legacy-relux",
+        "identity_domain": "relux.works"
+      },
+      "new": {
+        "operator": "fixture-operator",
+        "execution_host": "fixture-host",
+        "connection": "gr",
+        "identity_domain": "gr.relux.works"
+      }
+    },
+    "pinned_legacy_resolution": {
+      "aurora/keeper": {
+        "mxid": "@station_aurora_keeper:relux.works",
+        "connection": "legacy-relux"
+      },
+      "aurora/pilot": {
+        "mxid": "@station_beacon_orch:relux.works",
+        "connection": "legacy-relux"
+      },
+      "aurora/storage": {
+        "mxid": "@station_storage_orch:relux.works",
+        "connection": "legacy-relux"
+      }
+    },
+    "legacy_source_pin": {
+      "revision": "1111111111111111111111111111111111111111",
+      "sha256": "2e774d4db879405b48980c2fd096ef3e82f1b01f8e5be0b95e26aa0b7d1a71a6"
+    },
+    "allowed_cutover_member": "aurora/pilot",
+    "cases": [
+      {
+        "name": "before-cutover",
+        "members": [
+          {
+            "id": "keeper",
+            "role": "keeper",
+            "project": "aurora-host",
+            "binding": "old",
+            "identity": {
+              "scheme": "legacy-exact",
+              "mxid": "@station_aurora_keeper:relux.works",
+              "source_ref": {
+                "revision": "1111111111111111111111111111111111111111",
+                "sha256": "2e774d4db879405b48980c2fd096ef3e82f1b01f8e5be0b95e26aa0b7d1a71a6",
+                "member": "aurora/keeper",
+                "kind": "v3-card"
+              }
+            }
+          },
+          {
+            "id": "pilot",
+            "role": "orchestrator",
+            "project": "beacon",
+            "binding": "old",
+            "identity": {
+              "scheme": "legacy-exact",
+              "mxid": "@station_beacon_orch:relux.works",
+              "source_ref": {
+                "revision": "1111111111111111111111111111111111111111",
+                "sha256": "2e774d4db879405b48980c2fd096ef3e82f1b01f8e5be0b95e26aa0b7d1a71a6",
+                "member": "aurora/pilot",
+                "kind": "v3-card"
+              }
+            }
+          },
+          {
+            "id": "storage",
+            "role": "orchestrator",
+            "project": "storage",
+            "binding": "old",
+            "identity": {
+              "scheme": "legacy-exact",
+              "mxid": "@station_storage_orch:relux.works",
+              "source_ref": {
+                "revision": "1111111111111111111111111111111111111111",
+                "sha256": "2e774d4db879405b48980c2fd096ef3e82f1b01f8e5be0b95e26aa0b7d1a71a6",
+                "member": "aurora/storage",
+                "kind": "v3-card"
+              }
+            }
+          }
+        ],
+        "expected_mxids": {
+          "aurora/keeper": "@station_aurora_keeper:relux.works",
+          "aurora/pilot": "@station_beacon_orch:relux.works",
+          "aurora/storage": "@station_storage_orch:relux.works"
+        }
+      },
+      {
+        "name": "pilot-only-cutover",
+        "members": [
+          {
+            "id": "keeper",
+            "role": "keeper",
+            "project": "aurora-host",
+            "binding": "old",
+            "identity": {
+              "scheme": "legacy-exact",
+              "mxid": "@station_aurora_keeper:relux.works",
+              "source_ref": {
+                "revision": "1111111111111111111111111111111111111111",
+                "sha256": "2e774d4db879405b48980c2fd096ef3e82f1b01f8e5be0b95e26aa0b7d1a71a6",
+                "member": "aurora/keeper",
+                "kind": "v3-card"
+              }
+            }
+          },
+          {
+            "id": "pilot",
+            "role": "orchestrator",
+            "project": "beacon",
+            "binding": "new",
+            "identity": {
+              "scheme": "domain-star-v1",
+              "star": "betelgeuse"
+            }
+          },
+          {
+            "id": "storage",
+            "role": "orchestrator",
+            "project": "storage",
+            "binding": "old",
+            "identity": {
+              "scheme": "legacy-exact",
+              "mxid": "@station_storage_orch:relux.works",
+              "source_ref": {
+                "revision": "1111111111111111111111111111111111111111",
+                "sha256": "2e774d4db879405b48980c2fd096ef3e82f1b01f8e5be0b95e26aa0b7d1a71a6",
+                "member": "aurora/storage",
+                "kind": "v3-card"
+              }
+            }
+          }
+        ],
+        "expected_mxids": {
+          "aurora/keeper": "@station_aurora_keeper:relux.works",
+          "aurora/pilot": "@gr.relux.works_aurora_beacon_orch_betelgeuse:gr.relux.works",
+          "aurora/storage": "@station_storage_orch:relux.works"
+        },
+        "expected_unchanged": [
+          "aurora/keeper",
+          "aurora/storage"
+        ]
+      },
+      {
+        "name": "rollback",
+        "members": [
+          {
+            "id": "keeper",
+            "role": "keeper",
+            "project": "aurora-host",
+            "binding": "old",
+            "identity": {
+              "scheme": "legacy-exact",
+              "mxid": "@station_aurora_keeper:relux.works",
+              "source_ref": {
+                "revision": "1111111111111111111111111111111111111111",
+                "sha256": "2e774d4db879405b48980c2fd096ef3e82f1b01f8e5be0b95e26aa0b7d1a71a6",
+                "member": "aurora/keeper",
+                "kind": "v3-card"
+              }
+            }
+          },
+          {
+            "id": "pilot",
+            "role": "orchestrator",
+            "project": "beacon",
+            "binding": "old",
+            "identity": {
+              "scheme": "legacy-exact",
+              "mxid": "@station_beacon_orch:relux.works",
+              "source_ref": {
+                "revision": "1111111111111111111111111111111111111111",
+                "sha256": "2e774d4db879405b48980c2fd096ef3e82f1b01f8e5be0b95e26aa0b7d1a71a6",
+                "member": "aurora/pilot",
+                "kind": "v3-card"
+              }
+            }
+          },
+          {
+            "id": "storage",
+            "role": "orchestrator",
+            "project": "storage",
+            "binding": "old",
+            "identity": {
+              "scheme": "legacy-exact",
+              "mxid": "@station_storage_orch:relux.works",
+              "source_ref": {
+                "revision": "1111111111111111111111111111111111111111",
+                "sha256": "2e774d4db879405b48980c2fd096ef3e82f1b01f8e5be0b95e26aa0b7d1a71a6",
+                "member": "aurora/storage",
+                "kind": "v3-card"
+              }
+            }
+          }
+        ],
+        "expected_mxids": {
+          "aurora/keeper": "@station_aurora_keeper:relux.works",
+          "aurora/pilot": "@station_beacon_orch:relux.works",
+          "aurora/storage": "@station_storage_orch:relux.works"
+        },
+        "expected_unchanged": [
+          "aurora/keeper",
+          "aurora/storage"
+        ]
+      },
+      {
+        "name": "non-pilot-mutation",
+        "base": "pilot-only-cutover",
+        "mutation": {
+          "member": "aurora/storage",
+          "identity.mxid": "@station_storage_other:relux.works"
+        },
+        "expected": "reject preservation and legacy-source mismatch; no other member write"
+      },
+      {
+        "name": "legacy-provisioning",
+        "base": "before-cutover",
+        "operation": "register legacy-exact pilot",
+        "expected": "reject legacy provisioning before registration or account probe"
+      },
+      {
+        "name": "missing-legacy-source",
+        "base": "before-cutover",
+        "mutation": {
+          "remove": "legacy_source_pin"
+        },
+        "expected": "reject missing pinned legacy source; no guessed prefix"
+      }
+    ]
+  },
+  "service": {
+    "valid_member": {
+      "id": "ingest",
+      "role": "service",
+      "scope": "member",
+      "project": "beacon",
+      "parent": "aurora/pilot",
+      "lifecycle": "persistent",
+      "desired_state": "active",
+      "service_contract_ref": "fixture-service-contract",
+      "runtime": {
+        "kind": "none"
+      },
+      "context_mode": "none",
+      "binding": "new",
+      "identity": {
+        "scheme": "domain-star-v1",
+        "star": "vega"
+      },
+      "result_route": "a2a",
+      "admission_ref": "fixture-separate-chat-admission",
+      "a2a": {
+        "connection": "gr",
+        "parent_route": "#aurora-beacon:gr.relux.works",
+        "result_destination": "#aurora-beacon:gr.relux.works",
+        "rooms": [
+          "#aurora-beacon:gr.relux.works"
+        ],
+        "subscriptions": {
+          "required": [],
+          "self": []
+        }
+      }
+    },
+    "required_proof": [
+      "owned service runner identity/endpoint",
+      "expected event or request",
+      "durable handling",
+      "attributable result or health readback"
+    ],
+    "forbidden_proof_substitute": "conversational idle wake or resumed agent inbox",
+    "cases": [
+      {
+        "name": "sessionless-valid",
+        "expected": "valid service member; no model session is implied"
+      },
+      {
+        "name": "accidental-agent-session",
+        "operation": "agent-session launch of valid_member",
+        "expected_error": "service_session_forbidden",
+        "forbidden_effects": [
+          "model invocation",
+          "agent hooks",
+          "session or conversational binding writes"
+        ]
+      },
+      {
+        "name": "model-in-service",
+        "mutation": {
+          "runtime.model": "a-model"
+        },
+        "expected": "reject forbidden model field"
+      },
+      {
+        "name": "missing-result-route",
+        "mutation": {
+          "remove": "result_route"
+        },
+        "expected": "reject missing explicit result route"
+      }
+    ]
+  },
+  "pulse": {
+    "relation_snapshot": [
+      {
+        "id": "aurora/keeper",
+        "role": "keeper",
+        "parent": "external/root"
+      },
+      {
+        "id": "aurora/orch-a",
+        "role": "orchestrator",
+        "parent": "aurora/keeper"
+      },
+      {
+        "id": "aurora/orch-b",
+        "role": "orchestrator",
+        "parent": "aurora/keeper"
+      },
+      {
+        "id": "aurora/restricted-peer",
+        "role": "orchestrator",
+        "parent": "aurora/keeper"
+      },
+      {
+        "id": "aurora/worker-a",
+        "role": "developer",
+        "parent": "aurora/orch-a"
+      }
+    ],
+    "snapshot_pin": {
+      "product": "aurora",
+      "revision": "2222222222222222222222222222222222222222",
+      "sha256": "3e521ddb6de0b0fbf7da8c27f38e8c5a999fed6f19a17560be55e8cf24998013"
+    },
+    "extra_snapshots": [],
+    "evaluation_time": "2026-10-29T12:00:00Z",
+    "policies": {
+      "a": {
+        "schema": "pulse-visibility/v1",
+        "subject": "aurora/orch-a",
+        "visible_members": [
+          "aurora/keeper",
+          "aurora/orch-a",
+          "aurora/orch-b",
+          "aurora/worker-a",
+          "external/root"
+        ]
+      },
+      "b": {
+        "schema": "pulse-visibility/v1",
+        "subject": "aurora/orch-b",
+        "visible_members": [
+          "aurora/keeper",
+          "aurora/orch-a",
+          "aurora/orch-b",
+          "external/root"
+        ]
+      }
+    },
+    "callers": {
+      "a": {
+        "schema": "pulse-caller/v1",
+        "subject": "aurora/orch-a",
+        "execution_binding": "fixture-exec-a",
+        "card_sources": [
+          {
+            "product": "aurora",
+            "revision": "2222222222222222222222222222222222222222",
+            "sha256": "3e521ddb6de0b0fbf7da8c27f38e8c5a999fed6f19a17560be55e8cf24998013"
+          }
+        ],
+        "visibility_sha256": "23394bbbe4e97866e6f08b145a701c756a3b0c5f60675da0bedd7b526db7e8e8",
+        "issued_at": "2026-10-29T00:00:00Z",
+        "expires_at": "2026-10-30T00:00:00Z"
+      },
+      "b": {
+        "schema": "pulse-caller/v1",
+        "subject": "aurora/orch-b",
+        "execution_binding": "fixture-exec-b",
+        "card_sources": [
+          {
+            "product": "aurora",
+            "revision": "2222222222222222222222222222222222222222",
+            "sha256": "3e521ddb6de0b0fbf7da8c27f38e8c5a999fed6f19a17560be55e8cf24998013"
+          }
+        ],
+        "visibility_sha256": "b67a45bf7d6635e52b4998a58974298665a389260b0d2c9e31dd7d08cdb4d4c8",
+        "issued_at": "2026-10-29T00:00:00Z",
+        "expires_at": "2026-10-30T00:00:00Z"
+      }
+    },
+    "valid_setup": "trusted host config admits matching caller execution binding and signer; fixture signatures verify; snapshot/policy bytes match their pins",
+    "cases": [
+      {
+        "name": "caller-a",
+        "caller": "a",
+        "selector": "aurora/orch-a",
+        "policy": "a",
+        "expected": {
+          "self": "aurora/orch-a",
+          "peers": [
+            "aurora/orch-b"
+          ],
+          "direct_reports": [
+            "aurora/worker-a"
+          ],
+          "descendants": [
+            "aurora/worker-a"
+          ],
+          "superiors": [
+            "aurora/keeper"
+          ],
+          "boundaries": [
+            {
+              "relation": "superior",
+              "kind": "unavailable",
+              "reference": "external/root"
+            },
+            {
+              "relation": "peer",
+              "kind": "restricted"
+            }
+          ]
+        }
+      },
+      {
+        "name": "caller-b",
+        "caller": "b",
+        "selector": "aurora/orch-b",
+        "policy": "b",
+        "expected": {
+          "self": "aurora/orch-b",
+          "peers": [
+            "aurora/orch-a"
+          ],
+          "direct_reports": [],
+          "descendants": [],
+          "superiors": [
+            "aurora/keeper"
+          ],
+          "boundaries": [
+            {
+              "relation": "superior",
+              "kind": "unavailable",
+              "reference": "external/root"
+            },
+            {
+              "relation": "peer",
+              "kind": "restricted"
+            }
+          ]
+        }
+      },
+      {
+        "name": "unauthorized-selector",
+        "caller": "a",
+        "selector": "aurora/orch-b",
+        "expected": "refuse caller/selector mismatch; no partial view"
+      },
+      {
+        "name": "restricted-peer",
+        "caller": "a",
+        "expected": "no key/name/profile/locator for aurora/restricted-peer; anonymous restricted boundary only"
+      },
+      {
+        "name": "unavailable-ancestor",
+        "caller": "a",
+        "expected": "external/root remains an unavailable boundary; no fabricated root or claim of completeness"
+      },
+      {
+        "name": "self-only-default",
+        "caller_subject": "aurora/orch-a",
+        "visibility_sha256": null,
+        "expected": {
+          "self": "aurora/orch-a",
+          "peers": [],
+          "direct_reports": [],
+          "descendants": [],
+          "superiors": [],
+          "boundary_rule": "relationships outside self are anonymous restricted boundaries"
+        }
+      },
+      {
+        "name": "missing-caller-signature",
+        "caller": "a",
+        "setup_change": "signature missing",
+        "expected": "refuse untrusted caller; no partial view"
+      },
+      {
+        "name": "wrong-host-binding",
+        "caller": "a",
+        "setup_change": "host admits fixture-exec-b",
+        "expected": "refuse execution binding mismatch"
+      },
+      {
+        "name": "unpinned-extra-card",
+        "extra_source": "foreign-product",
+        "expected": "refuse unauthorized snapshot, not ambient cross-product peers"
+      }
+    ]
+  }
+}

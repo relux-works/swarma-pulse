@@ -1,6 +1,7 @@
-# Product cards, stable identities and Pulse — specification v1
+# Product cards, stable identities and Pulse — specification v1, revision 2
 
-Status: proposed; acceptance of an exact candidate is required before implementation.
+Status: proposed; implementation is not yet specified as available. Conformance vectors are in
+[conformance-v1.json](conformance-v1.json).
 
 ## 1. Problem and result
 
@@ -25,7 +26,10 @@ remains in force. An upgrade must preserve those guarantees.
 The proposed new schema is `product-card/v4`. A v3.1 card remains valid under its existing validator until an explicit,
 reviewed conversion. New software must identify the schema before validation; it must never reinterpret an old card as
 v4 or silently rewrite it. A v3 reader must refuse a v4 schema. Conversion is a separate, deterministic operation with a
-reviewable old-to-new mapping; it neither registers accounts nor changes running consumers.
+reviewable old-to-new mapping; it neither registers accounts nor changes running consumers. Conversion selects
+`legacy-exact` for every existing chat identity and preserves its exact MXID, connection and logical key. V4 can therefore
+contain legacy and new identities together without requiring a v3 reader to consume v4. A member moves to the new
+scheme only at its individual cutover; changing the card schema alone changes no resolved identity.
 
 The existing Ruby validator is the baseline for v3.1, not proof that v4 is implemented. A future v4 validator must use
 closed objects, reject unknown and duplicate keys and unsupported YAML features, and emit diagnostics containing rule
@@ -60,8 +64,8 @@ reviewed before coding the validator; this document defines its required structu
 | --- | --- |
 | Product | Existing id, description, privacy and keeper; add `host_project`, referencing a declared project. Keep default binding and desired topology. |
 | Projects | Unique id, description, repository reference or explicit local-only designation, desired state, manager, task-system reference and channels. Add discriminated `location`, described below. |
-| Members | Immutable portable `id`, stable primary role, project, parent, profile, lifecycle, desired state, context mode and explicit runtime/model. Add `identity.star` and `scope` (`product`, `project`, `member`). |
-| Bindings | Operator and execution-host references, named connection, and `identity_domain`. Replace arbitrary `identity_prefix`; the resolver constructs the prefix from the full domain. |
+| Members | Immutable portable `id`, stable primary role, project, parent, profile, lifecycle, desired state, context mode and explicit runtime/model. Add discriminated `identity` and `scope` (`product`, `project`, `member`); sessionless services use the exception below. |
+| Bindings | Operator and execution-host references, named connection, and `identity_domain`. Retire arbitrary `identity_prefix` from new resolution; `legacy-exact` preserves an attested old full MXID unchanged. |
 | Connections | Named HTTPS endpoint and Matrix server name, with no credentials or credential-store contents. |
 | Profiles | One declared source, compatible requirement and immutable selected version/source revision/lock digest. Selection is not evidence of installation or launch permission. |
 | Relations | Parent references resolve locally or to an explicit external product/member reference. No dangling references, duplicate resolved identities or cycles. |
@@ -76,6 +80,52 @@ capabilities describe assignments it may accept. A reviewer assignment does not 
 and parked afterwards; it never means creating a new member per story. Task ownership, current assignment, runtime
 session, PID, liveness and acceptance state remain in their native systems. A desired staffing slot is not a member or
 an admission record. Review still requires a distinct qualified member and a fresh context without producer history.
+
+### Mixed legacy and new identity representation
+
+A chat member has an explicit named `binding` (conversion materializes any inherited default) and exactly one of these closed identity objects:
+
+- `{scheme: legacy-exact, mxid: FULL_MXID, source_ref: PINNED_SOURCE}` preserves an existing identity. `source_ref`
+  is `{kind, revision, sha256, member}`. Its kind is `v3-card`, or `service-descriptor` for a separately admitted legacy
+  service absent from v3. It pins the pre-conversion source and unchanged qualified member key. The supplied source must resolve that key to exactly this MXID and connection. Missing source, changed key/MXID/connection,
+  duplicate identity or a Matrix server inconsistent with the selected connection refuses validation. The resolver
+  returns the attested MXID verbatim; it does not parse a host name into a new tuple.
+- `{scheme: domain-star-v1, star: STAR}` resolves the domain/product/project/role/star tuple from that member and binding.
+  The full-domain and reservation rules below apply. `mxid` and a legacy `source_ref` are forbidden in this branch.
+
+The legacy branch can verify/reuse an already admitted existing account; it cannot provision, register or adopt a new
+legacy account. No prefix guessing, account-presence probe or token recovery can replace the pinned source. Non-chat
+members may declare a prospective `domain-star-v1` tuple without a Matrix account; they cannot select `legacy-exact`.
+
+The card holds one selected identity per member, never live migration state. A reviewed cutover changes only the pilot's
+`identity`, `binding` and associated desired a2a connection/room/subscription fields. The private migration receipt pins
+the complete prior member record and its source revision for rollback; rollback restores those exact desired fields.
+Other member records and their resolved MXIDs stay unchanged. The old connection remains declared while referenced.
+Conversion must translate old `a2a.connection` values consistently, rather than deriving identities from the new domain.
+
+The mixed-card fixture supplies three member records, legacy source pins, the pilot-only delta and independent expected
+resolution maps before cutover, after cutover and after rollback. A fourth case changes a non-pilot identity and must
+fail the preservation invariant. These are binding-resolution excerpts; complete v4 card fixtures will include unchanged
+profiles, topology and other required fields when the full schema is finalized.
+
+### Sessionless service members
+
+V4 explicitly adds `role: service`, with `scope: member`, a project and an accountable parent who is that project's
+manager. A service has its own logical key, lifecycle and desired state, a separately admitted `service_contract_ref`,
+`runtime: {kind: none}` and `context_mode: none`. `model`, `effort`, conversational `profile`, agent-session continuation
+and conversational staffing are forbidden. The service contract identifies its actual service runner and health/result
+interface; it is a reference, never a launch instruction, credential or evidence of a running process.
+
+A service declares `result_route` explicitly as `a2a` or `parent-native`. For `a2a`, separately admitted chat participation,
+a named connection and declared project rooms, `parent_route`, `a2a.result_destination` and required/self selectors are
+required; automatic global membership is forbidden. For `parent-native`, an admitted service result-interface reference
+is required and there is no Matrix account or a2a block. Naming code `service` adds no admission or admin/invite power.
+
+A service is not launched by a conversational Curator member command. Passing it to an agent-session launcher must
+refuse `service_session_forbidden` before hooks, session/binding writes or model invocation. Its service owner admits
+any actual process start separately. Migration proves the owned runner's account/endpoint, expected event or request,
+durable handling and attributable result/health readback. It does not demand a conversational idle/busy wake or resumed
+inbox. The no-overlap and rollback rules apply to owned service publishers/runners, without stopping another service.
 
 ### Project locations
 
@@ -115,7 +165,7 @@ where an independently admitted route requires encryption.
 
 ## 5. Stable identity scheme
 
-The canonical Matrix localpart is:
+For `domain-star-v1`, the canonical Matrix localpart is:
 
 ```text
 <identity-domain>_<product>_<project>_<role-code>_<star>
@@ -157,7 +207,7 @@ reservation remains recorded and is not automatically reused. The complete resol
 all admitted host bindings. Stars are proposed by the custodian and reserved through the reviewed card change, not by
 racing registrations. Cross-operator reservations require their agreement before accounts are created.
 
-The entire localpart must fit a2a's current 64-character ceiling. The resolver rejects overflow before filesystem,
+The entire new-scheme localpart must fit a2a's current 64-character ceiling. The resolver rejects overflow before filesystem,
 Keychain, registration, room or hook effects. If necessary, custodians propose a separately reviewed canonical project
 slug before appointment; the domain and an existing identity are never silently shortened.
 
@@ -177,21 +227,55 @@ V1 is a local, read-only CLI over explicitly supplied, authorized card snapshots
 reconciler, account registration or automatic remote discovery. Proposed interface, not a shipped command:
 
 ```text
-pulse me --card PATH --revision REV --member PRODUCT/MEMBER --format json
+pulse me --card PATH --revision REV --member PRODUCT/MEMBER --caller-binding PATH --format json
 ```
 
-The caller must have an admitted binding to that member; `--member` is a selector, not impersonation or extra authority.
-For a local-only file the revision is a verified content digest or immutable local Git revision plus verified file bytes.
+The query also requires a trusted local caller binding and a visibility policy. Proposed explicit inputs are
+`--caller-binding PATH` and optional `--visibility-policy PATH`, plus repeated pairs of `--extra-card PATH` and
+`--extra-revision REV`. These are data locators, never a choice of trust anchor or another caller's authority.
+
+The local host's admitted Pulse configuration selects its public trusted-signers set and current execution binding for
+the invoking OS principal/runtime. No CLI argument, card field or environment fallback can replace that configuration.
+The caller file is UTF-8 JSON with exactly `schema: pulse-caller/v1`, `subject` (qualified member key),
+`execution_binding`, `card_sources` (product, revision and SHA-256 entries), `visibility_sha256` (digest or null),
+`issued_at` and `expires_at` (UTC timestamps). Duplicate or unknown keys refuse. A detached SSHSIG signature over the
+exact file bytes, in namespace `pulse-caller-v1`, must verify against a signer authorized by that host configuration.
+The detached format and namespace separation follow the [OpenSSH signature format](https://github.com/openssh/openssh-portable/blob/master/PROTOCOL.sshsig).
+The product custodian supplies the member/policy handoff through the operator-admitted local route; neither the file's
+claimed signer nor its filename admits a key. Trust provisioning is external to this read-only query.
+
+The subject must equal `--member`, its execution binding must equal the host's admitted caller binding, and its selected
+card binding must resolve to that same execution binding. Every supplied snapshot must match its signed allowlist entry,
+revision and bytes. Missing/untrusted/expired caller input, unknown host binding, selector/binding mismatch, digest
+mismatch, conflicting snapshots for one product or an unauthorized extra source refuses the entire query. No partial
+view is returned for these integrity/authority failures. This attests a local admission; it is not remote authentication.
+
+A non-null `visibility_sha256` requires the exact policy bytes via `--visibility-policy`. The policy is closed UTF-8 JSON
+with `schema: pulse-visibility/v1`, `subject` and `visible_members` (qualified logical keys); its subject must match the
+caller. The signature on the caller binding pins the custodian-authorized policy digest. Self is always visible.
+An absent policy digest means the explicit default of self-only visibility; supplying an unpinned policy refuses.
+Members outside the allowlist produce anonymous restricted relationship boundaries, without names, keys, profile data
+or locators. The policy cannot add an unpinned snapshot or grant access to files outside local authority.
+
+The peer universe is exactly the selected product/card plus the explicitly supplied, allowlisted extra snapshots.
+There is no network expansion, ambient workspace scan or implicit cross-product peer lookup. Peer level and relations
+are computed within that universe, then filtered by visibility. A referenced external ancestor without an authorized
+supplied snapshot is marked unavailable at that boundary; it is not evidence that no ancestor exists. A restricted
+ancestor is marked restricted instead. Traversal stops at that boundary and never skips over it to expose higher
+ancestors. Neither condition makes the result a complete hierarchy.
+
+For a local-only card the revision is a verified content digest or immutable local Git revision plus verified file bytes.
 A service/remote API, if later needed, requires a separate authentication and audience contract. V1 reads only snapshots
 provided through the existing handoff and local filesystem authority, never arbitrary URLs or credential directories.
-Local callers with permission to read the whole file already have that filesystem access; this CLI does not promise
-confidentiality from another process under the same OS identity. Cross-custody cards require a sanitized snapshot or
-separately authorized read access before invocation.
+Local callers with permission to read a whole file already have that filesystem access; this CLI promises no secrecy
+from another process under the same OS identity or holder of the same admitted caller context. Cross-custody cards
+require sanitized snapshots or separately authorized read access before invocation.
 
 The result carries `schema: pulse-view/v1`, product/member ids, source revision and content digest, and:
 
-- `self`: role, scope, logical key, resolved name (or non-chat designation), desired state, profile requirement/selection,
-  execution binding, project locator and own declared parent/result/escalation routes;
+- `self`: role, scope, logical key, resolved name (or non-chat designation), desired state, profile requirement/selection
+  for conversational members or service-contract reference for services, execution binding, project locator and own
+  declared parent/result/escalation routes;
 - `peers`: visible members at the same responsibility level, with their roles, projects and parent refs;
 - `direct_reports` and `descendants`: separate lists derived from parent edges;
 - `superiors`: ordered nearest parent first, ending at a verified root or an explicitly unresolved external boundary;
@@ -247,7 +331,8 @@ history. It does not delete accounts or old rooms.
 
 ### Inventory and order
 
-Product keepers supply sanitized inventories of all existing identities, including themselves, project orchestrators,
+Moving all ready Alexis-side identities is the top execution priority. Product keepers supply sanitized inventories
+of all existing identities, including themselves, project orchestrators,
 stable workers, services, parked members and legacy aliases. The migration ledger records logical member, old MXID,
 proposed target tuple/MXID, card revision, responsible custodian, audience, dependencies, status/evidence and rollback
 owner. Obtain the inventory from custodians and admitted account/member listings, never credential-store enumeration.
@@ -269,9 +354,12 @@ required pilot and per-member proof, not a successful registration alone.
 
 Before each member moves, require the accepted specification, an adopted a2a candidate supporting the exact tuple and
 connection, a reserved target name, a reviewed card mapping, explicit account/custody admission, ready rooms/invitations,
-known consumers and a supported cutover/rollback path. The host owner supplies any required secure bootstrap item;
-agents neither read nor transfer its value. Existing pending registration outcomes use source-owner recovery, never
-journal deletion or a second speculative name. Credential-reader signing/trust constraints remain intact.
+known consumers and a supported cutover/rollback path. At this specification baseline, the gr registration token is not
+yet on the host. The host owner supplies that token
+through the supported secure bootstrap reference before registration; this is distinct from source/tool qualification.
+Agents neither read nor transfer its value. Never use or copy the owner's human access token or password as a substitute,
+and never place human credentials in any agent-readable item or store. Existing pending registration outcomes use
+source-owner recovery, never journal deletion or a second speculative name. Credential-reader signing/trust constraints remain intact.
 
 A schema acceptance is not permission to change a live binary, registration store, hook trust, security posture or
 shared daemon. Each operation retains its actual custodian and supported maintenance boundary. Source implementation,
@@ -294,10 +382,11 @@ source review, installed adoption and member rollout are separate recorded facts
 5. **Cut over:** at the member custodian's safe point, stop only that member's old consumer through its supported route,
    preserve the in-flight checkpoint, activate the target consumer and profile, then apply the reviewed per-member card
    binding. Never activate both consumers to hide a custody gap. If no safe supported handoff exists, remain prepared.
-6. **Proven:** a peer sends an addressed event; it reaches the new durable inbox, causes an eligible idle wake, is read by
-   the resumed member and gets an attributable reply visible in the original topic. Verify an ordinary owner message
+6. **Proven (conversational member):** a peer sends an addressed event; it reaches the new durable inbox, causes an
+   eligible idle wake, is read by the resumed member and gets an attributable reply visible in the original topic. Verify an ordinary owner message
    from each required owner MXID as well. Confirm one active consumer, correct room ids and pinned gr connection.
    Test busy delivery at a later safe point before marking full notification readiness; do not interrupt a human draft.
+   A sessionless service instead supplies the service-runner proof defined in §4, with no conversational wake check.
 7. **Retired from active use:** announce old-to-new mapping, update authoritative cards/launch references and callers,
    check no active dependency remains on the old binding, and record acceptance of the per-member evidence. Keep old
    account and state preserved with no active hooks/consumer. No old chat deletion, shared room deletion or revocation
@@ -329,13 +418,15 @@ all outcomes, including lanes that could not start; one red lane must not suppre
 
 | Contract | Valid control | Forbidden case and required result |
 | --- | --- | --- |
+| Legacy mapping | Three old identities resolve exactly before conversion; pilot-only cutover and rollback have pinned expected maps. | Missing legacy source, changed old MXID/connection, non-pilot delta or attempted legacy registration refuses without changing another member. |
+| Service | An admitted `service` has runtime none, explicit parent/result route and an owned runner proof. | A model/profile or conversational session launch refuses `service_session_forbidden` before session, hooks or model effects. |
 | Naming | Full gr domain, swarm/swarma-pulse, orch/betelgeuse resolves to the example. | Short domain alias, embedded underscore, uppercase or unknown role refuses before any registration or local write. |
 | Name budget | Exactly 64 characters is accepted if every component and registry reservation is valid. | 65 characters refuses without truncation, random replacement or partial files. |
 | Reservation | Existing holder repeats the same proposal idempotently. | Two members reserve the same domain/product/role/star, even in different projects: second fails with no allocation. |
 | Membership | Assign two successive stories to one stable member. | No new logical id, account or star reservation is created by either assignment. |
 | Locations | Local sibling checkout and remote project both validate under their respective rules. | Absent remote checkout is not a missing-local error; absolute paths and symlink root escapes refuse before traversal. |
 | Graph | Ordinary and combined-manager examples produce correct chains and peer levels. | Cycle, dangling local parent, duplicate member or resolved MXID refuses; missing external source is explicitly partial. |
-| Projection | Verified self receives deterministic peers, direct/transitive reports and ordered superiors at a named revision. | Wrong caller binding or source digest refuses; unknown/stale observations never become "running", "absent" or permission. |
+| Projection | Two distinct trusted caller bindings receive different correct self/report views; peers use only pinned snapshots and authorized visibility. | Unauthorized selector, absent/expired attestation, wrong host binding or digest refuses. A restricted peer exposes no identifier; unavailable ancestor is an explicit boundary. Unknown/stale observations never become permission. |
 | Card isolation | Desired profiles/locks and explicit empty subscription lists validate. | Secrets, live-state fields, unknown keys, duplicate YAML keys, tags, aliases and oversize/deep documents refuse with safe locations only. |
 | Audience | Non-chat member uses parent-native route; admitted chat member has its declared project audience. | Naming support cannot grant chat, invite/admin rights, global autojoin or remove required owner selectors. |
 | Routing | Explicit gr target and federated shared room resolve correctly. | Missing profile, metadata mismatch, redirect to another credential origin or stale fingerprint refuses; no legacy fallback. |
@@ -348,23 +439,20 @@ A crash, skipped control or unrelated setup failure does not count as the intend
 against user credentials, shared state or live members. Documentation review now checks these pairs for consistency;
 implementation qualification remains pending.
 
-## 10. Review, decisions and delivery boundaries
+## 10. Technical dependencies and priority
 
-The initial review evaluates this complete contract, including alternatives: full structured identity instead of a
-forged host prefix; explicit local/remote locations instead of dummy local paths; and a local CLI before a service.
-The choices minimize hidden side effects and expose unavailable authority or observations.
+The design chooses full structured identities rather than a workstation-derived prefix, explicit local/remote locations
+rather than dummy checkouts, and a local read-only query before a network service. The current naming examples are
+provisional while the product/project canonical spelling is resolved; no reservation follows from an example.
 
-Before acceptance, obtain an independent verdict for the exact signed candidate, product-custodian disposition, and
-advice from affected a2a source and launcher owners. Record objections and resolutions with that revision. Shared a2a
-naming policy and cross-operator adoption require their actual decision channels; silence is not adoption. Owner-only
-questions go to the accountable keeper with options and a recommendation.
+The execution order is: finalize the minimum mixed-identity schema and conformance inputs needed for migration;
+complete and adopt the source-owned a2a naming/connection work; qualify the real pilot; then migrate the remaining ready
+Alexis-side members keeper by keeper. Preserve planned/parked/blocked records and continue feasible migration preparation
+when a particular member waits on its own dependency. One pilot does not complete migration. Nonessential Pulse
+implementation comes after these ready migrations; only a projection capability demonstrated necessary for migration
+may precede them. Nothing in this sequence starts a session or changes credentials by itself.
 
-The first implementation sequence after acceptance is: complete/review the v4 schema and conformance fixtures;
-coordinate the a2a naming/connection changes at source and adopt them through their supported route; qualify the first
-member migration; then implement the read-only Pulse projection against admitted cards. Card-host relocation and
-further keeper migrations proceed through their own reviewed units. A separately admitted publication route is needed
-before hosted branch/PR/check/landing delivery; until then a local signed candidate is reviewable but unlanded.
-
-Pending external inputs are the secure gr bootstrap route, exact adopted a2a/launcher capabilities, each operator's
-inventory/adoption, host-project custody/location, and any required hosted publication. These block their own execution
-steps, not preparation of the specification. This proposal does not claim those inputs or any build are complete.
+Technical prerequisites are the host-owner-provided gr registration token, a qualified secure registration route,
+exact adopted a2a/launcher capabilities, trusted local Pulse caller/policy inputs, each operator's inventory/adoption and
+the declared host-project location. An unavailable dependency prevents its own operation; preparation can continue.
+Per-member migration evidence and external input status are kept in the native operational system, outside the card.

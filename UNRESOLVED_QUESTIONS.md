@@ -1,14 +1,13 @@
-# Unresolved decisions
+# Open contract inputs
 
-The proposed contract is [specification v1](docs/specs/product-card-identity-pulse-v1.md). None of the following entries
-claims acceptance, provisioning or rollout authority.
+The proposed contract is [specification v1, revision 2](docs/specs/product-card-identity-pulse-v1.md).
 
-| Input or decision | Accountable route | Recommendation and alternatives | Blocks |
-| --- | --- | --- | --- |
-| Exact specification verdict | Product custodian routes independent exact-head review. | Review the signed candidate as a whole; require revisions for concrete defects. | Implementation. |
-| a2a naming/shared policy and onboarding descriptor | a2a source custodian and affected operators. | Adopt the five-field domain/product/project/role/star resolver; keep legacy operations explicit during migration. Alternative transport may change after source advice without weakening validation. | New identity onboarding. |
-| Secure gr registration and pending-recovery qualification | Host owner through product custodian; a2a source owner qualifies tooling. | Complete the supported secure route. Preserve the old working path while unavailable; never read/export bootstrap values or retry ambiguous registrations. | First account registration. |
-| Canonical host project and card relocation | Owning product custodian, with host/project custodians. | Use explicit `swarma-host` for swarm, preserve privacy and relative targets; defer relocation until custody and consumers are verified. | Card relocation. |
-| Complete per-operator inventory and foreign adoption | Each operator's keepers through the shared advice process. | Account for all identities, pilot this orchestrator, then migrate keeper by keeper. Foreign pending scope remains explicit. | Claim that all identities migrated. |
-| Publication availability | Repository custodian. | Use the admitted local signed candidate for review until the private repository is provisioned through its authorized route. | Hosted PR/check/landing flow. |
-| Worker chat admission, isolation, private channels and additional runtimes | Their existing policy/source custodians. | Preserve current non-chat/admitted behavior; do not couple this specification to automatic adoption of unlanded policies. | Only the affected new capability. |
+| Input | Contract effect | Proposed treatment |
+| --- | --- | --- |
+| Canonical product/project spelling | Determines the full identity tuple and host-project reference. | Keep naming examples provisional; reserve no name until the canonical ids are settled. |
+| a2a resolver and onboarding descriptor | Requires versioned tuple/legacy resolution, explicit named connections and audience validation. | Preserve existing mappings; adopt the source-owned contract before registering new names. |
+| gr registration token | The token is not yet on the host; the host owner must provision its supported secure reference. | Keep the old working path until provisioning and secure-tool qualification are complete. Never substitute human credentials. |
+| Host-project location | Determines the canonical card root and relative project/profile paths. | Preserve resolved targets during the explicit relocation to the declared host project. |
+| Complete per-operator inventory/adoption | Bounds the migration and the identities that may change. | Account for every inventoried identity and retain explicit pending foreign, parked or blocked scope. |
+| Pulse host admission and visibility inputs | Determines the trusted signer, caller context, pinned snapshots and visible member set. | Refuse unknown caller authority; use the specified self-only default when no visibility policy is pinned. |
+| Additional chat classes, private channels and runtimes | Each capability requires its own enacted eligibility/execution contract. | Preserve currently admitted behavior; naming validation alone grants no participation or launch. |
