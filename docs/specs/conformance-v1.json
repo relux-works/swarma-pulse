@@ -5,7 +5,8 @@
     "All names, sources and admissions below are synthetic examples, not operational appointments.",
     "Identity members are binding-resolution excerpts, not complete v4 cards; unchanged required fields belong in future full-card fixtures.",
     "Pulse snapshots are relation-only excerpts; hashes use sorted compact UTF-8 JSON plus one newline for these fixture objects.",
-    "Cryptographic setup is a conformance premise, not a product option: the future isolated harness must sign exact caller bytes with a fixture key, configure its public trust anchor and prove wrong-key refusal. No bypass flag is admitted."
+    "Cryptographic setup is a conformance premise, not a product option: the future isolated harness must sign exact caller bytes with a fixture key, configure its public trust anchor and prove wrong-key refusal. No bypass flag is admitted.",
+    "Identity/service examples and the Pulse relation examples are independent synthetic datasets; no unlisted cross-dataset member linkage is implied."
   ],
   "identity": {
     "product": "aurora",
@@ -31,31 +32,17 @@
         "identity_domain": "gr.relux.works"
       }
     },
-    "pinned_legacy_resolution": {
-      "aurora/keeper": {
-        "mxid": "@station_aurora_keeper:relux.works",
-        "connection": "legacy-relux"
-      },
-      "aurora/pilot": {
-        "mxid": "@station_beacon_orch:relux.works",
-        "connection": "legacy-relux"
-      },
-      "aurora/storage": {
-        "mxid": "@station_storage_orch:relux.works",
-        "connection": "legacy-relux"
-      }
-    },
     "legacy_source_pin": {
       "revision": "1111111111111111111111111111111111111111",
-      "sha256": "2e774d4db879405b48980c2fd096ef3e82f1b01f8e5be0b95e26aa0b7d1a71a6"
+      "sha256": "4685735820acdfcd61c324d1865bdbe7738130df164a162ca48b6fcec8c8a449"
     },
-    "allowed_cutover_member": "aurora/pilot",
+    "allowed_cutover_member": "aurora/beacon_orch",
     "cases": [
       {
         "name": "before-cutover",
         "members": [
           {
-            "id": "keeper",
+            "id": "aurora_keeper",
             "role": "keeper",
             "project": "aurora-host",
             "binding": "old",
@@ -64,14 +51,14 @@
               "mxid": "@station_aurora_keeper:relux.works",
               "source_ref": {
                 "revision": "1111111111111111111111111111111111111111",
-                "sha256": "2e774d4db879405b48980c2fd096ef3e82f1b01f8e5be0b95e26aa0b7d1a71a6",
-                "member": "aurora/keeper",
+                "sha256": "4685735820acdfcd61c324d1865bdbe7738130df164a162ca48b6fcec8c8a449",
+                "member": "aurora/aurora_keeper",
                 "kind": "v3-card"
               }
             }
           },
           {
-            "id": "pilot",
+            "id": "beacon_orch",
             "role": "orchestrator",
             "project": "beacon",
             "binding": "old",
@@ -80,14 +67,14 @@
               "mxid": "@station_beacon_orch:relux.works",
               "source_ref": {
                 "revision": "1111111111111111111111111111111111111111",
-                "sha256": "2e774d4db879405b48980c2fd096ef3e82f1b01f8e5be0b95e26aa0b7d1a71a6",
-                "member": "aurora/pilot",
+                "sha256": "4685735820acdfcd61c324d1865bdbe7738130df164a162ca48b6fcec8c8a449",
+                "member": "aurora/beacon_orch",
                 "kind": "v3-card"
               }
             }
           },
           {
-            "id": "storage",
+            "id": "storage_orch",
             "role": "orchestrator",
             "project": "storage",
             "binding": "old",
@@ -96,24 +83,24 @@
               "mxid": "@station_storage_orch:relux.works",
               "source_ref": {
                 "revision": "1111111111111111111111111111111111111111",
-                "sha256": "2e774d4db879405b48980c2fd096ef3e82f1b01f8e5be0b95e26aa0b7d1a71a6",
-                "member": "aurora/storage",
+                "sha256": "4685735820acdfcd61c324d1865bdbe7738130df164a162ca48b6fcec8c8a449",
+                "member": "aurora/storage_orch",
                 "kind": "v3-card"
               }
             }
           }
         ],
         "expected_mxids": {
-          "aurora/keeper": "@station_aurora_keeper:relux.works",
-          "aurora/pilot": "@station_beacon_orch:relux.works",
-          "aurora/storage": "@station_storage_orch:relux.works"
+          "aurora/aurora_keeper": "@station_aurora_keeper:relux.works",
+          "aurora/beacon_orch": "@station_beacon_orch:relux.works",
+          "aurora/storage_orch": "@station_storage_orch:relux.works"
         }
       },
       {
         "name": "pilot-only-cutover",
         "members": [
           {
-            "id": "keeper",
+            "id": "aurora_keeper",
             "role": "keeper",
             "project": "aurora-host",
             "binding": "old",
@@ -122,14 +109,14 @@
               "mxid": "@station_aurora_keeper:relux.works",
               "source_ref": {
                 "revision": "1111111111111111111111111111111111111111",
-                "sha256": "2e774d4db879405b48980c2fd096ef3e82f1b01f8e5be0b95e26aa0b7d1a71a6",
-                "member": "aurora/keeper",
+                "sha256": "4685735820acdfcd61c324d1865bdbe7738130df164a162ca48b6fcec8c8a449",
+                "member": "aurora/aurora_keeper",
                 "kind": "v3-card"
               }
             }
           },
           {
-            "id": "pilot",
+            "id": "beacon_orch",
             "role": "orchestrator",
             "project": "beacon",
             "binding": "new",
@@ -139,7 +126,7 @@
             }
           },
           {
-            "id": "storage",
+            "id": "storage_orch",
             "role": "orchestrator",
             "project": "storage",
             "binding": "old",
@@ -148,28 +135,28 @@
               "mxid": "@station_storage_orch:relux.works",
               "source_ref": {
                 "revision": "1111111111111111111111111111111111111111",
-                "sha256": "2e774d4db879405b48980c2fd096ef3e82f1b01f8e5be0b95e26aa0b7d1a71a6",
-                "member": "aurora/storage",
+                "sha256": "4685735820acdfcd61c324d1865bdbe7738130df164a162ca48b6fcec8c8a449",
+                "member": "aurora/storage_orch",
                 "kind": "v3-card"
               }
             }
           }
         ],
         "expected_mxids": {
-          "aurora/keeper": "@station_aurora_keeper:relux.works",
-          "aurora/pilot": "@gr.relux.works_aurora_beacon_orch_betelgeuse:gr.relux.works",
-          "aurora/storage": "@station_storage_orch:relux.works"
+          "aurora/aurora_keeper": "@station_aurora_keeper:relux.works",
+          "aurora/beacon_orch": "@gr.relux.works_aurora_beacon_orch_betelgeuse:gr.relux.works",
+          "aurora/storage_orch": "@station_storage_orch:relux.works"
         },
         "expected_unchanged": [
-          "aurora/keeper",
-          "aurora/storage"
+          "aurora/aurora_keeper",
+          "aurora/storage_orch"
         ]
       },
       {
         "name": "rollback",
         "members": [
           {
-            "id": "keeper",
+            "id": "aurora_keeper",
             "role": "keeper",
             "project": "aurora-host",
             "binding": "old",
@@ -178,14 +165,14 @@
               "mxid": "@station_aurora_keeper:relux.works",
               "source_ref": {
                 "revision": "1111111111111111111111111111111111111111",
-                "sha256": "2e774d4db879405b48980c2fd096ef3e82f1b01f8e5be0b95e26aa0b7d1a71a6",
-                "member": "aurora/keeper",
+                "sha256": "4685735820acdfcd61c324d1865bdbe7738130df164a162ca48b6fcec8c8a449",
+                "member": "aurora/aurora_keeper",
                 "kind": "v3-card"
               }
             }
           },
           {
-            "id": "pilot",
+            "id": "beacon_orch",
             "role": "orchestrator",
             "project": "beacon",
             "binding": "old",
@@ -194,14 +181,14 @@
               "mxid": "@station_beacon_orch:relux.works",
               "source_ref": {
                 "revision": "1111111111111111111111111111111111111111",
-                "sha256": "2e774d4db879405b48980c2fd096ef3e82f1b01f8e5be0b95e26aa0b7d1a71a6",
-                "member": "aurora/pilot",
+                "sha256": "4685735820acdfcd61c324d1865bdbe7738130df164a162ca48b6fcec8c8a449",
+                "member": "aurora/beacon_orch",
                 "kind": "v3-card"
               }
             }
           },
           {
-            "id": "storage",
+            "id": "storage_orch",
             "role": "orchestrator",
             "project": "storage",
             "binding": "old",
@@ -210,28 +197,28 @@
               "mxid": "@station_storage_orch:relux.works",
               "source_ref": {
                 "revision": "1111111111111111111111111111111111111111",
-                "sha256": "2e774d4db879405b48980c2fd096ef3e82f1b01f8e5be0b95e26aa0b7d1a71a6",
-                "member": "aurora/storage",
+                "sha256": "4685735820acdfcd61c324d1865bdbe7738130df164a162ca48b6fcec8c8a449",
+                "member": "aurora/storage_orch",
                 "kind": "v3-card"
               }
             }
           }
         ],
         "expected_mxids": {
-          "aurora/keeper": "@station_aurora_keeper:relux.works",
-          "aurora/pilot": "@station_beacon_orch:relux.works",
-          "aurora/storage": "@station_storage_orch:relux.works"
+          "aurora/aurora_keeper": "@station_aurora_keeper:relux.works",
+          "aurora/beacon_orch": "@station_beacon_orch:relux.works",
+          "aurora/storage_orch": "@station_storage_orch:relux.works"
         },
         "expected_unchanged": [
-          "aurora/keeper",
-          "aurora/storage"
+          "aurora/aurora_keeper",
+          "aurora/storage_orch"
         ]
       },
       {
         "name": "non-pilot-mutation",
         "base": "pilot-only-cutover",
         "mutation": {
-          "member": "aurora/storage",
+          "member": "aurora/storage_orch",
           "identity.mxid": "@station_storage_other:relux.works"
         },
         "expected": "reject preservation and legacy-source mismatch; no other member write"
@@ -249,8 +236,67 @@
           "remove": "legacy_source_pin"
         },
         "expected": "reject missing pinned legacy source; no guessed prefix"
+      },
+      {
+        "name": "legacy-id-not-derivable",
+        "base": "before-cutover",
+        "mutation": {
+          "member": "aurora/beacon_orch",
+          "id": "pilot",
+          "source_ref.member": "aurora/pilot",
+          "source.members[1].id": "pilot",
+          "source_pin": "recompute SHA-256 after source id change"
+        },
+        "expected": "reject source-derived MXID mismatch: station_ + pilot yields station_pilot, not station_beacon_orch; a correct hash cannot make the old MXID derivable",
+        "scope": "isolated legacy source/member binding; update matching source id and recompute the pin, retaining the old exact MXID"
       }
-    ]
+    ],
+    "expected_legacy_resolution": {
+      "aurora/aurora_keeper": {
+        "mxid": "@station_aurora_keeper:relux.works",
+        "connection": "legacy-relux"
+      },
+      "aurora/beacon_orch": {
+        "mxid": "@station_beacon_orch:relux.works",
+        "connection": "legacy-relux"
+      },
+      "aurora/storage_orch": {
+        "mxid": "@station_storage_orch:relux.works",
+        "connection": "legacy-relux"
+      }
+    },
+    "pinned_legacy_source": {
+      "schema": "product-card/v3",
+      "product": {
+        "id": "aurora",
+        "default_binding": "old"
+      },
+      "connections": {
+        "legacy-relux": {
+          "homeserver": "https://matrix.relux.works",
+          "server_name": "relux.works"
+        }
+      },
+      "bindings": {
+        "old": {
+          "identity_prefix": "station_",
+          "connection": "legacy-relux"
+        }
+      },
+      "members": [
+        {
+          "id": "aurora_keeper"
+        },
+        {
+          "id": "beacon_orch",
+          "binding": "old"
+        },
+        {
+          "id": "storage_orch"
+        }
+      ]
+    },
+    "source_pin_scope": "legacy_source_pin hashes pinned_legacy_source, not the expected resolution map; source is a v3 resolver excerpt, not a complete validator input"
   },
   "service": {
     "valid_member": {
@@ -258,7 +304,7 @@
       "role": "service",
       "scope": "member",
       "project": "beacon",
-      "parent": "aurora/pilot",
+      "parent": "aurora/beacon_orch",
       "lifecycle": "persistent",
       "desired_state": "active",
       "service_contract_ref": "fixture-service-contract",
@@ -299,6 +345,11 @@
         "expected": "valid service member; no model session is implied"
       },
       {
+        "name": "sessionless-migration-to-retirement",
+        "input": "service.migration",
+        "expected": "all seven states reach retirement with zero actual selectors and no agent hooks/profile/session; old account preserved"
+      },
+      {
         "name": "accidental-agent-session",
         "operation": "agent-session launch of valid_member",
         "expected_error": "service_session_forbidden",
@@ -307,6 +358,18 @@
           "agent hooks",
           "session or conversational binding writes"
         ]
+      },
+      {
+        "name": "implicit-owner-selector",
+        "base": "service.migration.trace.provisioned",
+        "mutation": {
+          "subscriptions.required": [
+            {
+              "from_mxid": "@fixture-owner:gr.relux.works"
+            }
+          ]
+        },
+        "expected": "reject unadmitted service selector; retain the old runner until actual zero-selector provisioning is established"
       },
       {
         "name": "model-in-service",
@@ -322,7 +385,207 @@
         },
         "expected": "reject missing explicit result route"
       }
-    ]
+    ],
+    "migration": {
+      "class": "sessionless-chat-service",
+      "logical_member": "aurora/ingest",
+      "admitted_service_descriptor": {
+        "member": "aurora/ingest",
+        "old_mxid": "@station_ingest_service:relux.works",
+        "connection": "legacy-relux",
+        "service_contract_ref": "fixture-service-contract",
+        "runtime_kind": "none"
+      },
+      "target_member_ref": "service.valid_member",
+      "target_mxid": "@gr.relux.works_aurora_beacon_service_vega:gr.relux.works",
+      "selector_policy": {
+        "required": [],
+        "self": []
+      },
+      "durable_result_checkpoint": "fixture-result-checkpoint-7",
+      "trace": [
+        {
+          "state": "prepared",
+          "active_runner": "old",
+          "subscriptions": {
+            "required": [],
+            "self": []
+          },
+          "agent_hooks": [],
+          "agent_profile": null,
+          "model_invocations": 0,
+          "conversational_bindings": 0,
+          "proof": [
+            "admitted service contract and runner owner",
+            "old identity/connection and durable result checkpoint preserved",
+            "allowlisted room and zero-selector policy recorded"
+          ],
+          "member_record": "service.migration.old_member"
+        },
+        {
+          "state": "registered",
+          "active_runner": "old",
+          "subscriptions": {
+            "required": [],
+            "self": []
+          },
+          "agent_hooks": [],
+          "agent_profile": null,
+          "model_invocations": 0,
+          "conversational_bindings": 0,
+          "proof": [
+            "reserved service account created through admitted secure target route",
+            "full target MXID/account class/endpoint verified; no conversational launch"
+          ],
+          "member_record": "service.migration.old_member"
+        },
+        {
+          "state": "provisioned",
+          "active_runner": "old",
+          "subscriptions": {
+            "required": [],
+            "self": []
+          },
+          "agent_hooks": [],
+          "agent_profile": null,
+          "model_invocations": 0,
+          "conversational_bindings": 0,
+          "proof": [
+            "service-aware route joins allowlisted project room only",
+            "actual subscription readback required=[] and self=[]; no implicit owner rows"
+          ],
+          "member_record": "service.migration.old_member"
+        },
+        {
+          "state": "qualified",
+          "active_runner": "old",
+          "subscriptions": {
+            "required": [],
+            "self": []
+          },
+          "agent_hooks": [],
+          "agent_profile": null,
+          "model_invocations": 0,
+          "conversational_bindings": 0,
+          "proof": [
+            "runner configuration and result/health interface checked without active second publisher",
+            "owned old runner remains active pending safe handoff"
+          ],
+          "member_record": "service.migration.old_member"
+        },
+        {
+          "state": "cut-over",
+          "active_runner": "new",
+          "subscriptions": {
+            "required": [],
+            "self": []
+          },
+          "agent_hooks": [],
+          "agent_profile": null,
+          "model_invocations": 0,
+          "conversational_bindings": 0,
+          "proof": [
+            "old owned runner stopped at durable-result checkpoint",
+            "new owned runner activated through service contract; desired binding/identity updated"
+          ],
+          "member_record": "service.valid_member"
+        },
+        {
+          "state": "proven",
+          "active_runner": "new",
+          "subscriptions": {
+            "required": [],
+            "self": []
+          },
+          "agent_hooks": [],
+          "agent_profile": null,
+          "model_invocations": 0,
+          "conversational_bindings": 0,
+          "proof": [
+            "expected fixture event handled durably",
+            "attributable result and health readback from new runner; no conversational wake"
+          ],
+          "member_record": "service.valid_member"
+        },
+        {
+          "state": "retired-from-active-use",
+          "active_runner": "new",
+          "subscriptions": {
+            "required": [],
+            "self": []
+          },
+          "agent_hooks": [],
+          "agent_profile": null,
+          "model_invocations": 0,
+          "conversational_bindings": 0,
+          "proof": [
+            "old runner inactive; old account/state preserved",
+            "callers and desired record point to proven new runner; no active old dependency"
+          ],
+          "member_record": "service.valid_member"
+        }
+      ],
+      "expected_final": {
+        "state": "retired-from-active-use",
+        "old_runner_active": false,
+        "new_runner_active": true,
+        "old_account_and_state_preserved": true,
+        "subscriptions": {
+          "required": [],
+          "self": []
+        },
+        "agent_hooks": [],
+        "agent_profile": null,
+        "model_invocations": 0,
+        "conversational_bindings": 0
+      },
+      "no_overlap_invariant": "the old runner is stopped before the new runner starts; active owned runner count never exceeds one",
+      "source_pin": {
+        "kind": "service-descriptor",
+        "revision": "3333333333333333333333333333333333333333",
+        "sha256": "25fc296a8715cfc3ab8b44086c4d35a324d6d22ffd40e2d2183c4dc7896b8ad0",
+        "member": "aurora/ingest"
+      },
+      "old_member": {
+        "id": "ingest",
+        "role": "service",
+        "scope": "member",
+        "project": "beacon",
+        "parent": "aurora/beacon_orch",
+        "lifecycle": "persistent",
+        "desired_state": "active",
+        "service_contract_ref": "fixture-service-contract",
+        "runtime": {
+          "kind": "none"
+        },
+        "context_mode": "none",
+        "binding": "old",
+        "identity": {
+          "scheme": "legacy-exact",
+          "mxid": "@station_ingest_service:relux.works",
+          "source_ref": {
+            "kind": "service-descriptor",
+            "revision": "3333333333333333333333333333333333333333",
+            "sha256": "25fc296a8715cfc3ab8b44086c4d35a324d6d22ffd40e2d2183c4dc7896b8ad0",
+            "member": "aurora/ingest"
+          }
+        },
+        "result_route": "a2a",
+        "admission_ref": "fixture-separate-chat-admission",
+        "a2a": {
+          "connection": "legacy-relux",
+          "parent_route": "#aurora-beacon:relux.works",
+          "result_destination": "#aurora-beacon:relux.works",
+          "rooms": [
+            "#aurora-beacon:relux.works"
+          ],
+          "subscriptions": {
+            "required": [],
+            "self": []
+          }
+        }
+      }
+    }
   },
   "pulse": {
     "relation_snapshot": [

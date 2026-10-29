@@ -1,4 +1,4 @@
-# Product cards, stable identities and Pulse — specification v1, revision 2
+# Product cards, stable identities and Pulse — specification v1, revision 3
 
 Status: proposed; implementation is not yet specified as available. Conformance vectors are in
 [conformance-v1.json](conformance-v1.json).
@@ -89,7 +89,9 @@ A chat member has an explicit named `binding` (conversion materializes any inher
   is `{kind, revision, sha256, member}`. Its kind is `v3-card`, or `service-descriptor` for a separately admitted legacy
   service absent from v3. It pins the pre-conversion source and unchanged qualified member key. The supplied source must resolve that key to exactly this MXID and connection. Missing source, changed key/MXID/connection,
   duplicate identity or a Matrix server inconsistent with the selected connection refuses validation. The resolver
-  returns the attested MXID verbatim; it does not parse a host name into a new tuple.
+  returns the attested MXID verbatim; it does not parse a host name into a new tuple. For a v3 source, independently
+  derive its localpart as the selected source binding's `identity_prefix` plus the unchanged `member.id`, on that
+  binding's connection. The source pin covers those input bytes; a pinned precomputed result map alone is insufficient.
 - `{scheme: domain-star-v1, star: STAR}` resolves the domain/product/project/role/star tuple from that member and binding.
   The full-domain and reservation rules below apply. `mxid` and a legacy `source_ref` are forbidden in this branch.
 
@@ -103,9 +105,10 @@ the complete prior member record and its source revision for rollback; rollback 
 Other member records and their resolved MXIDs stay unchanged. The old connection remains declared while referenced.
 Conversion must translate old `a2a.connection` values consistently, rather than deriving identities from the new domain.
 
-The mixed-card fixture supplies three member records, legacy source pins, the pilot-only delta and independent expected
-resolution maps before cutover, after cutover and after rollback. A fourth case changes a non-pilot identity and must
-fail the preservation invariant. These are binding-resolution excerpts; complete v4 card fixtures will include unchanged
+The mixed-card fixture supplies three preservable member ids, the source v3 prefix/connection/default and explicit
+bindings, source pins, a pilot-only delta and independent expected resolution maps before cutover, after cutover and
+after rollback. Its v3 source excerpt suffices to derive every original mapping rather than merely asserting it.
+A fourth case changes a non-pilot identity and must fail the preservation invariant. These are binding-resolution excerpts; complete v4 card fixtures will include unchanged
 profiles, topology and other required fields when the full schema is finalized.
 
 ### Sessionless service members
@@ -117,9 +120,12 @@ and conversational staffing are forbidden. The service contract identifies its a
 interface; it is a reference, never a launch instruction, credential or evidence of a running process.
 
 A service declares `result_route` explicitly as `a2a` or `parent-native`. For `a2a`, separately admitted chat participation,
-a named connection and declared project rooms, `parent_route`, `a2a.result_destination` and required/self selectors are
-required; automatic global membership is forbidden. For `parent-native`, an admitted service result-interface reference
-is required and there is no Matrix account or a2a block. Naming code `service` adds no admission or admin/invite power.
+a named connection, declared project rooms, `parent_route` and `a2a.result_destination` are required. Its
+`a2a.subscriptions.required` and `self` are explicit lists; the service-only baseline policy is empty for both, but omitted
+lists still refuse. Nonempty selectors require an explicit service-policy disposition referenced by `selector_policy_ref`;
+conversational owner selectors are never added by default. Use a qualified service-aware provisioning route that
+preserves this policy, or stop before cutover if none is available. Automatic global membership is forbidden.
+For `parent-native`, an admitted service result-interface reference is required and there is no Matrix account or a2a block. Naming code `service` adds no admission or admin/invite power.
 
 A service is not launched by a conversational Curator member command. Passing it to an agent-session launcher must
 refuse `service_session_forbidden` before hooks, session/binding writes or model invocation. Its service owner admits
@@ -365,7 +371,10 @@ A schema acceptance is not permission to change a live binary, registration stor
 shared daemon. Each operation retains its actual custodian and supported maintenance boundary. Source implementation,
 source review, installed adoption and member rollout are separate recorded facts.
 
-### Per-member state transition
+### Conversational member state transition
+
+This path applies to conversational Matrix members. Sessionless services use the complete service path below, including
+its zero-selector policy; they do not inherit conversational hooks, profile or owner-message proof requirements.
 
 1. **Prepared:** capture sanitized old identity/connection/binding facts, card revision, active task/continuation
    references, consumer ownership, room mapping, subscriptions and rollback steps. Establish one-live custody through
@@ -375,7 +384,9 @@ source review, installed adoption and member rollout are separate recorded facts
    An unknown outcome halts registration recovery for this member and leaves its old path usable.
 3. **Provisioned:** join gr replacement rooms and retained shared foreign rooms through authorized invitations. Apply
    required selectors under the new identity and read them back; preserve applicable self choices explicitly. Verify
-   both exact owner sender selectors across its admitted rooms. No Space subscriptions or unintended global rooms.
+   the exact owner sender selectors required by that conversational member's admitted policy across its allowed rooms.
+   This owner-selector requirement is conditional on conversational admission, not universal to migrating identities.
+   No Space subscriptions or unintended global rooms.
 4. **Qualified:** verify target membership, sender/address resolution and inbox durability through an admitted staging
    route. Prepare the reviewed hook/launcher/card handoff. A staged account is not a second live conversational session;
    qualification that needs live activation waits for the next step.
@@ -391,6 +402,29 @@ source review, installed adoption and member rollout are separate recorded facts
    check no active dependency remains on the old binding, and record acceptance of the per-member evidence. Keep old
    account and state preserved with no active hooks/consumer. No old chat deletion, shared room deletion or revocation
    is included in this step.
+
+### Sessionless service state transition
+
+All seven stages apply through the admitted service contract. The positive conformance trace reaches retirement with
+`subscriptions: {required: [], self: []}`, no agent hooks/profile, no model invocation and no conversational binding.
+Empty lists are verified from the actual service route; an empty desired list alone does not prove actual account data.
+A service-specific selector policy may override the empty lists only through its explicit disposition; it never inherits
+conversational defaults. The neighboring negative control rejects an implicitly added owner selector.
+
+| State | Service-specific evidence and action |
+| --- | --- |
+| Prepared | Preserve the service owner, admitted runner/result interface, old account/connection, durable result checkpoint, allowlisted project rooms, explicit selector policy and rollback record. No conversational task/profile/hook is created. |
+| Registered | For a chat service, create and verify exactly the reserved service account through the admitted secure route. Ambiguous outcome stops recovery here with the old runner preserved. A non-chat service records this account stage as not applicable, without creating an account. |
+| Provisioned | A chat service uses the service-aware route to join only allowlisted rooms and reads back the admitted selectors, empty for the positive control. No global/Space/owner defaults are added. A parent-native service verifies its admitted result interface instead and has no rooms or selectors. |
+| Qualified | Validate the target runner configuration and result/health interface without activating a second publisher. Stage account/audience/readiness evidence through the service route, never an agent inbox hook or conversational profile. |
+| Cut over | At its owner's safe durable-result checkpoint, stop only the old owned runner before starting the new one through the service contract. Apply the per-member desired binding/identity change. If no safe runner handoff exists, remain prepared. |
+| Proven | An expected event/request is handled durably and produces the attributable result or health readback on the new route. Verify the declared account/endpoint/audience and actual selector policy; no idle wake, owner-message receipt or resumed conversational inbox is required. |
+| Retired from active use | Verify old runner inactive, new route proven, no active old dependency and preserved old account/state. Update admitted callers and desired references; keep actual selectors empty in the positive control. No account deletion or conversational hooks/profile are introduced. |
+
+For a non-chat service, registration/membership stages remain explicit not-applicable records under the service contract,
+not a failed chat onboarding. A failure restores its prior runner/result interface without creating a Matrix identity.
+Chat-service rollback stops the new owned runner first and restores the exact old identity/binding/runner checkpoint;
+old state remains preserved. Neither service path creates overlapping active publishers or manufactures result receipts.
 
 Failure before cutover leaves the old member working. Failure after cutover stops only the new owned consumer first,
 then restores the old supported binding/card/consumer at the recorded checkpoint. Verify delivery again and mark the
@@ -419,7 +453,7 @@ all outcomes, including lanes that could not start; one red lane must not suppre
 | Contract | Valid control | Forbidden case and required result |
 | --- | --- | --- |
 | Legacy mapping | Three old identities resolve exactly before conversion; pilot-only cutover and rollback have pinned expected maps. | Missing legacy source, changed old MXID/connection, non-pilot delta or attempted legacy registration refuses without changing another member. |
-| Service | An admitted `service` has runtime none, explicit parent/result route and an owned runner proof. | A model/profile or conversational session launch refuses `service_session_forbidden` before session, hooks or model effects. |
+| Service | An admitted service reaches all seven migration states and retirement with runtime none, explicit result route, zero actual selectors, no agent hooks/profile and a proven owned runner. | An implicit owner selector violates service policy; a model/profile or conversational session launch refuses `service_session_forbidden` before session, hooks or model effects. |
 | Naming | Full gr domain, swarm/swarma-pulse, orch/betelgeuse resolves to the example. | Short domain alias, embedded underscore, uppercase or unknown role refuses before any registration or local write. |
 | Name budget | Exactly 64 characters is accepted if every component and registry reservation is valid. | 65 characters refuses without truncation, random replacement or partial files. |
 | Reservation | Existing holder repeats the same proposal idempotently. | Two members reserve the same domain/product/role/star, even in different projects: second fails with no allocation. |

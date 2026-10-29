@@ -1,6 +1,6 @@
 # Open contract inputs
 
-The proposed contract is [specification v1, revision 2](docs/specs/product-card-identity-pulse-v1.md).
+The proposed contract is [specification v1](docs/specs/product-card-identity-pulse-v1.md).
 
 | Input | Contract effect | Proposed treatment |
 | --- | --- | --- |

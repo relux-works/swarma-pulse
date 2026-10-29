@@ -3,7 +3,7 @@
 Swarma-pulse defines product cards, stable member identities and the Pulse query for a member's peers, reports and
 superiors. Product cards describe desired teams and project locations; they do not launch members or store live state.
 
-[Specification v1, revision 2](docs/specs/product-card-identity-pulse-v1.md) covers the proposed card upgrade,
+[Specification v1](docs/specs/product-card-identity-pulse-v1.md) covers the proposed card upgrade,
 full-domain star identities, read-only projections and migration to `gr.relux.works`.
 [Conformance vectors](docs/specs/conformance-v1.json) record required positive and negative examples.
 [Open contract inputs](UNRESOLVED_QUESTIONS.md) identify unresolved technical choices and prerequisites.
