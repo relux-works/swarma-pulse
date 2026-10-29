@@ -1,0 +1,16 @@
+{
+  "kind": "fixture-requirements",
+  "status": "outline-only-not-a-product-card",
+  "source_schema": "product-card/v3",
+  "target_schema": "product-card/v4",
+  "requires_full_cards_before_coding": true,
+  "families": [
+    {"id": "legacy-conversion", "valid": "derive old identities from default and explicit v3 bindings", "refusals": ["missing-source", "rehashed-wrong-id", "changed-legacy-mapping", "duplicate-identity", "old-reader-reinterpretation"]},
+    {"id": "mixed-cutover", "valid": "one pilot delta and exact rollback; all non-pilots equal", "refusals": ["non-pilot-mutation", "partial-output", "implicit-registration"]},
+    {"id": "service", "valid": "zero-selector a2a service and account-free parent-native service", "refusals": ["implicit-owner-selector", "service-session-forbidden", "parent-native-a2a"]},
+    {"id": "locations", "valid": "local sibling and explicit remote target preserve bases", "refusals": ["path-escape", "absolute-path", "remote-as-local"]},
+    {"id": "carry-over", "valid": "preserve all prior desired facts except explicit migration delta", "refusals": ["required-selector-loss", "profile-lock-change", "live-state", "credential-field", "unknown-key"]},
+    {"id": "parser-bounds", "valid": "within all stated limits and valid 64-character tuple", "refusals": ["duplicate-key", "tag", "alias", "merge-key", "multiple-documents", "byte-count-depth-hop-limit", "65-character-name"]}
+  ],
+  "runtime_qualification": "not-run-no-implementation"
+}

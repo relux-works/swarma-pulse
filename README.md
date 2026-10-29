@@ -21,3 +21,7 @@ Documentation whitespace can be checked with `git diff --check`. Conformance dat
 `python3 -m json.tool docs/specs/conformance-v1.json`; it prints the formatted fixture to stdout and exercises no product
 implementation. Candidate signature inspection uses `git verify-commit HEAD` and `git log -1 --show-signature`.
 No build command is available. Temporary local outputs, when needed, belong in ignored `.temp/`.
+
+The [v4 format outline](docs/format-v4-outline.md) and its fixture requirements describe the next bounded design work.
+They are not a complete schema or an available validator/converter. Format work proceeds independently of the first gr
+account pilot through separately qualified existing a2a primitives.
