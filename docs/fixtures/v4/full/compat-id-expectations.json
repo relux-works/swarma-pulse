@@ -45,7 +45,7 @@
     "aurora/storage_orch",
     "aurora/vault_dev"
   ],
-  "rollback_exact_file": "converted-v4.json",
+  "rollback_exact_file": "compat-id-converted-v4.json",
   "remote_is_distinct_disposition": true,
   "runtime_evidence": "not-run-no-implementation",
   "prospective_nonchat_choices": {
@@ -59,7 +59,7 @@
   },
   "reviewed_reservation_premises": [
     {
-      "holder": "aurora/beacon_orch",
+      "holder": "aurora/beacon=orch",
       "domain": "gr.relux.works",
       "product": "aurora",
       "primary_role": "orchestrator",

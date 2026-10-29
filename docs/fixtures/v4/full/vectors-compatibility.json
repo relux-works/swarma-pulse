@@ -8,7 +8,8 @@
         "operation": "validate-card-and-sources",
         "card": "compat-id-pilot-v4.json",
         "source_pins": "manifest.json#/source_pins",
-        "expected": "accept"
+        "expected": "accept",
+        "reservation_premises_source": "compat-id-expectations.json#/reviewed_reservation_premises"
       },
       "counterexample": {
         "target_patches": [
@@ -39,7 +40,8 @@
         "operation": "validate-card-and-sources",
         "card": "compat-id-pilot-v4.json",
         "source_pins": "manifest.json#/source_pins",
-        "expected": "accept"
+        "expected": "accept",
+        "reservation_premises_source": "compat-id-expectations.json#/reviewed_reservation_premises"
       },
       "counterexample": {
         "target_patches": [

@@ -12,6 +12,8 @@ mutate a previous case. source_pins selects the actual immutable source bytes/re
 source_selection replaces that set for this case; replace_supplied_v3_source replaces the baseline v3 entry only;
 remove_supplied_sources removes actual supplied bytes while retaining their manifest references. None fetches a source.
 Synthetic star reservations/admissions in expectations.json and explicit case additions are premises, not real grants.
+When reservation_premises_source is present, select that named file#/key list as the COMPLETE reservation set for the
+operation, replacing defaults rather than merging with them. Counterexample mutations inherit this exact selected set.
 Each compatibility pair names its complete conversion-input file in compatibility-expectations.json; those inputs
 carry the actual variant source pin and unchanged path/binding choices, with explicit renamed-key expectations where
 needed. Additional gr connection/binding definitions and the admitted root are explicit inputs, never inferred from

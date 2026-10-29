@@ -45,7 +45,7 @@
     "aurora/storage_orch",
     "aurora/vault_dev"
   ],
-  "rollback_exact_file": "converted-v4.json",
+  "rollback_exact_file": "compat-cross-group-converted-v4.json",
   "remote_is_distinct_disposition": true,
   "runtime_evidence": "not-run-no-implementation",
   "prospective_nonchat_choices": {
