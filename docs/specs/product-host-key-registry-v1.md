@@ -196,16 +196,25 @@ change. Hosted repository write access is broader than this semantic authority. 
 and compromised signing authorities remain within the actual repository/trust model, not prevented by
 this proposal. A different operator's unauthorized edit is rejected, including a correctly hashed edit.
 
-For v1, use externally admitted operator signing keys and verified accepted repository commits as the
-proposed endorsement route. These are existing authorized human/operator delivery signatures, not the
-new member's own signature. Each receiving context pins which signer may endorse which operator and
-which host snapshot it accepts. Do not treat an unverified Git signature, HTTPS access, a registry's own
-new key, or a commit's claimed author name as endorsement. A stronger alternative is an offline-verifiable federation membership record admitting operator
-roots, then each operator root endorsing its members' keys. This requires owner-approved roots,
-root-key custody and a signed record/rotation/revocation format; it is not an existing enacted
-contract. A flat mirror/index may aid discovery but cannot replace operator endorsement.
-The precise cross-operator authorization agreement, including commit endorsements versus an
-operator-root chain, remains an owner decision; this proposal grants no new signing access.
+Owner decision for this installation, 2026-10-30: cross-operator trust follows the existing grant and
+power-of-attorney model described in the Swarma book. For now, messages from the other operator
+are trusted verbally within the scope admitted by this installation's owner. Later, authority uses a
+public key and a grant certificate signed by the owner's key, with a project grant registry and tooling.
+This answers the local trust direction; it does not enact cryptographic verification. The other
+operator's owner has not yet accepted this proposal; that disposition remains pending.
+
+Human-signed, reviewed repository commits establish delivery provenance under the admitted change
+route; they are not operational grants. Keep the receiving context's admitted signer, operator scope
+and exact snapshot pins. An unverified Git signature, HTTPS access, a registry's own new key or a
+commit's claimed author cannot bootstrap authority. A public index is not the owner grant registry
+or a new trust root; no matching-signed-parts certificate mechanism is introduced.
+
+Future grant integration reuses the existing grant, attestation and message-path contracts described
+in the Swarma book (v1.7.1, sections 5.4, 5.7, 6 and 7.8), with exact adopted module specifications
+still to be pinned. The book is advisory vision; this dated owner choice sets the local direction.
+Module versions, key-purpose mappings, physical repository/root-key custody and rollout remain
+explicit integration inputs. This amendment changes no schema, algorithm, reader, live trust, key,
+account, signing access or service and implements no grant registry or verifier.
 
 ## 6. Foreign trust, enrollment, rotation and revocation
 
