@@ -4,7 +4,8 @@ Status: specification amendment for review, dated 2026-10-30. No command, schema
 key enrollment or runtime deployment is supplied by this document. The accepted
 [identity specification](product-card-identity-pulse-v1.md) and [v4 format](../format-v4.md)
 remain the implemented contracts. The [naming amendment](identity-names-v2.md) records the full-name/compact-Matrix choice;
-seat ownership and successor-schema admission remain open. Examples here use logical member identifiers only.
+identity and obligations belong to the logical seat. Successor-schema and actual namespace admission
+remain open. Examples here use logical member identifiers only.
 
 ## 1. Required result and boundaries
 
@@ -314,7 +315,8 @@ visibility allowlist; full own-organisation visibility cannot silently override 
 Foreign records must be published/admitted by their owner as well as visible to this caller. Operator
 ids, namespace authorization, physical host custody and placement transfer remain subject to the
 shared agreement. Full-name/Matrix mapping follows the
-[naming amendment](identity-names-v2.md); seat ownership and actual reservations remain open.
+[naming amendment](identity-names-v2.md); identity and obligations belong to the seat, with actual
+reservations still requiring admission.
 
 ## 9. Acceptance examples and forbidden outcomes
 

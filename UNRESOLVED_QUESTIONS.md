@@ -4,7 +4,7 @@ The proposed contract is [specification v1](docs/specs/product-card-identity-pul
 
 | Input | Contract effect | Proposed treatment |
 | --- | --- | --- |
-| Zone/project namespace and identity lifetime | The 2026-10-30 [naming amendment](docs/specs/identity-names-v2.md) selects full DNS and compact Matrix mapping; reverse lookup needs a pinned unique project owner. Seat ownership remains open. | Preserve existing mappings; admit no reservation/account until namespace, lifetime and source/custody prerequisites are satisfied. |
+| Zone/project namespace admission | The 2026-10-30 [naming amendment](docs/specs/identity-names-v2.md) settles full DNS/compact Matrix mapping and identity/obligations belonging to the seat; reverse lookup needs a pinned unique project owner. | Preserve existing mappings; admit no reservation/account until namespace and source/custody prerequisites are satisfied. |
 | a2a resolver and onboarding descriptor | Requires versioned tuple/legacy resolution, explicit named connections and audience validation. | Preserve existing mappings; qualify the supported low-level named-connection route for the first migration. Implement a source change first only when an actual migration-blocking gap is demonstrated. |
 | gr registration token | The token is not yet on the host; the host owner must provision its supported secure reference. | Keep the old working path until provisioning and secure-tool qualification are complete. Never substitute human credentials. |
 | Host-project location | Determines the canonical card root and relative project/profile paths. | Preserve resolved targets during the explicit relocation to the declared host project. |

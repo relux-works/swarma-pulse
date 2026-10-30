@@ -28,11 +28,17 @@ remain unchanged as compatibility contracts. Existing Matrix accounts cannot be 
 cutover still creates a separately admitted account and follows the accepted preservation/custody plan.
 No existing account is silently remapped from its old MXID.
 
-Identity lifetime/seat ownership remains an open owner input. This amendment defines the mapping of
-an admitted naming tuple; it does not decide whether an appointment, role or project transfer creates
-a new seat, renames an existing seat, or retains a historical name. Such a transfer needs an explicit
-accepted disposition before changing a live account. Changing model or restarting a runtime does not
-by itself allocate a name or a new member.
+Owner decision, 2026-10-30: «да нет никакой сути клод или кодекс и преписи такой не надо».
+Identity and obligations belong to the logical seat, not its current harness or model. Messages carry
+no harness/model annotation. Replacing the runtime, model or harness preserves that seat and its
+obligations; it does not allocate a new identity or add a runtime prefix/suffix to a name.
+
+This amendment maps an admitted naming tuple. A project/role/zone transition that changes the MXID
+requires an explicit accepted namespace/custody disposition and a new-account cutover preserving
+the logical seat and its history; a Matrix account cannot be renamed. A product-only change may
+change the full name without changing the compact MXID, so its accepted registry history must be
+pinned explicitly rather than reinterpreting earlier snapshots. No naming change is inferred merely
+from execution placement or a new task.
 
 ## 2. Canonical inputs and vocabulary
 
@@ -186,13 +192,13 @@ Missing semantic checks may be supplied by the admitted reviewed handoff if its 
 only a demonstrated blocker requires a source change before the corresponding live operation.
 
 No new scheme is admitted merely by merging this specification. The selected first pilot waits for
-the admitted phase-2 secure-store installation and its existing key/custody sitting. Seat-ownership input,
-actual reservations and the filled source/runtime handoff remain distinct facts. No account, Keychain,
+the admitted phase-2 secure-store installation and its existing key/custody sitting. Seat ownership is
+settled as above; actual reservations and the filled source/runtime handoff remain separate facts. No account, Keychain,
 keyvault, key creation/export/signing, room change or session launch is part of this document.
 
 ## 8. Contract examples and negative expectations
 
-The [review fixtures](../fixtures/identity-names-v2.json) are specification examples, not inputs accepted by
+The thirteen [review fixtures](../fixtures/identity-names-v2.json) are specification examples, not inputs accepted by
 the shipped validator or an executable new resolver. Their registries are explicitly synthetic premises.
 
 | Claim | Valid control | Required refusal or limit |
@@ -203,7 +209,8 @@ the shipped validator or an executable new resolver. Their registries are explic
 | Existing star guarantee | Member keeps its admitted product/role star reservation across assignments | Another member's reservation or a tombstoned MXID cannot be reused |
 | Lexical mapping | Known role with complete hyphenated star maps exactly | Unknown role, extra dot, uppercase, Unicode, trailing dot or lossy normalization refuses |
 | Localpart boundary | 38-byte synthetic project + `researcher` + `alpha-centauri` gives 64 bytes | 39-byte project with that same role/star gives 65 bytes and refuses before effects |
-| DNS bounds | Every component and complete full name fits DNS limits | Overlong zone label/full name refuses even when localpart fits |
+| DNS label bound | With project `p`, product `s`, dev/rigel: zone label lengths `[63,4]`, full name 82 bytes, localpart 11 bytes resolve | Zone labels `[64,4]` refuse at 83-byte full name/11-byte localpart, with empty effects |
+| Full DNS bound | With the same tuple: zone labels `[63,63,63,47]`, full name 253 bytes, localpart 11 bytes resolve | Zone labels `[63,63,63,48]` give a 254-byte full name and refuse, all labels valid/localpart 11, empty effects |
 | Snapshot authority | Current admitted registry matches its pin and caller visibility | Stale, altered, unauthorized or restricted lookup cannot return a canonical member |
 | Compatibility | Existing old-scheme/v4 fixtures keep their exact accepted results | New discriminator to v4 refuses; no rewrite or old-account rename |
 | Read-only resolution | Supplied admitted inputs yield bounded name output | No scan, fetch, reserve, registration, private-key access or launch |

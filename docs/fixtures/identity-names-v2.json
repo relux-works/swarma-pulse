@@ -126,6 +126,94 @@
         "legacy_mapping_unchanged": true,
         "effects": []
       }
+    },
+    {
+      "id": "dns-label-63",
+      "tuple": {
+        "zone": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.test",
+        "product": "s",
+        "project": "p",
+        "role": "developer",
+        "star": "rigel"
+      },
+      "premise": "Synthetic selected connection and matching pinned project/member/star/MXID admissions; only the named bound varies within this pair; no real zone or reservation",
+      "expected": {
+        "zone_label_bytes": [
+          63,
+          4
+        ],
+        "full_name_bytes": 82,
+        "localpart_bytes": 11,
+        "verdict": "resolve",
+        "effects": []
+      }
+    },
+    {
+      "id": "dns-label-64",
+      "tuple": {
+        "zone": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.test",
+        "product": "s",
+        "project": "p",
+        "role": "developer",
+        "star": "rigel"
+      },
+      "premise": "Synthetic selected connection and matching pinned project/member/star/MXID admissions; only the named bound varies within this pair; no real zone or reservation",
+      "expected": {
+        "zone_label_bytes": [
+          64,
+          4
+        ],
+        "full_name_bytes": 83,
+        "localpart_bytes": 11,
+        "verdict": "refuse-dns-label-length",
+        "effects": []
+      }
+    },
+    {
+      "id": "dns-full-253",
+      "tuple": {
+        "zone": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "product": "s",
+        "project": "p",
+        "role": "developer",
+        "star": "rigel"
+      },
+      "premise": "Synthetic selected connection and matching pinned project/member/star/MXID admissions; only the named bound varies within this pair; no real zone or reservation",
+      "expected": {
+        "zone_label_bytes": [
+          63,
+          63,
+          63,
+          47
+        ],
+        "full_name_bytes": 253,
+        "localpart_bytes": 11,
+        "verdict": "resolve",
+        "effects": []
+      }
+    },
+    {
+      "id": "dns-full-254",
+      "tuple": {
+        "zone": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "product": "s",
+        "project": "p",
+        "role": "developer",
+        "star": "rigel"
+      },
+      "premise": "Synthetic selected connection and matching pinned project/member/star/MXID admissions; only the named bound varies within this pair; no real zone or reservation",
+      "expected": {
+        "zone_label_bytes": [
+          63,
+          63,
+          63,
+          48
+        ],
+        "full_name_bytes": 254,
+        "localpart_bytes": 11,
+        "verdict": "refuse-dns-full-name-length",
+        "effects": []
+      }
     }
   ]
 }
