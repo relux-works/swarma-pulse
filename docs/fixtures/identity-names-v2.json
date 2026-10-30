@@ -1,0 +1,131 @@
+{
+  "schema": "identity-names-review-cases/v1",
+  "status": "specification-only; synthetic admissions; no account or reservation",
+  "cases": [
+    {
+      "id": "owner-example",
+      "tuple": {
+        "zone": "gr.relux.works",
+        "product": "swarm",
+        "project": "swarma-pulse",
+        "role": "orchestrator",
+        "star": "betelgeuse"
+      },
+      "premise": "Pinned project owner and unchanged member/star/MXID reservation supplied",
+      "expected": {
+        "full_name": "orch-betelgeuse.swarma-pulse.swarm.gr.relux.works",
+        "mxid": "@swarma-pulse.orch-betelgeuse:gr.relux.works",
+        "localpart_bytes": 28
+      }
+    },
+    {
+      "id": "boundary-64",
+      "tuple": {
+        "zone": "example.test",
+        "product": "sample",
+        "project": "pppppppppppppppppppppppppppppppppppppp",
+        "role": "researcher",
+        "star": "alpha-centauri"
+      },
+      "premise": "Synthetic matching project/member/star/MXID reservations supplied",
+      "expected": {
+        "localpart": "pppppppppppppppppppppppppppppppppppppp.researcher-alpha-centauri",
+        "localpart_bytes": 64,
+        "verdict": "resolve"
+      }
+    },
+    {
+      "id": "overflow-65",
+      "tuple": {
+        "zone": "example.test",
+        "product": "sample",
+        "project": "ppppppppppppppppppppppppppppppppppppppp",
+        "role": "researcher",
+        "star": "alpha-centauri"
+      },
+      "premise": "Otherwise matching synthetic admissions supplied",
+      "expected": {
+        "localpart_bytes": 65,
+        "verdict": "refuse-localpart-length",
+        "effects": []
+      }
+    },
+    {
+      "id": "reverse-missing-owner",
+      "input": "@swarma-pulse.orch-betelgeuse:gr.relux.works",
+      "premise": "No admitted zone/project owner available",
+      "expected": {
+        "verdict": "refuse-unresolved-project-owner",
+        "product_inferred": false,
+        "effects": []
+      }
+    },
+    {
+      "id": "project-collision",
+      "tuple": {
+        "zone": "example.test",
+        "product": "second",
+        "project": "shared",
+        "role": "developer",
+        "star": "rigel"
+      },
+      "premise": "(example.test,shared) is already reserved by product first; star is otherwise free",
+      "expected": {
+        "verdict": "refuse-project-owner-conflict",
+        "existing_holder_unchanged": true,
+        "effects": []
+      }
+    },
+    {
+      "id": "same-holder-retry",
+      "tuple": {
+        "zone": "example.test",
+        "product": "sample",
+        "project": "shared",
+        "role": "developer",
+        "star": "rigel"
+      },
+      "premise": "Exact same holder, tuple, registry revision, source pins and admission fields",
+      "expected": {
+        "verdict": "resolve-existing",
+        "new_allocation": false,
+        "effects": []
+      }
+    },
+    {
+      "id": "unknown-role",
+      "tuple": {
+        "zone": "example.test",
+        "product": "sample",
+        "project": "shared",
+        "role": "admin",
+        "star": "rigel"
+      },
+      "premise": "Project and star otherwise admitted",
+      "expected": {
+        "verdict": "refuse-role",
+        "effects": []
+      }
+    },
+    {
+      "id": "noncanonical-case",
+      "input": "@Swarma-pulse.orch-betelgeuse:gr.relux.works",
+      "premise": "Lowercase canonical counterpart is otherwise admitted",
+      "expected": {
+        "verdict": "refuse-noncanonical",
+        "normalization": false,
+        "effects": []
+      }
+    },
+    {
+      "id": "old-scheme-not-new",
+      "input": "@gr.relux.works_swarm_swarma-pulse_orch_betelgeuse:gr.relux.works",
+      "premise": "Explicit new-scheme reverse lookup",
+      "expected": {
+        "verdict": "refuse-new-scheme-shape",
+        "legacy_mapping_unchanged": true,
+        "effects": []
+      }
+    }
+  ]
+}

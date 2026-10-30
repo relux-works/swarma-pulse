@@ -171,6 +171,8 @@ where an independently admitted route requires encryption.
 
 ## 5. Stable identity scheme
 
+Owner naming decision, 2026-10-30: the [full-name/compact-Matrix amendment](identity-names-v2.md) supersedes this section's domain-prefix form for future registrations. The `domain-star-v1` rules below remain the unchanged implemented v4 compatibility contract; they are not authority to register a new name under the superseded form.
+
 For `domain-star-v1`, the canonical Matrix localpart is:
 
 ```text

@@ -13,8 +13,10 @@ Pulse, account migration and service/session launch remain separate operations.
 The [host and identity-key registry proposal](docs/specs/product-host-key-registry-v1.md) compares product-scoped Pulse
 contexts, operator-owned public keys and shared-product hosting. It is a specification draft; `pulse verify` is not implemented.
 
-Members are stable across stories. Their names use a full Matrix domain, product, project, primary role and readable
-star suffix. Existing chat identities retain their exact legacy mapping until an explicit per-member cutover.
+Members are stable across stories. The [2026-10-30 naming amendment](docs/specs/identity-names-v2.md) records full DNS
+names `role-star.project.product.zone` and compact Matrix localparts `project.role-star`. The shipped v4 tools retain
+the earlier `domain-star-v1` compatibility contract; the successor scheme is not implemented. Existing chat identities
+retain their exact mapping until an explicit per-member cutover.
 Product-specific cards belong in their declared host project; the swarm host project is `swarma-host`.
 
 ## Build and run
