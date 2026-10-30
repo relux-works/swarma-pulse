@@ -26,3 +26,13 @@ The optional read-only [desired-change checker](docs/change-check.md) verifies a
 Pulse, changed-location conversion dispositions and live integration acceptance remain separate. Future Go consumers may import the reviewed
 `internal/cardv4` package from this module; consumers outside this module need a separately reviewed public-package split.
 No consumer adoption, v3 retirement or live migration follows from validator availability.
+
+The [host and identity-key registry amendment](docs/specs/product-host-key-registry-v1.md) is a proposal for review:
+
+| Input | Contract effect | Proposed treatment |
+| --- | --- | --- |
+| Shared product host and canonical writer | Determines repository custody, card changes and admitted snapshots across operators. | Present shared-host, operator-hosted and canonical-history mirror options; preserve one agreed writer. |
+| Operator namespace endorsement | Determines who vouches for foreign member public keys and who may update each registry namespace. | Require independently admitted operator signers and accepted host revisions; no self-bootstrapping trust. |
+| mac-keyvault enrollment mapping | Source contract fixes explicit schema-2 generation, SPKI fingerprint and strict low-S signatures; real member-to-record selection remains unassigned. | Preserve the confirmed public contract and test vector; provision no key or private access during specification preparation. |
+| Card and caller-envelope version | Adds registry/member public references without changing closed v4 or caller v1 decoding. | Propose explicit successor versions; accept complete field/locator contracts before implementation. |
+| Cross-operator placement and visibility | Determines accepted participant location, transfer and personal view boundaries. | Align the existing federation design and operator decisions; desired placement is not live execution authority. |

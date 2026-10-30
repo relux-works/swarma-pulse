@@ -10,6 +10,8 @@ The Go read-only validator implements static v4 validation and the v3.1 source-r
 The optional [desired-change checker](docs/change-check.md) verifies a pinned candidate and exact rollback without writing.
 Pulse, account migration and service/session launch remain separate operations.
 [Open inputs](UNRESOLVED_QUESTIONS.md) describe their remaining prerequisites.
+The [host and identity-key registry proposal](docs/specs/product-host-key-registry-v1.md) compares product-scoped Pulse
+contexts, operator-owned public keys and shared-product hosting. It is a specification draft; `pulse verify` is not implemented.
 
 Members are stable across stories. Their names use a full Matrix domain, product, project, primary role and readable
 star suffix. Existing chat identities retain their exact legacy mapping until an explicit per-member cutover.
