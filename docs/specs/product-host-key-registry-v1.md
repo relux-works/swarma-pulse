@@ -16,7 +16,10 @@ Routine member discovery does not parse the raw card.
 A participant's private key belongs to the operator where that participant runs. It never travels with
 the product host or another operator's checkout. A participant remains one logical member across
 assignments; moving machines is an explicit placement change, not a second identity or permission to
-run a duplicate. Operators may each run their own participants on their own machines while reading
+run a duplicate. Distinguish logical identity/obligations, station placement (OS principal, home, clone
+and profile), and the actual runtime executor/lease epoch. Replacing an executor does not transfer
+the member's obligations. These are conceptual layers, not permission to launch or a replacement
+for the existing task-station reference. Operators may each run their own participants while reading
 one agreed product host and receiving views spanning authorized members of both operators.
 
 Public-key material is public *material*, not a requirement to publish the repository publicly. Preserve
@@ -142,7 +145,10 @@ to that namespace. A stable operator id is admitted independently, not derived f
 Prefer the second candidate for shared products. With one operator it is still one operator document,
 not a second system. Membership and public-key bindings remain in the single host. Machine placement
 is a card binding, not a second registry namespace: an operator may change machines without changing
-its stable operator id. Moving a private key between machines is not implied or permitted.
+its stable operator id. Host-local mac-keyvault keys cannot move to another machine or OS user. A transfer to another
+machine or OS principal requires a new target key and an endorsed continuity link; the stable logical
+identity, contacts, history and obligations can remain. A separate off-station signing broker would be
+a different custody model requiring its own owner decision, not an assumed capability.
 
 Proposed closed JSON documents:
 
@@ -151,19 +157,27 @@ Proposed closed JSON documents:
 | Index | `schema`, `product`, `operators` | Schema literal `pulse-key-index/v1`; product id; nonempty operator-entry list |
 | Operator entry | `operator`, `path`, `sha256` | Unique operator id and exact operator-document bytes under this snapshot |
 | Operator document | `schema`, `product`, `operator`, `sequence`, `keys` | Schema literal `pulse-operator-keys/v1`; matching product/operator; positive sequence; key entries |
-| Key entry | `member`, `generation`, `key_id`, `vault_record`, `public_key`, `status`, `status_at`, `not_before`, `not_after`, `supersedes` | Qualified logical member; positive generation; fingerprint; declared vault record; public descriptor; status and its UTC effective time; UTC validity interval; prior key id or null |
+| Key entry | `member`, `generation`, `key_id`, `custody_scope`, `vault_record`, `public_key`, `status`, `status_at`, `not_before`, `not_after`, `supersedes` | Qualified logical member; positive generation; fingerprint; admitted custody scope; declared vault record; public descriptor; status and its UTC effective time; UTC validity interval; predecessor reference or null |
+| Predecessor reference | `operator`, `key_id` | Earlier accepted key entry for the same qualified logical member, including across an admitted operator transfer |
 | Declared vault record | `kind`, `service`, `purpose`, `version` | Kind literal `key`; service/purpose each match `[a-z0-9-]{1,40}`; explicit positive generation equal to the key entry generation |
 | Public descriptor | `format`, `path`, `sha256` | Format literal `p256-spki-der`; public file under the operator's namespace; SHA-256 of exact canonical DER |
 
 Key status is exactly `active`, `retired` or `revoked`. `status_at` states when that status took effect;
 future-dated status transitions refuse rather than schedule an action. `not_after` is a timestamp or explicit null;
 `not_before` is a timestamp. Unknown/duplicate fields, noncanonical keys, cross-product entries,
-duplicate member/generation pairs or key ids, malformed intervals and namespace escapes refuse.
+duplicate full record bindings or key ids, malformed intervals and namespace escapes refuse.
+`custody_scope` identifies the explicitly admitted vault instance (operator, host and OS principal),
+using a public opaque reference, not a private filesystem path or the task-station field. The exact
+reference grammar/mapping belongs to the complete successor format. Generation is local to that
+vault record, not a global member counter: a new vault can start at version 1. A record binding is
+unique by `(operator, custody_scope, kind, service, purpose, version)`; the fingerprint must agree.
+The selected key's custody scope must match the member's admitted current placement.
 Every card key reference must resolve to exactly one entry with the exact operator/member/generation
 and public bytes. References to retired or revoked keys remain representable so the projection can
-explain their state; they do not pass current verification. At most one generation per member/operator
-is active. `supersedes`, when non-null, resolves to an older generation of that same member/operator
-and cannot form a cycle. Retired keys permit historical explanation, never current acceptance.
+explain their state; they do not pass current verification. At most one key entry per logical member is active. `supersedes`, when non-null, resolves to
+an earlier accepted entry for the same logical member and cannot form a cycle. A target entry may
+link to another operator's source entry only through an accepted transfer disposition; it cannot edit
+that source operator's namespace. Generations need not increase across different vault records. Retired keys permit historical explanation, never current acceptance.
 Revoked keys never pass current verification.
 
 Use the confirmed mac-keyvault fingerprint unchanged: unpadded base64url of SHA-256 of canonical
@@ -184,8 +198,12 @@ For v1, use externally admitted operator signing keys and verified accepted repo
 proposed endorsement route. These are existing authorized human/operator delivery signatures, not the
 new member's own signature. Each receiving context pins which signer may endorse which operator and
 which host snapshot it accepts. Do not treat an unverified Git signature, HTTPS access, a registry's own
-new key, or a commit's claimed author name as endorsement. The precise cross-operator authorization
-agreement remains an owner decision; this proposal grants no new signing access.
+new key, or a commit's claimed author name as endorsement. A stronger alternative is an offline-verifiable federation membership record admitting operator
+roots, then each operator root endorsing its members' keys. This requires owner-approved roots,
+root-key custody and a signed record/rotation/revocation format; it is not an existing enacted
+contract. A flat mirror/index may aid discovery but cannot replace operator endorsement.
+The precise cross-operator authorization agreement, including commit endorsements versus an
+operator-root chain, remains an owner decision; this proposal grants no new signing access.
 
 ## 6. Foreign trust, enrollment, rotation and revocation
 
@@ -217,10 +235,14 @@ endorsement yields untrusted, not an automatic trust-on-first-use prompt.
 Rotation is an explicit accepted update: the owner creates a new generation locally, supplies its
 public bytes, appends a new entry with `supersedes`, and changes the member's selected generation.
 The old entry becomes retired or revoked according to the accepted disposition. Old keys are never
-silently deleted from historical evidence. Generation uniqueness is scoped to one member/operator;
-sequence orders that operator's accepted registry documents, not wall-clock account identity.
+silently deleted from historical evidence. A rotation/transfer record is the accepted, operator-endorsed
+predecessor link plus its pinned source snapshot/disposition; it is not proof that one private key
+moved. Per-record generation and custody scope stay explicit. `sequence` orders that operator's accepted registry documents, not wall-clock account identity.
 Changing operators requires both the relinquishing and receiving custody dispositions plus an
-accepted placement/card update; it is not an ordinary unilateral same-operator rotation.
+accepted placement/card update; it is not an ordinary unilateral same-operator rotation. Cross-host
+or cross-OS-user movement under the same operator also creates a fresh target key record. Losing
+the old private key must not force its use to authorize recovery: the independently admitted operator
+authority owns that decision. No recovery authority is created by this proposal.
 
 Keyvault has no revoked state or revocation list. Its `rotate` retains older usable generations;
 `validity.not_after` limits signing, not public verification. Deleting a private generation is destructive
@@ -284,9 +306,13 @@ with conflicting placement/parents/keys are not a single shared product view. If
 its own product/card instead, expose authorized pinned cross-product projections and unresolved
 boundaries; that is a different ownership model, not an automatic merge.
 
-Alignment with the existing other-operator place-identity/federation design is requested, not claimed.
-Operator ids, namespace authorization, physical host custody, allowed cross-operator visibility and
-placement transfer remain subject to that agreement. Naming/localparts remain separately unresolved.
+The conceptual identity/place/executor separation and single canonical writer align with the supplied
+federation advice. The proposed operator-root chain, DNS naming and Exchange-like foreign-publication
+visibility are design alternatives, not enacted shared rules. Preserve the existing explicitly pinned
+visibility allowlist; full own-organisation visibility cannot silently override its self-only default.
+Foreign records must be published/admitted by their owner as well as visible to this caller. Operator
+ids, namespace authorization, physical host custody and placement transfer remain subject to the
+shared agreement. Naming/localparts remain separately unresolved.
 
 ## 9. Acceptance examples and forbidden outcomes
 
@@ -296,13 +322,13 @@ and nearby refusal follows the requirements above. Use synthetic public fixtures
 | Claim | Valid control | Required refusal or limit |
 | --- | --- | --- |
 | Both host layouts | Dedicated host and single project supply the same admitted card/index shape | Inventing a second required repository for a single project is unnecessary |
-| Stable placement | Same logical member changes declared host through accepted custody | Two desired/observed processes do not establish a single active member; no launch is inferred |
+| Stable placement | Same logical member changes declared host with a new target key and endorsed predecessor | A private key does not move with placement; two processes do not prove a single active member |
 | Operator ownership | Operator A authorizes only A's changed document/public keys | A's valid signature over an edit to B's namespace is insufficient |
 | Foreign endorsement | Receiver pins B's authorized signer and exact accepted host snapshot | A self-endorsed B key in an untrusted registry cannot establish B's identity |
 | Exact binding | Visible member, operator, explicit generation and public bytes all match | Same key bytes for the wrong member/operator or a different generation refuse |
 | Public-key encoding | Canonical P-256 SPKI DER with its computed SHA-256 id | P-384, trailing data, PEM-hash substitution or changed bytes refuse |
 | Key status | Selected active generation inside its validity interval | Revoked, retired, expired or not-yet-valid entry cannot pass current verification |
-| Rotation | Accepted higher sequence selects new generation and retains old historical entry | Implicit newest-vault lookup, silent overwrite or unannounced operator transfer refuse |
+| Rotation | Accepted higher sequence selects new generation and retains old historical entry | Implicit newest lookup, assumed same key on a new host/user, silent overwrite or unannounced operator transfer refuse |
 | Freshness | Snapshot matches admitted pins/floors and explicit age bound | Older sequence, altered document or stale snapshot cannot claim current validity |
 | Offline revocation | Fresh accepted snapshot explicitly contains the status used | No claim of observing a later unpublished/unreceived revocation |
 | Member references | Admitted local public file or supplied exact immutable remote bytes | Escape, mutable remote locator, missing remote bytes or ambient credential lookup refuse |
