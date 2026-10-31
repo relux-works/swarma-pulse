@@ -11,6 +11,9 @@ The optional [desired-change checker](docs/change-check.md) verifies a pinned ca
 The read-only [Pulse member query](docs/pulse.md) reads one explicitly selected v3 card and emits a local unsigned self-only projection.
 It uses `A2A_AGENT` as unverified context and reports `caller not cryptographically verified; single-user local trust`.
 Account migration and service/session launch remain separate operations.
+The repository-owned [Pulse usage skill](agents/skills/swarma-pulse/SKILL.md) explains the shipped self-query, explicit
+inputs, source/trust limits and nearby refusals. Project-local `.codex/skills/swarma-pulse` and
+`.claude/skills/swarma-pulse` links reference that source; environment packaging and profile adoption remain separate.
 [Open inputs](UNRESOLVED_QUESTIONS.md) describe their remaining prerequisites.
 The [host and identity-key registry proposal](docs/specs/product-host-key-registry-v1.md) compares product-scoped Pulse
 contexts, operator-owned public keys and shared-product hosting. It is a specification draft; `pulse verify` is not implemented.
