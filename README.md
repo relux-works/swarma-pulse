@@ -8,7 +8,9 @@ The [specification](docs/specs/product-card-identity-pulse-v1.md), [v4 format](d
 The Go read-only validator implements static v4 validation and the v3.1 source-reading rules. An explicitly invoked
 [converter](docs/converter.md) preserves a supplied v3 card into a separately selected destination with atomic publication.
 The optional [desired-change checker](docs/change-check.md) verifies a pinned candidate and exact rollback without writing.
-Pulse, account migration and service/session launch remain separate operations.
+The read-only [Pulse member query](docs/pulse.md) reads one explicitly selected v3 card and emits a local unsigned self-only projection.
+It uses `A2A_AGENT` as unverified context and reports `caller not cryptographically verified; single-user local trust`.
+Account migration and service/session launch remain separate operations.
 [Open inputs](UNRESOLVED_QUESTIONS.md) describe their remaining prerequisites.
 The [host and identity-key registry proposal](docs/specs/product-host-key-registry-v1.md) compares product-scoped Pulse
 contexts, operator-owned public keys and shared-product hosting. It is a specification draft; `pulse verify` is not implemented.
@@ -73,6 +75,8 @@ be confirmed; inspect the result before any retry. See [converter inputs and pub
 | Converter | `.temp/bin/card-v4-convert --root ROOT --source SOURCE --inputs INPUTS --destination DESTINATION` | Explicit complete destination; fixed receipt or safe refusal |
 | Change-check build | `go build -o .temp/bin/card-v4-check-change ./cmd/card-v4-check-change` | Ignored `.temp/bin/` executable |
 | Change checker | `.temp/bin/card-v4-check-change --root ROOT --prior PRIOR --prior-sha256 HASH --candidate CANDIDATE --candidate-sha256 HASH --rollback ROLLBACK --rollback-sha256 HASH --pilot PRODUCT/MEMBER --source-manifest MANIFEST --reservations PREMISES` | Fixed receipt or safe refusal; no writes |
+| Pulse build | `go build -o .temp/bin/pulse ./cmd/pulse` | Ignored `.temp/bin/` executable |
+| Pulse query | `.temp/bin/pulse me --local-unsigned --card ABS --revision sha256:HASH --format json` | Self-only JSON or safe refusal; exact content pin and public `A2A_AGENT` context |
 | Go tests | `go test -count=1 ./...` | All selected test lanes; isolated temporary fixtures |
 | Race checks | `go test -race -count=1 ./...` | Race-enabled results for all packages |
 | Go vet | `go vet ./...` | Static diagnostics |

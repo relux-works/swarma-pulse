@@ -9,7 +9,7 @@ The proposed contract is [specification v1](docs/specs/product-card-identity-pul
 | gr registration token | The token is not yet on the host; the host owner must provision its supported secure reference. | Keep the old working path until provisioning and secure-tool qualification are complete. Never substitute human credentials. |
 | Host-project location | Determines the canonical card root and relative project/profile paths. | Preserve resolved targets during the explicit relocation to the declared host project. |
 | Complete per-operator inventory/adoption | Bounds the migration and the identities that may change. | Account for every inventoried identity and retain explicit pending foreign, parked or blocked scope. |
-| Pulse host admission and visibility inputs | Determines the trusted signer, caller context, pinned snapshots and visible member set. | Refuse unknown caller authority; use the specified self-only default when no visibility policy is pinned. |
+| Pulse actual local use and future caller authority | The [local unsigned query](docs/pulse.md) reads one exact v3 card under the invoking OS identity; `A2A_AGENT` is unverified and freshness is unknown. | Qualify the actual input/context and invocation separately from fixtures. Cryptographic callers, broader visibility and the signed successor remain future work; no signer, host-config or conversion is required by this explicit MVP. |
 | Additional chat classes, private channels and runtimes | Each capability requires its own enacted eligibility/execution contract. | Preserve currently admitted behavior; naming validation alone grants no participation or launch. |
 
 Delivery ordering, 2026-10-29: the first gr account pilot and its supported a2a/launcher preparation proceed independently
@@ -23,7 +23,7 @@ stays outside the card. This ordering clarification leaves the specification's i
 The [complete v4 format](docs/format-v4.md) and [synthetic inputs](docs/fixtures/v4/full/README.md) are accepted design
 contracts. The read-only Go validator and explicit converter are now supplied;
 The optional read-only [desired-change checker](docs/change-check.md) verifies a candidate and exact prior rollback;
-Pulse, changed-location conversion dispositions and live integration acceptance remain separate. Future Go consumers may import the reviewed
+The read-only [Pulse query](docs/pulse.md) is supplied for one explicitly admitted snapshot. Actual host input/adoption, changed-location conversion dispositions and live integration acceptance remain separate. Future Go consumers may import the reviewed
 `internal/cardv4` package from this module; consumers outside this module need a separately reviewed public-package split.
 No consumer adoption, v3 retirement or live migration follows from validator availability.
 
