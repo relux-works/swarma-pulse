@@ -94,6 +94,36 @@ observation provenance. `query_observed_at` is the actual query's UTC clock, kep
 separate. Changing hidden source bytes necessarily changes the mandatory source
 pin; no claim of hiding that fingerprint is made.
 
+## Matrix identity in shared displays
+
+Owner decision, 2026-10-31: shared identity displays retain the full Matrix ID,
+including its homeserver. A friendly short label may accompany that ID.
+
+| Field | Meaning | Use |
+| --- | --- | --- |
+| `self.resolved_name` | Full source-declared `@localpart:homeserver` | Retain the complete ID in shared display and when passing an account identifier to a consumer. |
+| `caller.agent` | Unverified local `A2A_AGENT` context | Keep its existing meaning; it is not a qualified account address or authentication proof. |
+| `member` and `self.key` | Logical `product/member` key | Identify the logical member independently of its Matrix account or friendly label. |
+
+For example, `@station_beacon_orch:alpha.example` and
+`@station_beacon_orch:beta.example` identify distinct Matrix accounts despite
+their equal localparts. Consumers must retain both homeservers in display,
+addressing and account identity comparisons. Repeating the same full ID preserves
+account equality; message-event deduplication is a separate contract. Use the
+selected connection's declared `server_name`, not its HTTPS endpoint hostname or
+the execution host, when interpreting the returned name.
+
+The current local query still requires exactly one matching localpart in its
+single pinned card. If two declared bindings match that context on different
+homeservers, it refuses with `RULE caller_ambiguous` and empty stdout. It does not
+choose a domain implicitly or introduce a qualified caller selector.
+
+The full name is a card declaration; it does not establish account registration,
+authenticated authorship or current runtime state. Pulse emits this data but has
+no shared display renderer, messaging operation or transport deduplication.
+Its fixture checks do not establish that a downstream consumer implements or
+has adopted this contract.
+
 ## Verification and rollback
 
 ```sh
@@ -108,6 +138,12 @@ failures; bounded aliases; safe file types/ownership/modes; empty refusal stdout
 and unchanged input bytes. Hidden-data comparisons allow only the mandatory
 source fingerprint to change. These checks cannot establish cryptographic caller
 authenticity or actual host adoption.
+
+Federation fixtures pair equal localparts on different homeservers with a repeated
+identical full ID. A unique local-context positive precedes a valid two-domain
+ambiguous-context refusal, checking empty stdout and preservation of the fixture
+file and directory. Consumer display, addressing and event deduplication need
+their own implementation checks.
 
 Before actual use, the input custodian selects the existing card, verifies its
 exact content pin and runs the intended existing session context. Qualify a valid
