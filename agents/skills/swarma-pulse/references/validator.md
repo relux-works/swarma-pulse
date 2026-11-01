@@ -1,7 +1,7 @@
 # Read-only product-card validator
 
 The minimum toolchain is Go 1.25.12; the Go 1.26 branch requires 1.26.5 or newer, including the rooted-filesystem fix for
-[CVE-2026-39822](https://github.com/golang/go/issues/79005). `go.mod` requires this minimum; an older compiler with
+CVE-2026-39822 (golang/go issue 79005). `go.mod` requires this minimum; an older compiler with
 `GOTOOLCHAIN=local` refuses the build. Root containment claims require a toolchain containing this repair. The supported
 CLI profile-root and manifest-source paths also have adversarial trailing-separator tests. Linux execution remains
 unverified; the native checks described here were run on macOS arm64.
