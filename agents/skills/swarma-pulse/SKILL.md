@@ -22,7 +22,9 @@ to a real card. Select those inputs separately before running a command.
 - Select an existing admitted binary or build the repository's `cmd/pulse` as
   shown below, using the supported fixed Go toolchain in the
   [build guide](references/build-and-tools.md#build-and-run). Native qualification is macOS arm64;
-  do not infer another platform's qualification from it.
+  do not infer another platform's qualification from it. Before attributing a
+  built executable to a reviewed commit, read back its build metadata against
+  the selected source as described in that guide.
 - Select one absolute, clean card path and an independently checked SHA-256 of
   its exact bytes. `--revision` is that content pin, not a Git lookup or a
   canonical/current-card assertion. Do not copy or relocate a real card to change

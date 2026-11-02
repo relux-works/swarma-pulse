@@ -12,9 +12,21 @@ The initial target is a local Unix CLI, validated on macOS arm64. Use the module
 fixed supported Go toolchain, at least Go 1.25.12. No signature tool or cgo-backed
 account lookup is required.
 
+For an exact-commit build claim, record `git rev-parse HEAD` and a clean
+`git status --porcelain` before building, then read back the actual executable
+with `go version -m .temp/bin/pulse` and recheck the source status. Its
+`vcs.revision` must equal the selected head and `vcs.modified` must be `false`.
+Some Go toolchains stamp an enclosing checkout when building in a linked
+worktree. Missing or mismatching metadata cannot establish the selected-head
+provenance; it alone does not prove different source bytes were compiled.
+Preserve the artifact and qualify the build/toolchain route rather than suppress
+or inject metadata. A matching stamp does not establish reproducible-build
+equivalence or replace product checks.
+
 ```sh
 mkdir -p .temp/bin
 go build -o .temp/bin/pulse ./cmd/pulse
+go version -m .temp/bin/pulse
 # Select an existing owner-held card and its independently checked byte digest.
 .temp/bin/pulse me --local-unsigned \
   --card /absolute/path/product-card.yaml \

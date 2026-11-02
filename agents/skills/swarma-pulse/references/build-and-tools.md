@@ -15,6 +15,22 @@ refuse the build. Native validation is tested on macOS arm64 with Go 1.25.12. Th
 go.yaml.in/yaml/v3 v3.0.5, the maintained YAML v3 Node API, pinned in
 go.mod/go.sum. No language adapter, child process or network client is used by the validator.
 
+Before attributing a local executable to one reviewed commit, record the selected
+source's `git rev-parse HEAD` and `git status --porcelain`, build it, then inspect
+the actual executable with `go version -m PATH_TO_EXECUTABLE`. Require a clean
+source and matching `vcs.revision` with `vcs.modified=false` for that exact-commit
+claim. Check the source status again after building. A dirty source needs explicit
+dirty-source evidence instead of an exact-commit claim.
+
+Do not infer this attribution from the build directory or a successful command.
+Some Go toolchains skip a linked worktree's `.git` file and stamp an enclosing
+checkout instead (golang/go issue 58218). A missing or mismatching stamp cannot
+establish the selected-head provenance; it alone does not prove different source
+bytes were compiled. Preserve the artifact and report the discrepancy. Qualify
+the supported build/toolchain route before making the claim; never suppress or
+inject version metadata to make it appear matched. A matching stamp supports
+source attribution, not reproducible-build equivalence or product acceptance.
+
 ```sh
 mkdir -p .temp/bin
 go build -o .temp/bin/card-v4-validate ./cmd/card-v4-validate

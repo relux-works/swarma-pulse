@@ -79,6 +79,7 @@ be confirmed; inspect the result before any retry. See [converter inputs and pub
 | Change-check build | `go build -o .temp/bin/card-v4-check-change ./cmd/card-v4-check-change` | Ignored `.temp/bin/` executable |
 | Change checker | `.temp/bin/card-v4-check-change --root ROOT --prior PRIOR --prior-sha256 HASH --candidate CANDIDATE --candidate-sha256 HASH --rollback ROLLBACK --rollback-sha256 HASH --pilot PRODUCT/MEMBER --source-manifest MANIFEST --reservations PREMISES` | Fixed receipt or safe refusal; no writes |
 | Pulse build | `go build -o .temp/bin/pulse ./cmd/pulse` | Ignored `.temp/bin/` executable |
+| Build provenance | `git rev-parse HEAD`; `git status --porcelain`; `go version -m .temp/bin/pulse` | For an exact-commit claim, require clean source before/after build and matching `vcs.revision` with `vcs.modified=false`; a mismatching or missing stamp leaves attribution unverified |
 | Pulse query | `.temp/bin/pulse me --local-unsigned --card ABS --revision sha256:HASH --format json` | Self-only JSON or safe refusal; exact content pin and public `A2A_AGENT` context |
 | Declared environment | `.temp/bin/pulse me --local-unsigned --view environment --card ABS --revision sha256:HASH --format json` | Self-only v2 JSON with declared environment; no native-home lookup or launch |
 | Go tests | `go test -count=1 ./...` | All selected test lanes; isolated temporary fixtures |
