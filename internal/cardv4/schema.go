@@ -111,7 +111,9 @@ func combine(a, b map[string]validator) map[string]validator {
 	}
 	return out
 }
-func schema(version int) validator {
+func schema(version int) validator { return cardSchema(version, false) }
+
+func cardSchema(version int, company bool) validator {
 	closed := version == 4
 	txt := scalar(text, "text_format")
 	if !closed {
@@ -270,6 +272,18 @@ func schema(version int) validator {
 			opt["result_route"] = enumeration("a2a parent-native")
 			opt["chat_admission"] = txt
 		}
+		if company {
+			delete(opt, "project")
+			if _, present := m["project"]; present {
+				return fail("company_project_forbidden", at)
+			}
+			req["parent"] = func(v any, at string) *Issue {
+				if v == nil {
+					return nil
+				}
+				return id(v, at)
+			}
+		}
 		return objv(req, opt)(v, at)
 	}
 	productFields := fields("id description privacy keeper default_binding", txt)
@@ -282,6 +296,20 @@ func schema(version int) validator {
 	ext := validator(external)
 	if !closed {
 		ext = id
+	}
+	if company {
+		return object(map[string]validator{
+			"schema":           enumeration("company-card/v1"),
+			"company":          object(fields("id description privacy keeper default_binding", txt), nil, true),
+			"external_members": array(id, false), "connections": mapping(connection, true), "bindings": mapping(binding, true),
+			"profiles_root": path, "profiles": mapping(profile, true), "members": array(member, true),
+			"products": array(func(v any, at string) *Issue {
+				if obj(v) == nil {
+					return shape("object_shape", at)
+				}
+				return nil
+			}, false),
+		}, nil, true)
 	}
 	return objv(map[string]validator{"schema": enumeration("product-card/v" + string(rune('0'+version))), "product": objv(productFields, nil), "external_members": array(ext, false), "connections": mapping(connection, true), "bindings": mapping(binding, true), "profiles_root": path, "profiles": mapping(profile, true), "projects": array(project, true), "members": array(member, true)}, nil)
 }

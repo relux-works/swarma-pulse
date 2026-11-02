@@ -1,14 +1,18 @@
 ---
 name: swarma-pulse
-description: Use the shipped Pulse CLI to read a local unsigned self-only member view, interpret its identity and source fields, or select the existing product-card validator, converter and change checker. Use for these module interfaces; account registration, runtime launch and proposed signed or plugin interfaces are separate operations.
+description: Use the shipped Pulse CLI for local unsigned self, declared-environment or caller-discovery views, interpret identity/source boundaries, or select the product-card validator, converter and change checker. Use for these module interfaces; account registration, runtime launch and proposed signed or plugin interfaces are separate operations.
 ---
 
 # Use Pulse
 
 Read [the query contract](references/query-contract.md) for the complete input, trust
 and output boundary. Use the shipped `pulse me --local-unsigned` command for a
-self-only view of one explicitly selected `product-card/v3` snapshot. Its output
-schema is `pulse-view/v1`. The v4 tools are separate; selecting a v4 card does not
+self-only view of one explicitly selected `product-card/v3` snapshot, with output
+schema `pulse-view/v1`. Add `--view environment` for self declarations from one
+v3 product or v1 company card. Explicit `--view discovery` returns caller-relative
+peers, reports and superiors from a pinned local source universe. Both opt-in
+views return `pulse-view/v2`; read their sections in the query contract before use.
+The v4 tools are separate; selecting a v4 card does not
 make it a supported Pulse query input.
 
 The included references provide this skill's documentation without relying on
@@ -31,12 +35,14 @@ to a real card. Select those inputs separately before running a command.
   its path interpretation.
 - Use the invoking session's existing public `A2A_AGENT` localpart. Resolution is
   exact `binding.identity_prefix + member.id` for chat members, through the
-  declared or default binding, with exactly one match. A full MXID, normalized
+  declared or default binding, with exactly one match across the selected card or
+  discovery universe. A full MXID, normalized
   punctuation or an arbitrary member override is not a caller selector.
 - Pass **all** selectors explicitly: `me --local-unsigned --card ABS
   --revision sha256:LOWERCASE64HEX --format json`. There is no query config file,
-  implicit card discovery, extra-card merge, `--member`, `--config`, signature,
-  policy, trust or clock override. Missing mode refuses instead of falling back.
+  implicit card search, `--member`, `--config`, signature,
+  policy, trust or clock override. Additional cards require the explicit discovery
+  selectors below. Missing mode refuses instead of falling back.
 
 The card must be an invoking-UID-owned regular file of at most 1 MiB. Real and
 effective UIDs must match. The complete path must have nonsymlink ancestors owned
@@ -86,15 +92,61 @@ Expected: exit 2, empty stdout, exactly `RULE usage: $` followed by a newline on
 stderr. Selector validation precedes file access. Do not retry by silently adding
 unsigned mode to a request that intended a signed caller.
 
+## Select an opt-in view
+
+For self's declared environment, add `--view environment` to the baseline
+invocation. It reads only that card and never follows its references. The result
+has `self.level` and `self.environment` with profile source/pins, runtime,
+a2a connection/config selection, working-root locator and affirmative network
+selection. Missing optional launch declarations produce `state: incomplete`,
+nulls and sorted `missing`; malformed supplied extensions refuse
+`environment_invalid`. Do not inspect actual homes or supply guessed defaults.
+Even `state: complete` grants no execution authority. All supplied member
+extensions are validated, but only self's environment is returned.
+
+Discovery requires all of these selectors, including for an empty additional list:
+
+```text
+pulse me --local-unsigned --view discovery \
+  --card ABS --revision sha256:LOWERCASE64HEX \
+  --sources ABS --sources-revision sha256:LOWERCASE64HEX --root ABS --format json
+```
+
+Select the source manifest and read root through their existing input custody.
+The manifest is closed JSON `pulse-sources/v1` with `cards`, an array of additional
+`{id, schema, path, revision}` entries. Its paths use the primary card's parent,
+not the manifest directory. Each file is pinned; the primary is not repeated.
+All input files must remain inside the explicit absolute clean read root with
+the existing nonsymlink, owner and write-mode checks. Discovery source selectors
+with another view refuse as usage before input access. See the query contract's
+[company and discovery section](references/query-contract.md#company-inventory-and-caller-discovery)
+for the exact schema, containment, composition, refusal and limit rules.
+
+A company inventories products using company-card-relative host/card references.
+Local `product-card.yaml` may be directly or more deeply inside its declared host;
+normalization must preserve strict component containment. Keep every real card
+in place. A product's own project/profile/clone locators keep its own base.
+No reference triggers an implicit read: deliberately unsupplied products and
+external parents produce partial boundaries. An explicitly supplied missing
+file instead refuses the whole query. Remote inventory remains opaque and
+unavailable; supplying it as local refuses, with no fetch or coordinate mapping.
+
+Related summaries have exactly key, role, level, desired_state, resolved_name,
+project and parent. They exclude others' environments, profile/config/private
+routes and working roots. Same-level peers mean responsibility level, not equal
+graph depth. Superiors are nearest-first; reports retain parked/retired desired
+states. A partial hierarchy ends at declared unresolved boundaries. A complete
+hierarchy is complete only relative to supplied declarations.
+
 ## Interpret the result without expanding authority
 
 | Value | Interpretation |
 | --- | --- |
 | `self.resolved_name` | Full source-declared `@localpart:homeserver`; preserve the complete ID in shared display and account addressing/comparison. A friendly label may accompany it. |
 | `caller.agent` | Unverified local context; not a qualified account address or authenticated sender. |
-| `member`, `self.key` | Logical `product/member`, separate from the Matrix account. |
+| `member` (v1), `self.key` | Logical `card-id/member-id`, separate from the Matrix account. |
 | `self.execution_binding`, `self.profile`, `projects` | Declared desired facts, not current process, installed-profile or scheduling evidence. |
-| `source.schema`, `revision`, `sha256`, `card_root` | Supplied schema, exact byte pin and real input-parent coordinates. Freshness is `unknown`; `observed_at` is null. |
+| `source` (v1) or each `sources` item (v2): schema, revision, sha256, card_root | Supplied schema, exact byte pin and real input-parent coordinates. Freshness is `unknown`; `observed_at` is null. |
 | `query_observed_at` | Query UTC time, not card freshness or registration time. |
 
 `@station_beacon_orch:alpha.example` and
@@ -112,8 +164,8 @@ process can claim another valid local context; this mode cannot detect that
 impersonation. Self-only output and a card's desired role do not authorize an
 operation, filesystem access, account action or subordinate launch.
 
-`peers`, `direct_reports`, `descendants` and `superiors` are always empty.
-`hierarchy_status` is `self-only; hierarchy not disclosed`; empty lists do not
+Without discovery, `peers`, `direct_reports`, `descendants` and `superiors` are
+empty. `hierarchy_status` is `self-only; hierarchy not disclosed`; empty lists do not
 prove that no such members exist. Runtime, registration, installed-profile and
 assignment observations remain `unknown`. A member without a declared project
 returns `self.project: null`, `self.project_state: undeclared`, `projects: []`;
@@ -128,10 +180,11 @@ do not invent a project or appointment.
 | Missing/empty context | Exit 1, `RULE caller_context`, empty stdout. |
 | Valid but unmatched local context | Exit 1, `RULE caller_unknown`, empty stdout. |
 | Valid card with two bindings matching that localpart on different homeservers | Exit 1, `RULE caller_ambiguous`, empty stdout; no implicit domain choice. |
-| Unsupported schema or invalid complete v3 graph | Exit 1 with `RULE unsupported_schema` or `RULE card_invalid`, no conversion or partial view. |
+| Unsupported schema or invalid complete supplied graph | Exit 1 with `RULE unsupported_schema` or `RULE card_invalid`, no conversion or partial view. |
 | Unsafe, missing or unreadable input | Exit 1 with the applicable input rule; no substitute source or input writes. |
 
-Diagnostics use `RULE name: $` plus newline. The entire v3 graph is validated,
+Diagnostics use `RULE name: $` plus newline. Every supplied card and its complete
+graph are validated,
 including relationships, before projection; accepted bounded aliases and legacy
 extensions retain the v3 reader semantics. Do not impose v4's closed-field rules
 on v3 or accept only the self record from an invalid graph. A final stdout
@@ -164,7 +217,7 @@ skill, change a selected profile, register an identity or prove runtime adoption
 Use the chosen environment's supported reviewed packaging/adoption route for
 those separate changes; this product supplies no profile-install command.
 
-Signed callers, broader hierarchy, v5 composition, compact naming/migration and
+Signed callers, authenticated visibility, v5 composition, compact naming/migration and
 remote/plugin interfaces in the design documents remain proposals. Do not invoke
 unimplemented `pulse verify` or treat illustrative future pins as executable
 fixtures or as a production canonical-JSON rule.

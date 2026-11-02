@@ -43,8 +43,8 @@ Missing, empty, unknown and ambiguous context refuse; non-chat members cannot be
 selected through this context.
 
 Mode, card, revision and format are explicit. Unknown, duplicate, missing or unsupported flags
-refuse. Signed caller, signature, policy, extra-source, host-config, trust and clock
-selectors are unsupported. Omitted mode never falls back to unsigned behavior.
+refuse. The explicit views below add only their documented selectors. Signed caller,
+signature, policy, host-config, trust and clock selectors are unsupported. Omitted mode never falls back to unsigned behavior.
 `--revision` verifies the selected file's exact content SHA-256; it is not a Git
 revision lookup or proof that this snapshot is the current canonical card.
 
@@ -116,8 +116,8 @@ Add `--view environment` to the same invocation to request `pulse-view/v2`:
   --revision sha256:EXACT_LOWERCASE_64_HEX_DIGEST --format json
 ```
 
-This view supports one v3 card. Company cards, discovery, source manifests and
-read-root selectors are not shipped. The existing invocation without `--view`
+This view supports one `product-card/v3` or `company-card/v1`; it never opens
+referenced cards and refuses discovery source selectors. The existing invocation without `--view`
 keeps its v1 schema and ignores the new optional member extension.
 
 The v2 root contains exactly `schema`, `mode`, `query`, `caller`, `known_limit`,
@@ -125,10 +125,12 @@ The v2 root contains exactly `schema`, `mode`, `query`, `caller`, `known_limit`,
 `products`, `boundaries`, `hierarchy_status`, `observations` and
 `query_observed_at`. `query` is exactly `{view: environment}`. The singular v1
 `source` becomes a one-item `sources` array with the same receipt fields plus
-the product `id`. The v1 root `product` and `member` fields are absent.
+the card `id`. The v1 root `product` and `member` fields are absent.
 
-`self` retains the baseline fields and adds `level` (`product` for a keeper,
-`project` for an orchestrator, otherwise `member`) and `environment`.
+`self` retains the baseline fields and adds `level` (`company` for company-card
+members; otherwise `product` for a keeper, `project` for an orchestrator and
+`member` for other roles) and `environment`. Company self has company scope and
+no project.
 `projects` still contains only the caller's declared project. All relationship,
 product and boundary arrays are empty; hierarchy and observations remain unknown
 under the same self-only rule.
@@ -138,16 +140,16 @@ under the same self-only rule.
 not observations, installed configuration or permission to launch:
 
 - `profile` contains `key`, the existing `requirement` and `selected` pins, and
-  `source`. A local source is `{source: PRODUCT_ID, base: profiles_root,
+  `source`. A local source is `{source: CARD_ID, base: profiles_root,
   profiles_root: RELATIVE, path: RELATIVE}`; interpret `profiles_root` relative
   to that card's actual parent, then `path` relative to it. A registry source is
-  `{source: PRODUCT_ID, base: registry, repo: REPOSITORY, directory: RELATIVE}`.
+  `{source: CARD_ID, base: registry, repo: REPOSITORY, directory: RELATIVE}`.
 - `runtime` contains `kind`, `model` and `effort`; absent effort is null.
 - `a2a` contains `agent`, full `resolved_name`, `binding`, `operator`, `host`,
   named `connection`, `server_name` and `config_profile` (null if undeclared).
   It does not forward the HTTPS endpoint. A consumer resolves connection and
   config selectors through its own admitted configuration.
-- `working_root` is `{source: PRODUCT_ID, base: card, path: RELATIVE,
+- `working_root` is `{source: CARD_ID, base: card, path: RELATIVE,
   origin: ORIGIN}` or null. Precedence is `pulse.working_root`, then
   `member.clone`, then the caller's `project.path`. The origin records that
   choice. Its base is the card's actual parent, never the query cwd.
@@ -189,6 +191,155 @@ Consumers must refuse an incomplete launch description rather than invent values
 a complete description still grants no execution permission. No actual profile,
 credential store, process, proxy configuration or session file is consulted.
 
+## Company inventory and caller discovery
+
+Company cards use the new discriminant `company-card/v1`. Their closed root
+contains exactly `schema`, `company`, `external_members`, `connections`,
+`bindings`, `profiles_root`, `profiles`, `members` and `products`. `company`
+contains exactly `id`, `description`, `privacy`, `keeper` and `default_binding`.
+Connection, binding, profile and member fields reuse v3 predicates and legacy
+compatibility. A company is never presented as a v3 product to the old reader.
+
+The designated `company.keeper` references a local member with role `keeper`.
+Every company member requires `parent`. Only that designated keeper may declare
+`parent: null`, which ends traversal at the declared company root. Its parent
+may instead be a local or declared external string. Other company members,
+including another member with role `keeper`, require a string parent. Missing
+parent is invalid, and company members cannot have a project reference.
+An empty products list is valid. Member `clone` and the environment extension
+may declare a working root without inventing a company host project.
+
+Each product inventory entry has exactly these fields:
+
+```yaml
+id: aurora
+description: Example product
+host: {kind: local, path: ../aurora-host}
+card: {path: ../aurora-host/product-card/product-card.yaml}
+keeper: aurora/product_keeper
+superior: example-company/company_keeper
+parent_alias: external_company_keeper
+```
+
+Ids are unique across company and products. `keeper` is qualified by the entry's
+product id; `superior` names a materialized company member. A supplied product
+must designate that keeper and declare its parent as the exact external
+`parent_alias`. Discovery then resolves that one explicit edge to the superior;
+it never edits a card or infers an account from the alias. Disagreement refuses
+`relation_conflict`.
+
+Host and card locators use the actual company card's parent as their base.
+For a local entry, normalized `card.path` must be a strict component descendant
+of normalized `host.path`, directly or nested, with leaf `product-card.yaml`.
+A sibling sharing a string prefix, escape or different leaf refuses `input_path`.
+The closed `card` object accepts optional `revision: sha256:LOWERCASE64HEX`.
+When supplied, that pin must equal the selected product's query pin; disagreement
+refuses `source_digest`. Omitting the inventory pin never omits query pinning.
+A supplied local product's actual path must equal the company reference or the
+query refuses `source_reference_mismatch`. Declaring a locator does not open it.
+
+A remote host has exactly `{kind: remote, operator: ID, execution_host: ID,
+locator: PUBLIC_LOCATOR}`. Its nonempty locator has at most 512 bytes and no
+control characters. The card path retains its literal company-relative inventory
+meaning and receives relative syntax checks only. No remote coordinate mapping,
+local read, fetch or execution is inferred. Unsupplied remote entries report
+`remote_unavailable`; supplying one as a local source refuses
+`remote_source_unsupported`.
+
+Invoke discovery only with all explicit source selectors:
+
+```sh
+.temp/bin/pulse me --local-unsigned --view discovery \
+  --card /admitted/root/product/product-card.yaml \
+  --revision sha256:EXACT_CARD_DIGEST \
+  --sources /admitted/root/sources.json \
+  --sources-revision sha256:EXACT_MANIFEST_DIGEST \
+  --root /admitted/root --format json
+```
+
+The separately pinned sources manifest is UTF-8 JSON, not YAML:
+
+```json
+{
+  "schema": "pulse-sources/v1",
+  "cards": [
+    {
+      "id": "example-company",
+      "schema": "company-card/v1",
+      "path": "../company/company-card.yaml",
+      "revision": "sha256:LOWERCASE64HEX"
+    }
+  ]
+}
+```
+
+The root has exactly `schema` and `cards`; entries have exactly the four shown
+fields and select additional cards only. Every entry path is relative to the
+primary card's parent, regardless of the manifest's own directory. The primary
+may be a company or product. An empty `cards` array is valid and still requires
+all selectors. Duplicate keys, ids, normalized paths, repeated primary,
+unsupported schema and mismatched actual id/schema refuse the whole query.
+At most one company may be supplied. With a company, every supplied product must
+be in its inventory or `source_unreferenced` refuses. Product-only discovery
+needs no invented company root.
+
+`--root` must be an absolute clean admitted read root. Primary, manifest and
+additional source files must be strictly inside it after normalization. Sibling
+`..` references are allowed within that root; an escaping path refuses
+`input_path`. All actually opened files retain the ownership, ancestor mode,
+nonsymlink, UID and bounded-read checks above. A symlink inside the root still
+refuses. A supplied missing path refuses instead of becoming a partial result;
+a deliberately unsupplied reference produces a boundary without opening it.
+There is no automatic source search, Git lookup or fallback to a different view.
+
+Limits are 1 MiB per card or manifest, 32 additional cards, 16 MiB total supplied
+card bytes, 10,000 materialized members and 64 reporting hops, plus the existing
+per-card parser/member/project limits. Discovery breaches refuse `input_limit`.
+The complete supplied graphs and all environment extensions are checked before
+projection, including non-self records. Duplicate resolved full MXIDs refuse
+`identity_conflict`; equal localparts on distinct domains instead remain distinct
+accounts and refuse `caller_ambiguous` when selecting the caller. Reporting
+cycles and inconsistent or dangling materialized edges refuse the whole query.
+
+Discovery returns the same closed 17-field v2 root as environment. `query` is
+`{view: discovery, sources: {revision, sha256, root}}`. Root-level `sources`
+contains the primary first, then additional sources sorted by id, each with its
+own actual card parent, exact byte pin and unknown freshness. Project, clone,
+profile and company locators retain their owning card's base.
+
+Related summaries contain exactly `key`, `role`, `level`, `desired_state`,
+`resolved_name`, `project` and `parent`. Keys are `card-id/member-id`; non-chat
+members have null resolved names. Parent is a qualified key, null at the declared
+root, or `{source: CARD_ID, external: ALIAS}` for an unresolved external edge.
+Summaries exclude other members' environment, profile pins/paths, private routes,
+subscriptions and config/proxy selectors. Only self receives its environment.
+
+- `peers` contains every other materialized member at self's responsibility level,
+  independently of graph depth or parent. Levels are company for company members,
+  product for product keepers, project for product orchestrators, otherwise member.
+  A keeper managing a project remains product-level.
+- `direct_reports` contains immediate reports; `descendants` contains all reachable
+  reports, including direct ones, once each.
+- `superiors` is nearest-first and stops at a root or unresolved ancestor.
+- `projects` contains only self's and returned summaries' projects, with qualified
+  keys, repository, desired state and source-qualified local locations.
+- `products` contains all company inventory for company self; for a product caller
+  it contains self's product and products of returned summaries. Each has exactly
+  id, description, source-qualified host/card locators, keeper, superior and
+  `resolution: resolved|not_supplied|remote_unavailable`.
+
+Except for nearest-first superiors, lists sort by qualified key or product id.
+Parked and retired desired declarations remain present. Each unresolved parent
+edge and each unsupplied or remote inventory entry in the entire supplied universe
+produces a boundary with exactly `from`, `relation`, `target` and `reason`.
+Reasons are `external_unresolved`, `not_supplied` and `remote_unavailable`.
+Boundaries sort by raw source-qualified from, relation, target and reason
+(parent object targets compare source then external). `hierarchy_status` is
+`partial` with any boundary, otherwise `complete` relative to supplied declarations.
+A digest, resolved edge or complete hierarchy proves no authentication, current
+appointment, visibility entitlement, registered account or launch authority.
+Observations stay unknown and query time remains separate from source freshness.
+
 ## Matrix identity in shared displays
 
 Owner decision, 2026-10-31: shared identity displays retain the full Matrix ID,
@@ -208,8 +359,8 @@ account equality; message-event deduplication is a separate contract. Use the
 selected connection's declared `server_name`, not its HTTPS endpoint hostname or
 the execution host, when interpreting the returned name.
 
-The current local query still requires exactly one matching localpart in its
-single pinned card. If two declared bindings match that context on different
+Each view requires exactly one matching localpart in its selected card or
+explicitly supplied source universe. If two declared bindings match that context on different
 homeservers, it refuses with `RULE caller_ambiguous` and empty stdout. It does not
 choose a domain implicitly or introduce a qualified caller selector.
 
@@ -247,5 +398,9 @@ success alone does not prove that operation occurred.
 
 The query installs no daemon and creates no persistent state to roll back. Stop
 invoking it or use the previous reviewed binary while preserving all input files.
-Card migration, broader visibility, cryptographic callers and live observations
-require their own future accepted contracts.
+Card migration, authenticated visibility, cryptographic callers and live observations
+require their own future accepted contracts. Discovery checks also pair reciprocal
+company/product/member projections with partial inventory, explicit remote and
+missing-source refusals, source agreement, complete-graph validation, budget
+boundaries, summary privacy and stable ordering. Fixture evidence does not prove
+actual company/product adoption.

@@ -1,4 +1,4 @@
-// Package pulse provides an explicit local, unsigned, self-only product-card view.
+// Package pulse provides explicit local unsigned member, environment and discovery views.
 package pulse
 
 import (
@@ -11,8 +11,6 @@ import (
 	"time"
 	"unicode"
 	"unicode/utf8"
-
-	"github.com/relux-works/swarma-pulse/internal/cardv4"
 )
 
 const knownLimit = "caller not cryptographically verified; single-user local trust"
@@ -41,24 +39,11 @@ func projectView(raw []byte, revision, cardRoot, agent string, now time.Time, vi
 	if agent == "" || len(agent) > 512 || !utf8.ValidString(agent) || strings.ContainsFunc(agent, unicode.IsControl) {
 		return nil, refusal("caller_context")
 	}
-	card, issue := cardv4.Parse(raw, 3)
-	if issue != nil {
-		return nil, refusal("card_invalid")
+	card, err := decodeQueryCard(raw, revision, view == "environment")
+	if err != nil {
+		return nil, err
 	}
-	if card["schema"] != "product-card/v3" {
-		return nil, refusal("unsupported_schema")
-	}
-	if issue := cardv4.Validate(raw, cardv4.Options{Version: 3}); issue != nil {
-		return nil, refusal("card_invalid")
-	}
-	if view == "environment" {
-		for _, value := range arr(card["members"]) {
-			if !validEnvironmentExtension(obj(value)) {
-				return nil, refusal("environment_invalid")
-			}
-		}
-	}
-	product := obj(card["product"])
+	product := cardHeader(card)
 	bindings := obj(card["bindings"])
 	connections := obj(card["connections"])
 	var self, binding, connection object
@@ -97,6 +82,9 @@ func projectView(raw []byte, revision, cardRoot, agent string, now time.Time, vi
 	case "orchestrator":
 		scope = "project"
 	}
+	if card["schema"] == "company-card/v1" {
+		scope = "company"
+	}
 	profile := obj(obj(card["profiles"])[str(self["profile"])])
 	requirement, selected := obj(profile["requirement"]), obj(profile["selected"])
 	viewSelf := object{"key": key, "role": self["role"], "scope": scope, "desired_state": self["desired_state"],
@@ -122,7 +110,7 @@ func projectView(raw []byte, revision, cardRoot, agent string, now time.Time, vi
 	}
 	result := object{"schema": "pulse-view/v1", "mode": "local-unsigned", "product": product["id"], "member": key,
 		"caller": object{"agent": agent, "cryptographically_verified": false, "trust": "single-user local trust"}, "known_limit": knownLimit,
-		"source":            object{"schema": "product-card/v3", "revision": revision, "sha256": digest(raw), "card_root": filepath.Clean(cardRoot), "freshness": "unknown", "observed_at": nil},
+		"source":            object{"schema": card["schema"], "revision": revision, "sha256": digest(raw), "card_root": filepath.Clean(cardRoot), "freshness": "unknown", "observed_at": nil},
 		"query_observed_at": now.UTC().Format(time.RFC3339Nano), "self": viewSelf, "peers": []any{}, "direct_reports": []any{}, "descendants": []any{}, "superiors": []any{}, "projects": projects,
 		// This constant does not reveal hidden node counts or edge existence.
 		"hierarchy_status": "self-only; hierarchy not disclosed",

@@ -67,7 +67,7 @@ func validEnvironmentExtension(member object) bool {
 }
 
 func declaredEnvironment(card, member, binding, connection object, bindingKey, agent string) (object, error) {
-	sourceID := str(obj(card["product"])["id"])
+	sourceID := cardID(card)
 	profileKey := str(member["profile"])
 	profile := obj(obj(card["profiles"])[profileKey])
 	requirement, selected := obj(profile["requirement"]), obj(profile["selected"])

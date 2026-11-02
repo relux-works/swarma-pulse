@@ -12,7 +12,9 @@ import (
 
 // readCard accepts one explicitly selected owner-held file, not a directory or
 // ambient source. Owner/root can change these paths; same-UID isolation is not promised.
-func readCard(path string, uid int) ([]byte, error) {
+func readCard(path string, uid int) ([]byte, error) { return readCardBounded(path, uid, "input_trust") }
+
+func readCardBounded(path string, uid int, oversizedRule string) ([]byte, error) {
 	if !filepath.IsAbs(path) || filepath.Clean(path) != path || strings.ContainsRune(path, 0) {
 		return nil, refusal("input_path")
 	}
@@ -32,7 +34,9 @@ func readCard(path string, uid int) ([]byte, error) {
 			if !info.IsDir() {
 				return nil, refusal("input_trust")
 			}
-		} else if !info.Mode().IsRegular() || stat.Uid != uint32(uid) || info.Size() > cardv4.MaxBytes {
+		} else if info.Size() > cardv4.MaxBytes {
+			return nil, refusal(oversizedRule)
+		} else if !info.Mode().IsRegular() || stat.Uid != uint32(uid) {
 			return nil, refusal("input_trust")
 		}
 	}
@@ -43,7 +47,10 @@ func readCard(path string, uid int) ([]byte, error) {
 	file := os.NewFile(uintptr(fd), path)
 	defer file.Close()
 	info, err := file.Stat()
-	if err != nil || !info.Mode().IsRegular() || info.Size() > cardv4.MaxBytes {
+	if err == nil && info.Size() > cardv4.MaxBytes {
+		return nil, refusal(oversizedRule)
+	}
+	if err != nil || !info.Mode().IsRegular() {
 		return nil, refusal("input_trust")
 	}
 	stat, ok := info.Sys().(*syscall.Stat_t)
