@@ -9,7 +9,7 @@ import (
 	"time"
 )
 
-type selectors struct{ card, revision string }
+type selectors struct{ card, revision, view string }
 
 func parseSelectors(args []string) (selectors, error) {
 	var s selectors
@@ -31,7 +31,7 @@ func parseSelectors(args []string) (selectors, error) {
 			return s, refusal("usage")
 		}
 		key, value, hasValue := strings.Cut(strings.TrimPrefix(arg, "--"), "=")
-		if key != "card" && key != "revision" && key != "format" {
+		if key != "card" && key != "revision" && key != "format" && key != "view" {
 			return s, refusal("usage")
 		}
 		if _, duplicate := values[key]; duplicate {
@@ -52,6 +52,9 @@ func parseSelectors(args []string) (selectors, error) {
 	if !local || values["card"] == "" || values["format"] != "json" {
 		return s, refusal("usage")
 	}
+	if view, present := values["view"]; present && view != "environment" {
+		return s, refusal("usage")
+	}
 	revision := values["revision"]
 	if !strings.HasPrefix(revision, "sha256:") || len(revision) != 71 || strings.ContainsAny(strings.TrimPrefix(revision, "sha256:"), "ABCDEF") {
 		return s, refusal("usage")
@@ -61,7 +64,7 @@ func parseSelectors(args []string) (selectors, error) {
 			return s, refusal("usage")
 		}
 	}
-	return selectors{values["card"], revision}, nil
+	return selectors{card: values["card"], revision: revision, view: values["view"]}, nil
 }
 
 // Run requires affirmative unsigned mode before reading OS context or any file.
@@ -88,7 +91,7 @@ func runSelected(s selectors, uid, euid int, agent string, now time.Time, out, d
 		fmt.Fprintln(diagnostics, err)
 		return 1
 	}
-	result, err := project(raw, s.revision, filepath.Dir(s.card), agent, now)
+	result, err := projectView(raw, s.revision, filepath.Dir(s.card), agent, now, s.view)
 	if err != nil {
 		fmt.Fprintln(diagnostics, err)
 		return 1

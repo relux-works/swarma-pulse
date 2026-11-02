@@ -30,7 +30,7 @@ There is no punctuation normalization, account-store lookup or `--member` overri
 Missing, empty, unknown and ambiguous context refuse; non-chat members cannot be
 selected through this context.
 
-All four selectors are explicit. Unknown, duplicate, missing or unsupported flags
+Mode, card, revision and format are explicit. Unknown, duplicate, missing or unsupported flags
 refuse. Signed caller, signature, policy, extra-source, host-config, trust and clock
 selectors are unsupported. Omitted mode never falls back to unsigned behavior.
 `--revision` verifies the selected file's exact content SHA-256; it is not a Git
@@ -93,6 +93,89 @@ registration, installed profile and assignment observations are all `unknown`.
 observation provenance. `query_observed_at` is the actual query's UTC clock, kept
 separate. Changing hidden source bytes necessarily changes the mandatory source
 pin; no claim of hiding that fingerprint is made.
+
+## Declared environment view
+
+Add `--view environment` to the same invocation to request `pulse-view/v2`:
+
+```sh
+.temp/bin/pulse me --local-unsigned --view environment \
+  --card /absolute/path/product-card.yaml \
+  --revision sha256:EXACT_LOWERCASE_64_HEX_DIGEST --format json
+```
+
+This view supports one v3 card. Company cards, discovery, source manifests and
+read-root selectors are not shipped. The existing invocation without `--view`
+keeps its v1 schema and ignores the new optional member extension.
+
+The v2 root contains exactly `schema`, `mode`, `query`, `caller`, `known_limit`,
+`sources`, `self`, `peers`, `direct_reports`, `descendants`, `superiors`, `projects`,
+`products`, `boundaries`, `hierarchy_status`, `observations` and
+`query_observed_at`. `query` is exactly `{view: environment}`. The singular v1
+`source` becomes a one-item `sources` array with the same receipt fields plus
+the product `id`. The v1 root `product` and `member` fields are absent.
+
+`self` retains the baseline fields and adds `level` (`product` for a keeper,
+`project` for an orchestrator, otherwise `member`) and `environment`.
+`projects` still contains only the caller's declared project. All relationship,
+product and boundary arrays are empty; hierarchy and observations remain unknown
+under the same self-only rule.
+
+`self.environment` has exactly `schema: pulse-environment/v1`, `state`, `profile`,
+`runtime`, `a2a`, `working_root`, `network` and `missing`. These are declarations,
+not observations, installed configuration or permission to launch:
+
+- `profile` contains `key`, the existing `requirement` and `selected` pins, and
+  `source`. A local source is `{source: PRODUCT_ID, base: profiles_root,
+  profiles_root: RELATIVE, path: RELATIVE}`; interpret `profiles_root` relative
+  to that card's actual parent, then `path` relative to it. A registry source is
+  `{source: PRODUCT_ID, base: registry, repo: REPOSITORY, directory: RELATIVE}`.
+- `runtime` contains `kind`, `model` and `effort`; absent effort is null.
+- `a2a` contains `agent`, full `resolved_name`, `binding`, `operator`, `host`,
+  named `connection`, `server_name` and `config_profile` (null if undeclared).
+  It does not forward the HTTPS endpoint. A consumer resolves connection and
+  config selectors through its own admitted configuration.
+- `working_root` is `{source: PRODUCT_ID, base: card, path: RELATIVE,
+  origin: ORIGIN}` or null. Precedence is `pulse.working_root`, then
+  `member.clone`, then the caller's `project.path`. The origin records that
+  choice. Its base is the card's actual parent, never the query cwd.
+- `network` is null when undeclared, or exactly `{mode: direct}` or
+  `{mode: proxy, ref: SELECTOR}`. There is no implicit direct fallback.
+
+To supply the optional launch declarations, add this closed member extension:
+
+```yaml
+pulse:
+  schema: pulse-member-environment/v1
+  a2a_config_profile: demo-config
+  working_root: ../beacon
+  network:
+    mode: proxy
+    ref: proxy-main
+```
+
+Only `schema` is required in the extension. Config and proxy selectors match
+`[a-zA-Z0-9][a-zA-Z0-9._-]{0,127}`; they are symbolic names. The two network
+branches accept exactly the fields shown. Unknown keys/version, wrong types,
+malformed selectors or relative paths refuse `RULE environment_invalid: $`
+without echoing the supplied value. All supplied member extensions are validated
+before projection; only the caller's environment is returned.
+
+Declared relative locators must be nonempty and contain no control characters,
+leading slash, backslash, tilde, URI scheme or platform drive prefix. Sibling
+`..` components are allowed. Pulse checks syntax only: it never opens these
+paths or checks their existence, symlinks or containment. The source file itself
+retains the strict input-read boundary described above. The eventual launch
+consumer separately admits its working root and profile.
+
+Missing config profile, network or working root produces success with
+`state: incomplete`, explicit nulls and sorted `missing` paths
+(`a2a.config_profile`, `network`, `working_root`, as applicable). Otherwise the
+state is `complete`. Baseline validation already requires profile selection,
+runtime kind/model and chat binding/connection. Optional effort is not missing.
+Consumers must refuse an incomplete launch description rather than invent values;
+a complete description still grants no execution permission. No actual profile,
+credential store, process, proxy configuration or session file is consulted.
 
 ## Matrix identity in shared displays
 

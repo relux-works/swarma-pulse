@@ -28,6 +28,13 @@ func digest(raw []byte) string  { sum := sha256.Sum256(raw); return hex.EncodeTo
 // project validates a single exact source before resolving the unverified local
 // context. No authority, remote lookup, extra source or relationship expansion exists.
 func project(raw []byte, revision, cardRoot, agent string, now time.Time) ([]byte, error) {
+	return projectView(raw, revision, cardRoot, agent, now, "")
+}
+
+func projectView(raw []byte, revision, cardRoot, agent string, now time.Time, view string) ([]byte, error) {
+	if view != "" && view != "environment" {
+		return nil, refusal("usage")
+	}
 	if revision != "sha256:"+digest(raw) {
 		return nil, refusal("source_digest")
 	}
@@ -43,6 +50,13 @@ func project(raw []byte, revision, cardRoot, agent string, now time.Time) ([]byt
 	}
 	if issue := cardv4.Validate(raw, cardv4.Options{Version: 3}); issue != nil {
 		return nil, refusal("card_invalid")
+	}
+	if view == "environment" {
+		for _, value := range arr(card["members"]) {
+			if !validEnvironmentExtension(obj(value)) {
+				return nil, refusal("environment_invalid")
+			}
+		}
 	}
 	product := obj(card["product"])
 	bindings := obj(card["bindings"])
@@ -113,6 +127,24 @@ func project(raw []byte, revision, cardRoot, agent string, now time.Time) ([]byt
 		// This constant does not reveal hidden node counts or edge existence.
 		"hierarchy_status": "self-only; hierarchy not disclosed",
 		"observations":     object{"runtime": object{"state": "unknown"}, "registration": object{"state": "unknown"}, "installed_profile": object{"state": "unknown"}, "assignment": object{"state": "unknown"}}}
+	if view == "environment" {
+		environment, err := declaredEnvironment(card, self, binding, connection, bindingKey, agent)
+		if err != nil {
+			return nil, err
+		}
+		viewSelf["level"] = scope
+		viewSelf["environment"] = environment
+		source := obj(result["source"])
+		source["id"] = product["id"]
+		delete(result, "source")
+		delete(result, "product")
+		delete(result, "member")
+		result["schema"] = "pulse-view/v2"
+		result["query"] = object{"view": "environment"}
+		result["sources"] = []any{source}
+		result["products"] = []any{}
+		result["boundaries"] = []any{}
+	}
 	encoded, err := json.Marshal(result)
 	if err != nil {
 		return nil, refusal("output_encoding")

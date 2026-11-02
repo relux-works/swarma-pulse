@@ -8,7 +8,7 @@ The [specification](docs/specs/product-card-identity-pulse-v1.md), [v4 format](d
 The Go read-only validator implements static v4 validation and the v3.1 source-reading rules. An explicitly invoked
 [converter](docs/converter.md) preserves a supplied v3 card into a separately selected destination with atomic publication.
 The optional [desired-change checker](docs/change-check.md) verifies a pinned candidate and exact rollback without writing.
-The read-only [Pulse member query](docs/pulse.md) reads one explicitly selected v3 card and emits a local unsigned self-only projection.
+The read-only [Pulse member query](docs/pulse.md) reads one explicitly selected v3 card and emits a local unsigned self-only projection. Add `--view environment` for the caller's declared profile, runtime and launch coordinates, with explicit missing facts.
 It uses `A2A_AGENT` as unverified context and reports `caller not cryptographically verified; single-user local trust`.
 Account migration and service/session launch remain separate operations.
 The repository-owned [Pulse usage skill](agents/skills/swarma-pulse/SKILL.md) explains the shipped self-query, explicit
@@ -80,6 +80,7 @@ be confirmed; inspect the result before any retry. See [converter inputs and pub
 | Change checker | `.temp/bin/card-v4-check-change --root ROOT --prior PRIOR --prior-sha256 HASH --candidate CANDIDATE --candidate-sha256 HASH --rollback ROLLBACK --rollback-sha256 HASH --pilot PRODUCT/MEMBER --source-manifest MANIFEST --reservations PREMISES` | Fixed receipt or safe refusal; no writes |
 | Pulse build | `go build -o .temp/bin/pulse ./cmd/pulse` | Ignored `.temp/bin/` executable |
 | Pulse query | `.temp/bin/pulse me --local-unsigned --card ABS --revision sha256:HASH --format json` | Self-only JSON or safe refusal; exact content pin and public `A2A_AGENT` context |
+| Declared environment | `.temp/bin/pulse me --local-unsigned --view environment --card ABS --revision sha256:HASH --format json` | Self-only v2 JSON with declared environment; no native-home lookup or launch |
 | Go tests | `go test -count=1 ./...` | All selected test lanes; isolated temporary fixtures |
 | Race checks | `go test -race -count=1 ./...` | Race-enabled results for all packages |
 | Go vet | `go vet ./...` | Static diagnostics |
