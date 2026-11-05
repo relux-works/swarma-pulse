@@ -23,9 +23,11 @@ clone with its own `.git` directory, rather than a linked worktree. Record
 `git rev-parse HEAD` and `git status --porcelain` before building, then read back
 the actual executable with `go version -m .temp/bin/pulse` and recheck the source
 status. Require `-trimpath=true`, `vcs.revision` equal to the selected head and
-`vcs.modified=false`, with clean source before and after. A tracked-file edit,
-including a documentation-only edit, yields `vcs.modified=true` and cannot support
-a clean exact-head claim. Some Go toolchains
+`vcs.modified=false`, with clean source before and after. For this supported Go/Git build route,
+uncommitted tracked-file changes or non-ignored untracked files, including
+documentation, yield `vcs.modified=true` and cannot support a clean exact-head
+claim; the stamp does not prove that Go source changed. An ignored scratch file
+alone leaves an otherwise clean checkout at `vcs.modified=false`. Some Go toolchains
 stamp an enclosing checkout when building in a linked worktree. Missing or
 mismatching metadata leaves attribution unverified; it alone does not prove
 different source bytes were compiled. Preserve the artifact and qualify the
