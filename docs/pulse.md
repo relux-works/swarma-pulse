@@ -12,42 +12,9 @@ The initial target is a local Unix CLI, validated on macOS arm64. Use the module
 fixed supported Go toolchain, at least Go 1.25.12 (the Go 1.26 branch requires
 1.26.5 or newer). No signature tool or cgo-backed account lookup is required.
 
-Build with `-trimpath` to remove checkout filesystem paths from the executable.
-Without it, builds of the same source at different paths can have different
-artifact hashes. The `-p 2` flag caps build parallelism and is output-neutral;
-path independence comes from `-trimpath`. Neither flag changes the source
-revision or selects a release.
-
-For an exact-commit build claim, select a signed commit in a clean standalone
-clone with its own `.git` directory, rather than a linked worktree. Record
-`git rev-parse HEAD` and `git status --porcelain` before building, then read back
-the actual executable with `go version -m .temp/bin/pulse` and recheck the source
-status. Require `-trimpath=true`, `vcs.revision` equal to the selected head and
-`vcs.modified=false`, with clean source before and after. For this supported Go/Git build route,
-uncommitted tracked-file changes or non-ignored untracked files, including
-documentation, yield `vcs.modified=true` and cannot support a clean exact-head
-claim; the stamp does not prove that Go source changed. An ignored scratch file
-alone leaves an otherwise clean checkout at `vcs.modified=false`. Some Go toolchains
-stamp an enclosing checkout when building in a linked worktree. Missing or
-mismatching metadata leaves attribution unverified; it alone does not prove
-different source bytes were compiled. Preserve the artifact and qualify the
-build/toolchain route rather than suppress or inject metadata.
-
-For a path-independence check, build the same signed commit in two clean
-standalone clones at different absolute paths using the command below. Fix and
-record the exact Go version, GOOS/GOARCH and architecture tuning, CGO_ENABLED,
-compiler and other build settings identically for both builds. Use
-`GOTOOLCHAIN=local` to prevent automatic toolchain selection. Verify both
-executables' metadata as above and compare their full SHA-256 hashes (for
-example, `sha256sum /first/output/pulse /second/output/pulse` on Linux or
-`shasum -a 256 /first/output/pulse /second/output/pulse` on macOS). Unequal hashes
-leave that comparison unqualified, even if both revision stamps match.
-Equal hashes qualify only the recorded source, toolchain, platform and settings;
-`-trimpath` alone is not a reproducibility guarantee across different toolchains,
-platforms or CGO configurations. Linux/amd64 with Go 1.26.8 is a supported check
-lane; a result from that lane is Linux-only and does not qualify macOS behavior.
-Unavailable lanes remain unrun. Matching metadata or hashes do not replace
-signature verification, independent review or product checks.
+For build provenance and path-independence details, see the
+[canonical guidance](
+../agents/skills/swarma-pulse/references/query-contract.md#build-and-invoke).
 
 ```sh
 mkdir -p .temp/bin
