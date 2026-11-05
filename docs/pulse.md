@@ -9,23 +9,42 @@ input. Existing v4 tools and the signed-caller design remain separate contracts.
 ## Build and invoke
 
 The initial target is a local Unix CLI, validated on macOS arm64. Use the module's
-fixed supported Go toolchain, at least Go 1.25.12. No signature tool or cgo-backed
-account lookup is required.
+fixed supported Go toolchain, at least Go 1.25.12 (the Go 1.26 branch requires
+1.26.5 or newer). No signature tool or cgo-backed account lookup is required.
 
-For an exact-commit build claim, record `git rev-parse HEAD` and a clean
-`git status --porcelain` before building, then read back the actual executable
-with `go version -m .temp/bin/pulse` and recheck the source status. Its
-`vcs.revision` must equal the selected head and `vcs.modified` must be `false`.
-Some Go toolchains stamp an enclosing checkout when building in a linked
-worktree. Missing or mismatching metadata cannot establish the selected-head
-provenance; it alone does not prove different source bytes were compiled.
-Preserve the artifact and qualify the build/toolchain route rather than suppress
-or inject metadata. A matching stamp does not establish reproducible-build
-equivalence or replace product checks.
+Build with `-trimpath` to remove checkout filesystem paths from the executable.
+Without it, builds of the same source at different paths can have different
+artifact hashes. This does not change the source revision or select a release.
+
+For an exact-commit build claim, select a signed commit in a clean standalone
+clone with its own `.git` directory, rather than a linked worktree. Record
+`git rev-parse HEAD` and `git status --porcelain` before building, then read back
+the actual executable with `go version -m .temp/bin/pulse` and recheck the source
+status. Require `-trimpath=true`, `vcs.revision` equal to the selected head and
+`vcs.modified=false`, with clean source before and after. Some Go toolchains
+stamp an enclosing checkout when building in a linked worktree. Missing or
+mismatching metadata leaves attribution unverified; it alone does not prove
+different source bytes were compiled. Preserve the artifact and qualify the
+build/toolchain route rather than suppress or inject metadata.
+
+For a path-independence check, build the same signed commit in two clean
+standalone clones at different absolute paths using the command below. Fix and
+record the exact Go version, GOOS/GOARCH and architecture tuning, CGO_ENABLED,
+compiler and other build settings identically for both builds. Use
+`GOTOOLCHAIN=local` to prevent automatic toolchain selection. Verify both
+executables' metadata as above and compare their full SHA-256 hashes (for
+example, `sha256sum /first/output/pulse /second/output/pulse` on Linux). Unequal
+hashes leave that comparison unqualified, even if both revision stamps match.
+Equal hashes qualify only the recorded source, toolchain, platform and settings;
+`-trimpath` alone is not a reproducibility guarantee across different toolchains,
+platforms or CGO configurations. Linux/amd64 with Go 1.26.8 is a supported check
+lane; a result from that lane is Linux-only and does not qualify macOS behavior.
+Unavailable lanes remain unrun. Matching metadata or hashes do not replace
+signature verification, independent review or product checks.
 
 ```sh
 mkdir -p .temp/bin
-go build -o .temp/bin/pulse ./cmd/pulse
+GOTOOLCHAIN=local go build -trimpath -mod=readonly -p 2 -o .temp/bin/pulse ./cmd/pulse
 go version -m .temp/bin/pulse
 # Select an existing owner-held card and its independently checked byte digest.
 .temp/bin/pulse me --local-unsigned \
