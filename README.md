@@ -92,6 +92,10 @@ be confirmed; inspect the result before any retry. See [converter inputs and pub
 | Coverage | `go test -coverprofile=.temp/coverage.out ./...` | `.temp/coverage.out`; inspect with `go tool cover -func=.temp/coverage.out` |
 | Git | `git diff --check`; `git verify-commit HEAD` | Whitespace/signature diagnostics |
 
+For Pulse, `-p 2` caps build parallelism and is output-neutral; checkout-path
+independence comes from `-trimpath`. See the [Pulse build guidance](docs/pulse.md#build-and-invoke)
+for clean standalone-clone attribution and fixed-settings hash comparisons.
+
 The optional v3 integration lane takes an explicit source without copying its values:
 `CARD_V3_INTEGRATION_INPUT=/absolute/path/product-card.yaml go test -count=1 ./internal/cardv4 -run TestV3SuppliedCard`.
 That lane checks the recorded 9-member, 8-project, 4-profile baseline; it is skipped when no input is selected.

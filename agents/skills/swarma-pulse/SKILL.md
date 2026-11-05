@@ -60,7 +60,7 @@ a local build destination, not a claim that a binary is already installed on PAT
 
 ```sh
 mkdir -p .temp/bin
-go build -o .temp/bin/pulse ./cmd/pulse
+GOTOOLCHAIN=local go build -trimpath -mod=readonly -p 2 -o .temp/bin/pulse ./cmd/pulse
 pulse_card="$(pwd -P)/docs/fixtures/v4/full/source-v3.json"
 pulse_revision='sha256:70ec21346a86efda80dfcf0433b0405acf41ab25751b00b1fdcad25ee504fc11'
 A2A_AGENT=station_beacon_orch .temp/bin/pulse me --local-unsigned \
