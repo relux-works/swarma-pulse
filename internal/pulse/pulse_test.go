@@ -213,22 +213,22 @@ func TestLegacyReaderAndHiddenNoninterference(t *testing.T) {
 
 func ownDirectory(t *testing.T) string {
 	t.Helper()
-	base, err := filepath.Abs("../../.temp")
+	// Resolve aliases only on the fixture allocated by testing (for example,
+	// macOS /var -> /private/var), never on an input being tested for refusal.
+	p, err := filepath.EvalSymlinks(t.TempDir())
 	if err != nil {
 		t.Fatal(err)
 	}
-	if err = os.MkdirAll(base, 0700); err != nil {
+	if err := os.Chmod(p, 0700); err != nil {
 		t.Fatal(err)
 	}
-	p, err := os.MkdirTemp(base, "pulse-test-")
+	info, err := os.Lstat(p)
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Cleanup(func() {
-		if err := os.RemoveAll(p); err != nil {
-			t.Error(err)
-		}
-	})
+	if !info.IsDir() || info.Mode().Perm() != 0700 {
+		t.Fatalf("fixture directory must be a regular 0700 directory: %v", info.Mode())
+	}
 	return p
 }
 func writeFixture(t *testing.T, dir string, raw []byte) string {
@@ -237,7 +237,40 @@ func writeFixture(t *testing.T, dir string, raw []byte) string {
 	if err := os.WriteFile(p, raw, 0600); err != nil {
 		t.Fatal(err)
 	}
+	if err := os.Chmod(p, 0600); err != nil {
+		t.Fatal(err)
+	}
+	info, err := os.Lstat(p)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !info.Mode().IsRegular() || info.Mode().Perm() != 0600 {
+		t.Fatalf("fixture file must be regular with mode 0600: %v", info.Mode())
+	}
 	return p
+}
+
+// The helper returns a canonical test-owned path and testing removes it after
+// the allocating subtest, including the fixture file it contains.
+func TestOwnDirectoryLifecycle(t *testing.T) {
+	var dir string
+	t.Run("allocate", func(t *testing.T) {
+		dir = ownDirectory(t)
+		if !filepath.IsAbs(dir) {
+			t.Fatalf("fixture path must be absolute: %q", dir)
+		}
+		canonical, err := filepath.EvalSymlinks(dir)
+		if err != nil || canonical != dir {
+			t.Fatalf("fixture path must be canonical: %q, %v", canonical, err)
+		}
+		writeFixture(t, dir, []byte("synthetic fixture"))
+	})
+	if dir == "" {
+		t.Fatal("fixture was not allocated")
+	}
+	if _, err := os.Lstat(dir); !os.IsNotExist(err) {
+		t.Fatalf("testing must remove the allocated fixture: %v", err)
+	}
 }
 
 // Exact owner-held regular bytes pass; mode, symlink/ancestor, finite-size,

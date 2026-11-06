@@ -96,6 +96,18 @@ For Pulse, `-p 2` caps build parallelism and is output-neutral; checkout-path
 independence comes from `-trimpath`. See the [Pulse build guidance](docs/pulse.md#build-and-invoke)
 for clean standalone-clone attribution and fixed-settings hash comparisons.
 
+Pulse file-reader tests allocate their owned fixtures with `testing.T.TempDir` and
+remove them through Go test cleanup. For a read-only checkout, set Go's `TMPDIR`
+to an exclusive writable directory outside the source before running ordinary,
+race and vet commands. Fixture directories are 0700 and card files are 0600.
+The positive reader fixtures require every ancestor, including the filesystem
+root, to be nonsymlink, owned by root or the test UID, and not group/world writable.
+A default shared `/tmp` does not satisfy this premise. Arrange a protected scratch
+path under your existing custody; do not weaken the reader to admit shared temp
+roots. The helper canonicalizes only its allocated fixture path to handle platform
+aliases such as macOS `/var`; deliberately unsafe test inputs remain unchanged.
+Run the full ordinary/race/vet lanes on both Linux and macOS for qualification.
+
 The optional v3 integration lane takes an explicit source without copying its values:
 `CARD_V3_INTEGRATION_INPUT=/absolute/path/product-card.yaml go test -count=1 ./internal/cardv4 -run TestV3SuppliedCard`.
 That lane checks the recorded 9-member, 8-project, 4-profile baseline; it is skipped when no input is selected.
