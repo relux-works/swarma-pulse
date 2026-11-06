@@ -293,6 +293,12 @@ projection, including non-self records. Duplicate resolved full MXIDs refuse
 `identity_conflict`; equal localparts on distinct domains instead remain distinct
 accounts and refuse `caller_ambiguous` when selecting the caller. Reporting
 cycles and inconsistent or dangling materialized edges refuse the whole query.
+During reporting validation, a `relation_conflict` found by any walk within its
+64-hop budget takes precedence over `input_limit` from another reporting walk,
+independent of member iteration order. Each walk still stops at its hop limit;
+if none finds a relation conflict, any exceeded reporting budget refuses
+`input_limit`. A cycle longer than 64 edges therefore still refuses `input_limit`.
+This precedence does not change earlier source, identity or input-budget checks.
 
 Discovery returns the same closed 17-field v2 root as environment. `query` is
 `{view: discovery, sources: {revision, sha256, root}}`. Root-level `sources`

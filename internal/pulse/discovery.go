@@ -261,6 +261,7 @@ func composeCompany(cards []*querySource, nodes map[string]*graphMember) ([]any,
 }
 
 func checkReportingGraph(nodes map[string]*graphMember) error {
+	limited := false
 	for _, start := range nodes {
 		seen := map[string]bool{}
 		n := start
@@ -275,7 +276,10 @@ func checkReportingGraph(nodes map[string]*graphMember) error {
 			}
 			hops++
 			if hops > maxReportingHops {
-				return refusal("input_limit")
+				// Keep each walk bounded, but let a relation conflict found by
+				// another bounded walk take precedence, regardless of map order.
+				limited = true
+				break
 			}
 			parent, local := n.parent.(string)
 			if !local {
@@ -286,6 +290,9 @@ func checkReportingGraph(nodes map[string]*graphMember) error {
 				return refusal("relation_conflict")
 			}
 		}
+	}
+	if limited {
+		return refusal("input_limit")
 	}
 	return nil
 }
