@@ -316,6 +316,109 @@ func TestDiscoveryCompositionRefusals(t *testing.T) {
 	}
 }
 
+// Unsupplied remote inventory still validates its opaque locator before any
+// projection. Each refusal differs only in locator bytes from a valid control.
+func TestDiscoveryUnsuppliedRemoteLocator(t *testing.T) {
+	const opaque = "https://unopened.invalid/no-fetch"
+	for _, tc := range []struct {
+		name, valid, invalid string
+	}{
+		{"byte-limit", strings.Repeat("é", 256), strings.Repeat("é", 256) + "x"},
+		{"nonempty", opaque, ""},
+		{"newline", opaque, opaque + "\n"},
+		{"nul", opaque, opaque + "\x00"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			for _, control := range []bool{true, false} {
+				name, locator := "valid", tc.valid
+				if !control {
+					name, locator = "invalid", tc.invalid
+				}
+				t.Run(name, func(t *testing.T) {
+					c := companyFixture(t)
+					e := inventoryEntry("away", "keeper")
+					e["host"] = object{"kind": "remote", "operator": "other", "execution_host": "other", "locator": locator}
+					c["products"] = []any{e}
+					// Only the company is supplied; JSON encoding escapes control
+					// bytes and writeUniverse pins these exact newly encoded bytes.
+					u := writeUniverse(t, map[string]object{"company": c})
+					s := u.selectSources(t, "company")
+					raw, err := os.ReadFile(s.card)
+					if err != nil || !json.Valid(raw) || s.revision != "sha256:"+digest(raw) {
+						t.Fatal("invalid JSON or stale input pin", err)
+					}
+					cards, manifest, err := loadDiscovery(s, os.Getuid())
+					var projected []byte
+					if err == nil {
+						projected, err = projectDiscovery(cards, manifest, "station_company_keeper", fixedTime)
+					}
+					if !control {
+						wantRule(t, err, "card_invalid")
+						if len(projected) != 0 || err.Error() != "RULE card_invalid: $" {
+							t.Fatal("refusal emitted a partial view or unsafe diagnostic")
+						}
+						return
+					}
+					if err != nil {
+						t.Fatal(err)
+					}
+					var v object
+					if err := json.Unmarshal(projected, &v); err != nil {
+						t.Fatal(err)
+					}
+					if len(cards) != 1 || len(arr(v["sources"])) != 1 || len(arr(v["products"])) != 1 || obj(arr(v["products"])[0])["resolution"] != "remote_unavailable" {
+						t.Fatal("unsupplied remote control did not remain unavailable")
+					}
+				})
+			}
+		})
+	}
+}
+
+func TestDiscoveryRemoteLocatorCLIRefusalPreservesSources(t *testing.T) {
+	c := companyFixture(t)
+	e := inventoryEntry("away", "keeper")
+	e["host"] = object{"kind": "remote", "operator": "other", "execution_host": "other", "locator": "https://unopened.invalid/private-marker\x00"}
+	c["products"] = []any{e}
+	u := writeUniverse(t, map[string]object{"company": c})
+	s := u.selectSources(t, "company")
+	type witness struct {
+		raw  []byte
+		info os.FileInfo
+	}
+	before := map[string]witness{}
+	for _, path := range u.files {
+		raw, err := os.ReadFile(path)
+		if err != nil {
+			t.Fatal(err)
+		}
+		info, err := os.Stat(path)
+		if err != nil {
+			t.Fatal(err)
+		}
+		before[path] = witness{raw, info}
+	}
+	t.Setenv("A2A_AGENT", "station_company_keeper")
+	args := []string{"me", "--local-unsigned", "--view", "discovery", "--card", s.card, "--revision", s.revision, "--format", "json", "--sources", s.sources, "--sources-revision", s.sourcesRevision, "--root", s.root}
+	var out, diag bytes.Buffer
+	if code := Run(args, &out, &diag); code != 1 || out.Len() != 0 || diag.String() != "RULE card_invalid: $\n" {
+		t.Fatal("CLI did not refuse safely with exit 1 and empty stdout")
+	}
+	for path, w := range before {
+		raw, err := os.ReadFile(path)
+		if err != nil {
+			t.Fatal(err)
+		}
+		info, err := os.Stat(path)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if !bytes.Equal(raw, w.raw) || !os.SameFile(info, w.info) || info.Mode() != w.info.Mode() || info.Size() != w.info.Size() || !info.ModTime().Equal(w.info.ModTime()) {
+			t.Fatal("source bytes or metadata changed")
+		}
+	}
+}
+
 // CLI success and typed failures preserve every selected card/manifest and do
 // not emit partial views or raw private paths/scalars on pre-output refusal.
 func TestDiscoveryCLIAndSourcePreservation(t *testing.T) {
