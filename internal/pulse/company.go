@@ -79,6 +79,16 @@ func decodeQueryCard(raw []byte, revision string, allowCompany bool) (object, er
 		if issue := cardv4.Validate(raw, cardv4.Options{Version: 3}); issue != nil {
 			return nil, refusal("card_invalid")
 		}
+	case "product-card/v4":
+		if allowCompany {
+			return nil, refusal("unsupported_schema")
+		}
+		// Reparse the original bytes with strict v4 YAML rules. A legacy parse
+		// must never normalize away aliases, merges or other v4 refusals.
+		c, issue = cardv4.ParseLocalSnapshot(raw)
+		if issue != nil {
+			return nil, refusal("card_invalid")
+		}
 	case "company-card/v1":
 		if !allowCompany {
 			return nil, refusal("unsupported_schema")

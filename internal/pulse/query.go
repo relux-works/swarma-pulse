@@ -11,6 +11,8 @@ import (
 	"time"
 	"unicode"
 	"unicode/utf8"
+
+	"github.com/relux-works/swarma-pulse/internal/cardv4"
 )
 
 const knownLimit = "caller not cryptographically verified; single-user local trust"
@@ -46,6 +48,7 @@ func projectView(raw []byte, revision, cardRoot, agent string, now time.Time, vi
 	product := cardHeader(card)
 	bindings := obj(card["bindings"])
 	connections := obj(card["connections"])
+	v4 := card["schema"] == "product-card/v4"
 	var self, binding, connection object
 	bindingKey := ""
 	matches := 0
@@ -59,7 +62,12 @@ func projectView(raw []byte, revision, cardRoot, agent string, now time.Time, vi
 			key = str(product["default_binding"])
 		}
 		b := obj(bindings[key])
-		if str(b["identity_prefix"])+str(member["id"]) != agent {
+		localpart := str(b["identity_prefix"]) + str(member["id"])
+		if v4 {
+			name := cardv4.DeclaredMXID(card, member)
+			localpart, _, _ = strings.Cut(strings.TrimPrefix(name, "@"), ":")
+		}
+		if localpart != agent {
 			continue
 		}
 		matches++
@@ -102,7 +110,17 @@ func projectView(raw []byte, revision, cardRoot, agent string, now time.Time, vi
 			pkey := str(product["id"]) + "/" + projectID
 			viewSelf["project"] = pkey
 			viewSelf["project_state"] = "declared"
-			projects = append(projects, object{"key": pkey, "repo": p["repo"], "desired_state": p["desired_state"], "location": object{"kind": "local", "path": p["path"]}})
+			location := object{"kind": "local", "path": p["path"]}
+			if v4 {
+				declared := obj(p["location"])
+				location = object{"kind": declared["kind"]}
+				for _, k := range []string{"path", "operator", "execution_host", "project_locator", "checkout_path"} {
+					if value, present := declared[k]; present {
+						location[k] = value
+					}
+				}
+			}
+			projects = append(projects, object{"key": pkey, "repo": p["repo"], "desired_state": p["desired_state"], "location": location})
 		}
 		if len(projects) != 1 {
 			return nil, refusal("self_project_missing")
@@ -115,6 +133,9 @@ func projectView(raw []byte, revision, cardRoot, agent string, now time.Time, vi
 		// This constant does not reveal hidden node counts or edge existence.
 		"hierarchy_status": "self-only; hierarchy not disclosed",
 		"observations":     object{"runtime": object{"state": "unknown"}, "registration": object{"state": "unknown"}, "installed_profile": object{"state": "unknown"}, "assignment": object{"state": "unknown"}}}
+	if v4 {
+		obj(result["source"])["validation"] = "local declarations only; source attestations and star reservations unverified"
+	}
 	if view == "environment" {
 		environment, err := declaredEnvironment(card, self, binding, connection, bindingKey, agent)
 		if err != nil {
