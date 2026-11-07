@@ -1,10 +1,15 @@
 # Pulse local member query
 
-`pulse me --local-unsigned` reads one explicit `product-card/v3` snapshot and emits
+`pulse me --local-unsigned` reads one explicit `product-card/v3` or `product-card/v4` snapshot and emits
 a self-only `pulse-view/v1` JSON document. It preserves the existing v3.1 reader
 semantics, including bounded YAML aliases and permitted legacy extensions. It
 never converts a card, changes its coordinates, contacts a service or writes an
-input. Existing v4 tools and the signed-caller design remain separate contracts.
+input. V4 checks strict syntax and the complete local declaration, while marking
+external source attestations and star reservations unverified. See the
+[v4 self-only snapshot contract](../agents/skills/swarma-pulse/references/query-contract.md#v4-self-only-snapshot)
+for identity resolution and refusal behavior. V4 environment and discovery views
+remain unsupported. Existing v4 admission tools and the signed-caller design
+remain separate contracts.
 
 ## Build and invoke
 

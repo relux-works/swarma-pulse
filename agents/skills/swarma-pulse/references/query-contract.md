@@ -1,10 +1,12 @@
 # Pulse query contract
 
-`pulse me --local-unsigned` reads one explicit `product-card/v3` snapshot and emits
+`pulse me --local-unsigned` reads one explicit `product-card/v3` or `product-card/v4` snapshot and emits
 a self-only `pulse-view/v1` JSON document. It preserves the existing v3.1 reader
 semantics, including bounded YAML aliases and permitted legacy extensions. It
 never converts a card, changes its coordinates, contacts a service or writes an
-input. Existing v4 tools and the signed-caller design remain separate contracts.
+input. V4 uses strict parsing and checks the complete local declaration; external
+attestations remain unverified. Existing v4 admission tools and the signed-caller
+design remain separate contracts.
 
 ## Build and invoke
 
@@ -132,6 +134,54 @@ registration, installed profile and assignment observations are all `unknown`.
 observation provenance. `query_observed_at` is the actual query's UTC clock, kept
 separate. Changing hidden source bytes necessarily changes the mandatory source
 pin; no claim of hiding that fingerprint is made.
+
+## V4 self-only snapshot
+
+Use the same explicit selectors, input ownership/path checks and exact-byte pin
+with `product-card/v4`. No conversion or additional input is implied. The reader
+checks the complete v4 schema and local graph, including hidden members, binding
+domains, references, reporting lines and duplicate chat identities. V4 aliases,
+merges, tags, nulls and unknown fields refuse `card_invalid`; v3 keeps its existing
+legacy reader semantics.
+
+For chat members, `A2A_AGENT` must equal the exact localpart of the declared
+`legacy-exact` MXID or of the `domain-star-v1` name:
+`DOMAIN_PRODUCT_PROJECT_ROLECODE_STAR`. Role codes are `keeper`, `orch`, `dev`,
+`tester`, `arch`, `reviewer`, `researcher` and `service`. Full MXIDs and unmatched
+localparts refuse `caller_unknown`; multiple matches on distinct servers refuse
+`caller_ambiguous`. Non-chat members never become caller matches. This is an
+unverified local claim with the same single-user trust boundary as v3.
+
+The response retains `pulse-view/v1`. Self's declared project uses its v4
+`location` branch: local `path`, or remote `operator`, `execution_host`,
+`project_locator` and optional `checkout_path`. These are coordinates only;
+none is opened or fetched. Only self's project is returned. V4's explicit host
+project is returned for a keeper; the v3 undeclared-project behavior is unchanged.
+
+The v4 source adds `validation: local declarations only; source attestations and
+star reservations unverified`. Referenced source bytes, legacy/logical-key
+attestations and external reservation ownership are not verified by this
+single-card read. Their declared shapes, member keys and selected server must
+still agree locally. Use the separate admission validator with independently
+supplied sources and reservations to verify those premises. A Pulse result
+cannot substitute for that verdict or authorize registration, deployment or launch.
+
+| Neighbor of a valid v4 self query | Refusal (empty stdout) |
+| --- | --- |
+| Mismatching exact byte pin | Exit 1, `RULE source_digest` |
+| Relative/non-clean path, including traversal | Exit 1, `RULE input_path` |
+| Symlink or unsafe input ancestry | Exit 1, `RULE input_trust` |
+| Unknown/full-MXID/non-chat caller | Exit 1, `RULE caller_unknown` |
+| Ambiguous localpart across servers | Exit 1, `RULE caller_ambiguous` |
+| Malformed/unsupported schema version | Exit 1, `RULE unsupported_schema` |
+| Invalid strict-v4 syntax or complete local graph | Exit 1, `RULE card_invalid` |
+| V4 with environment or as primary discovery card | Exit 1, `RULE unsupported_schema` |
+| V4 entry in discovery sources manifest | Exit 1, `RULE source_manifest_invalid` |
+
+V4 is limited to the default self-only view. Environment/discovery continue to
+accept only their existing v3 product and v1 company schemas, including the
+discovery sources manifest. All hierarchy lists stay empty in the v4 result;
+runtime, registration, installed profile and assignment observations stay unknown.
 
 ## Declared environment view
 

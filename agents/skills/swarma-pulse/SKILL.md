@@ -7,13 +7,14 @@ description: Use the shipped Pulse CLI for local unsigned self, declared-environ
 
 Read [the query contract](references/query-contract.md) for the complete input, trust
 and output boundary. Use the shipped `pulse me --local-unsigned` command for a
-self-only view of one explicitly selected `product-card/v3` snapshot, with output
+self-only view of one explicitly selected `product-card/v3` or `product-card/v4` snapshot, with output
 schema `pulse-view/v1`. Add `--view environment` for self declarations from one
 v3 product or v1 company card. Explicit `--view discovery` returns caller-relative
 peers, reports and superiors from a pinned local source universe. Both opt-in
 views return `pulse-view/v2`; read their sections in the query contract before use.
-The v4 tools are separate; selecting a v4 card does not
-make it a supported Pulse query input.
+V4 supports the default self-only view. Its complete local declaration is checked;
+external source attestations and star reservations remain unverified and are
+marked in `source.validation`. The v4 admission tools remain separate.
 
 The included references provide this skill's documentation without relying on
 files outside its folder. Their build and fixture commands run from an authorized
@@ -34,9 +35,11 @@ to a real card. Select those inputs separately before running a command.
   canonical/current-card assertion. Do not copy or relocate a real card to change
   its path interpretation.
 - Use the invoking session's existing public `A2A_AGENT` localpart. Resolution is
-  exact `binding.identity_prefix + member.id` for chat members, through the
-  declared or default binding, with exactly one match across the selected card or
-  discovery universe. A full MXID, normalized
+  exact `binding.identity_prefix + member.id` for v3 chat members, through the
+  declared or default binding. For v4 chat members, match the exact localpart of
+  `identity.mxid` (`legacy-exact`) or the declared domain/product/project/role/star
+  tuple (`domain-star-v1`). Exactly one match is required across the selected card or
+  supported discovery universe. A full MXID, normalized
   punctuation or an arbitrary member override is not a caller selector.
 - Pass **all** selectors explicitly: `me --local-unsigned --card ABS
   --revision sha256:LOWERCASE64HEX --format json`. There is no query config file,
@@ -181,6 +184,9 @@ do not invent a project or appointment.
 | Valid but unmatched local context | Exit 1, `RULE caller_unknown`, empty stdout. |
 | Valid card with two bindings matching that localpart on different homeservers | Exit 1, `RULE caller_ambiguous`, empty stdout; no implicit domain choice. |
 | Unsupported schema or invalid complete supplied graph | Exit 1 with `RULE unsupported_schema` or `RULE card_invalid`, no conversion or partial view. |
+| V4 selected with `--view environment` or as the primary discovery card | Exit 1, `RULE unsupported_schema`, empty stdout. V4 only supports the default self-only view. |
+| V4 declared in the discovery sources manifest | Exit 1, `RULE source_manifest_invalid`, empty stdout; the manifest's accepted schemas are unchanged. |
+| V4 aliases, merges, explicit tags, nulls, unknown fields or inconsistent local identity declarations | Exit 1, `RULE card_invalid`, empty stdout; strict v4 parsing uses the original pinned bytes. |
 | Unsafe, missing or unreadable input | Exit 1 with the applicable input rule; no substitute source or input writes. |
 
 Diagnostics use `RULE name: $` plus newline. Every supplied card and its complete
@@ -190,6 +196,12 @@ extensions retain the v3 reader semantics. Do not impose v4's closed-field rules
 on v3 or accept only the self record from an invalid graph. A final stdout
 transport failure returns `RULE output_write`/exit 1 and can interrupt delivery;
 that is distinct from an intended pre-output refusal with empty stdout.
+For v4, local graph validation does not verify referenced source bytes, source
+attestations, logical-key attestations or external star reservations. The result
+explicitly says `source.validation: local declarations only; source attestations
+and star reservations unverified`. A returned name grants no registration or
+execution authority; use the separate validator with admitted premises for that
+contract. Source references and declared paths are never followed.
 The CLI writes no card or persistent state. To stop using it, stop invoking it or
 select a prior reviewed binary; preserve inputs and any separately owned data.
 

@@ -62,7 +62,7 @@ func validateDecoded(card Object, o Options, version int) *Issue {
 	if e := schema(version)(card, "$"); e != nil {
 		return e
 	}
-	return relations(card, o, version)
+	return relations(card, o, version, false)
 }
 func legacyIssue(e *Issue) *Issue {
 	if strings.HasPrefix(e.Location, "$.product.topology") {
@@ -87,7 +87,7 @@ func legacyIssue(e *Issue) *Issue {
 	}
 	return &Issue{r, e.Location, e.Exit}
 }
-func relations(c Object, o Options, version int) *Issue {
+func relations(c Object, o Options, version int, localSnapshot bool) *Issue {
 	v4 := version == 4
 	product := obj(c["product"])
 	members := list(c["members"])
@@ -206,8 +206,14 @@ func relations(c Object, o Options, version int) *Issue {
 				return fail("logical_source_required", at+".logical_source_ref")
 			}
 			if pin != nil {
-				if _, _, e := resolveSource(pin, product, id, o, false); e != nil {
-					return relocated(e, at+".logical_source_ref")
+				if localSnapshot {
+					if pin["member"] != str(product["id"])+"/"+id {
+						return fail("legacy_source_key_mismatch", at+".logical_source_ref")
+					}
+				} else {
+					if _, _, e := resolveSource(pin, product, id, o, false); e != nil {
+						return relocated(e, at+".logical_source_ref")
+					}
 				}
 			}
 		}
@@ -308,15 +314,24 @@ func relations(c Object, o Options, version int) *Issue {
 				if pin := obj(m["logical_source_ref"]); pin != nil && !reflect.DeepEqual(pin, ref) {
 					return fail("legacy_source_key_mismatch", at+".identity.source_ref")
 				}
-				mx, conn, e := resolveSource(ref, product, id, o, true)
-				if e != nil {
-					return relocated(e, at+".identity.source_ref")
-				}
-				if mx != identity["mxid"] {
-					return fail("legacy_source_mismatch", at+".identity.mxid")
-				}
-				if !reflect.DeepEqual(conn, connections[str(binding["connection"])]) {
-					return fail("legacy_source_connection_mismatch", at+".identity.source_ref")
+				mx := str(identity["mxid"])
+				conn := obj(connections[str(binding["connection"])])
+				if localSnapshot {
+					if ref["member"] != str(product["id"])+"/"+id {
+						return fail("legacy_source_key_mismatch", at+".identity.source_ref")
+					}
+				} else {
+					var e *Issue
+					mx, conn, e = resolveSource(ref, product, id, o, true)
+					if e != nil {
+						return relocated(e, at+".identity.source_ref")
+					}
+					if mx != identity["mxid"] {
+						return fail("legacy_source_mismatch", at+".identity.mxid")
+					}
+					if !reflect.DeepEqual(conn, connections[str(binding["connection"])]) {
+						return fail("legacy_source_connection_mismatch", at+".identity.source_ref")
+					}
 				}
 				_, server, _ := strings.Cut(mx, ":")
 				if server != str(conn["server_name"]) {
@@ -339,7 +354,7 @@ func relations(c Object, o Options, version int) *Issue {
 						count++
 					}
 				}
-				if count != 1 {
+				if !localSnapshot && count != 1 {
 					return fail("star_reservation_required", at+".identity.star")
 				}
 				name = "@" + local + ":" + domain
