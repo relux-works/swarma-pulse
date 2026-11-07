@@ -90,7 +90,7 @@ func TestSourceManifestContract(t *testing.T) {
 			wantRule(t, err, tc.rule)
 		})
 	}
-	for _, path := range []string{"/absolute", "~home", "https:remote", "C:drive", "\\\\host\\file", "bad\x00", "bad\n", "../../escape"} {
+	for _, path := range []string{"/absolute", "~home", "https:remote", "C:drive", "\\\\host\\file", "bad\x00", "bad\n", "../../escape", `nested\card`, `card\`} {
 		b := sourcesBytes(t, sourceEntry("p", path))
 		_, err := parseSourceManifest(b, "sha256:"+digest(b), "/fixture/primary/product-card.yaml", "/fixture")
 		wantRule(t, err, "input_path")

@@ -18,7 +18,7 @@ var (
 func declaredRelative(v any) bool {
 	s, ok := v.(string)
 	return ok && s != "" && utf8.ValidString(s) && !strings.ContainsFunc(s, unicode.IsControl) &&
-		!strings.HasPrefix(s, "/") && !strings.HasPrefix(s, "\\") && !strings.HasPrefix(s, "~") && !pathScheme.MatchString(s)
+		!strings.HasPrefix(s, "/") && !strings.ContainsRune(s, '\\') && !strings.HasPrefix(s, "~") && !pathScheme.MatchString(s)
 }
 
 func onlyKeys(m object, allowed ...string) bool {
