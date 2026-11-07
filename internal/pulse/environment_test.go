@@ -137,7 +137,7 @@ func TestEnvironmentRegistryAndDirect(t *testing.T) {
 // reader permits, while preserving legitimate sibling and relative locators.
 func TestEnvironmentInheritedLocatorGrammar(t *testing.T) {
 	for _, field := range []string{"clone", "profile.path", "profiles_root", "registry.directory"} {
-		for _, path := range []string{"../unopened", "nested/path", "https:remote", "C:drive", "path\n"} {
+		for _, path := range []string{"../unopened", "nested/path", "https:remote", "C:drive", "path\n", `nested\path`, `path\`} {
 			c := fixture(t)
 			profile := obj(obj(c["profiles"])["control"])
 			switch field {
@@ -183,7 +183,7 @@ func TestEnvironmentExtensionRefusalsAndLegacy(t *testing.T) {
 		p["network"] = object{"mode": "proxy", "ref": selector}
 		bad = append(bad, p)
 	}
-	for _, path := range []string{"", "/absolute", "~home", "https:relative", "C:drive", "\\\\server\\share", "path\x00", "path\n"} {
+	for _, path := range []string{"", "/absolute", "~home", "https:relative", "C:drive", "\\\\server\\share", "path\x00", "path\n", `nested\path`, `path\`} {
 		p := completeExtension()
 		p["working_root"] = path
 		bad = append(bad, p)

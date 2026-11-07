@@ -405,13 +405,20 @@ func TestCompanyLocalCardContainment(t *testing.T) {
 			t.Fatal(path, err)
 		}
 	}
-	for _, path := range []string{"../aurora-other/product-card.yaml", "../outside/product-card.yaml", "../aurora/nested/../../outside/product-card.yaml", "../aurora", "../aurora/wrong.yaml", "/absolute/product-card.yaml", "~home/product-card.yaml", "https:product-card.yaml", "C:product-card.yaml", "bad\n/product-card.yaml"} {
+	for _, path := range []string{"../aurora-other/product-card.yaml", "../outside/product-card.yaml", "../aurora/nested/../../outside/product-card.yaml", "../aurora", "../aurora/wrong.yaml", "/absolute/product-card.yaml", "~home/product-card.yaml", "https:product-card.yaml", "C:product-card.yaml", "bad\n/product-card.yaml", `../aurora/nested\path/product-card.yaml`} {
 		c := companyFixture(t)
 		e := inventoryEntry("aurora", "aurora_keeper")
 		obj(e["card"])["path"] = path
 		c["products"] = []any{e}
 		wantRule(t, validateCompany(c), "input_path")
 	}
+	// A matching card descendant does not make a backslash-bearing host valid.
+	c := companyFixture(t)
+	e := inventoryEntry("aurora", "aurora_keeper")
+	obj(e["host"])["path"] = `../aurora\host`
+	obj(e["card"])["path"] = `../aurora\host/product-card.yaml`
+	c["products"] = []any{e}
+	wantRule(t, validateCompany(c), "input_path")
 	c, a, _ := twoProductUniverse(t)
 	c["products"] = arr(c["products"])[:1]
 	obj(obj(arr(c["products"])[0])["card"])["path"] = "../aurora/product-card/product-card.yaml"
