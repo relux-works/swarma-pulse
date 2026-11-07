@@ -18,7 +18,8 @@ func readCardBounded(path string, uid int, oversizedRule string) ([]byte, error)
 	if !filepath.IsAbs(path) || filepath.Clean(path) != path || strings.ContainsRune(path, 0) {
 		return nil, refusal("input_path")
 	}
-	parts := strings.Split(strings.TrimPrefix(path, string(filepath.Separator)), string(filepath.Separator))
+	// Keep the leading empty component so the filesystem root is checked too.
+	parts := strings.Split(path, string(filepath.Separator))
 	current := string(filepath.Separator)
 	for i, part := range parts {
 		current = filepath.Join(current, part)
