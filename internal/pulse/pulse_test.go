@@ -138,7 +138,7 @@ func TestResolutionAndValidationRefusals(t *testing.T) {
 	_, err := project(raw, "sha256:"+strings.Repeat("0", 64), "/fixture", "station_aurora_keeper", fixedTime)
 	wantRule(t, err, "source_digest")
 	badSchema := fixture(t)
-	badSchema["schema"] = "product-card/v4"
+	badSchema["schema"] = "product-card/v5"
 	b := encode(t, badSchema)
 	_, err = project(b, "sha256:"+digest(b), "/fixture", "station_aurora_keeper", fixedTime)
 	wantRule(t, err, "unsupported_schema")
