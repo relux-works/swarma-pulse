@@ -12,7 +12,10 @@ remain unsupported. Existing v4 admission tools and the signed-caller design
 remain separate contracts.
 
 Explicit `--view hierarchy` adds a one-card v3/v4 hierarchy query. The default
-self-only view and the existing environment/discovery views keep their contracts.
+self-only and environment views keep their contracts. Discovery now preserves a
+v3 product keeper's external parent even when its alias matches a local member
+ID, returning an external boundary instead of `relation_conflict`. All other
+discovery output remains unchanged.
 
 ## Build and invoke
 

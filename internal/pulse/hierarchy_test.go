@@ -94,6 +94,27 @@ func TestHierarchyProjection(t *testing.T) {
 	}
 }
 
+// This normal fixture's discovery bytes match the output captured independently
+// from base b8ffb301632462ce89e30ff5fd5c4f33aa6bc005 at the same fixed coordinates/time.
+// The neighboring alias tests cover the intentional compatibility exception.
+func TestDiscoveryBaseByteCompatibility(t *testing.T) {
+	c := fixture(t)
+	raw := validBytes(t, c)
+	s := sourceSelection{id: "aurora", schema: "product-card/v3", path: "/fixture/aurora/product-card.yaml", revision: "sha256:" + digest(raw)}
+	manifest := object{"revision": "sha256:" + strings.Repeat("1", 64), "sha256": strings.Repeat("2", 64), "root": "/fixture"}
+	got, err := projectDiscovery([]*querySource{{selection: s, raw: raw, card: c}}, manifest, "station_storage_orch", fixedTime)
+	if err != nil {
+		t.Fatal(err)
+	}
+	want, err := os.ReadFile("testdata/discovery-base-v2.json")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !bytes.Equal(got, want) {
+		t.Fatalf("normal discovery changed from base\nwant %s\ngot %s", want, got)
+	}
+}
+
 // V3 product keepers' parents are external by the source schema even if an
 // alias also names self, an orchestrator or a non-chat local member. Other local
 // edges and company keeper-to-keeper edges retain their own schema semantics.

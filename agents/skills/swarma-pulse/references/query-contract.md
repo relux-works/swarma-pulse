@@ -196,7 +196,11 @@ Add `--view hierarchy` to the explicit unsigned invocation:
 This view reads exactly one pinned `product-card/v3` or `product-card/v4` snapshot.
 It follows no file references, external parents or remote locations. Company cards
 refuse `unsupported_schema`; discovery source selectors refuse `usage` before input
-access. Default, environment and discovery behavior is unchanged.
+access. Default and environment behavior is unchanged. Discovery has one
+correction: a v3 product keeper's declared external parent remains external even
+when its alias matches a local member ID. These cards now return the external
+boundary instead of refusing `relation_conflict`; all other discovery output
+remains byte-for-byte unchanged.
 
 Output is `pulse-view/v3` with the same 17 root field names as v2:
 `schema`, `mode`, `caller`, `known_limit`, `query`, `sources`, `query_observed_at`,

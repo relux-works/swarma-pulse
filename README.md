@@ -13,6 +13,10 @@ Add `--view environment` for the caller's declared profile, runtime and launch c
 Explicit `--view discovery` composes pinned local sources for same-level peers, superiors and reports, with unresolved boundaries.
 Use `--view hierarchy` for the same caller-relative relationships from one pinned v3 or v4 product card,
 returning `pulse-view/v3` with declared external parents left unresolved.
+In hierarchy and discovery, a v3 product keeper's declared external parent stays
+external even when its alias matches a local member ID. Discovery now accepts
+these cards with an external boundary instead of reporting `relation_conflict`;
+all other discovery output remains unchanged.
 Company cards inventory products and their card-relative host/card references; discovery never fetches remote inventory.
 It uses `A2A_AGENT` as unverified context and reports `caller not cryptographically verified; single-user local trust`.
 Account migration and service/session launch remain separate operations.

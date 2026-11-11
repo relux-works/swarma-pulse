@@ -107,7 +107,10 @@ stay unresolved; non-chat names remain null. It reads no additional file or remo
 reference and refuses discovery source selectors. Output is `pulse-view/v3`;
 self keeps its baseline fields plus level, related summaries keep their seven
 public fields, and related local/remote project locations retain their source base.
-No environment or DM provisioning is implied. Existing views remain unchanged.
+No environment or DM provisioning is implied. Default/environment views remain
+unchanged. Discovery now preserves a v3 product keeper's external parent when its
+alias also matches a local member ID: it returns an external boundary instead of
+`relation_conflict`. All other discovery output remains unchanged.
 
 For self's declared environment, add `--view environment` to the baseline
 invocation. It reads only that card and never follows its references. The result
