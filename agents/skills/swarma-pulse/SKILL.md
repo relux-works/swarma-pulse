@@ -12,7 +12,10 @@ schema `pulse-view/v1`. Add `--view environment` for self declarations from one
 v3 product or v1 company card. Explicit `--view discovery` returns caller-relative
 peers, reports and superiors from a pinned local source universe. Both opt-in
 views return `pulse-view/v2`; read their sections in the query contract before use.
-V4 supports the default self-only view. Its complete local declaration is checked;
+Use `--view hierarchy` for caller-relative relationships from one pinned v3/v4
+product card, returning `pulse-view/v3`. See the query contract's
+[hierarchy section](references/query-contract.md#one-card-hierarchy-view).
+V4 supports the default self-only and explicit hierarchy views. Its complete local declaration is checked;
 external source attestations and star reservations remain unverified and are
 marked in `source.validation`. The v4 admission tools remain separate.
 
@@ -97,6 +100,15 @@ unsigned mode to a request that intended a signed caller.
 
 ## Select an opt-in view
 
+For a one-card hierarchy, add `--view hierarchy` to the baseline invocation.
+It accepts v3/v4 product cards, validates every member, and returns full-MXID
+peers, direct reports, descendants and nearest-first superiors. External parents
+stay unresolved; non-chat names remain null. It reads no additional file or remote
+reference and refuses discovery source selectors. Output is `pulse-view/v3`;
+self keeps its baseline fields plus level, related summaries keep their seven
+public fields, and related local/remote project locations retain their source base.
+No environment or DM provisioning is implied. Existing views remain unchanged.
+
 For self's declared environment, add `--view environment` to the baseline
 invocation. It reads only that card and never follows its references. The result
 has `self.level` and `self.environment` with profile source/pins, runtime,
@@ -149,7 +161,7 @@ hierarchy is complete only relative to supplied declarations.
 | `caller.agent` | Unverified local context; not a qualified account address or authenticated sender. |
 | `member` (v1), `self.key` | Logical `card-id/member-id`, separate from the Matrix account. |
 | `self.execution_binding`, `self.profile`, `projects` | Declared desired facts, not current process, installed-profile or scheduling evidence. |
-| `source` (v1) or each `sources` item (v2): schema, revision, sha256, card_root | Supplied schema, exact byte pin and real input-parent coordinates. Freshness is `unknown`; `observed_at` is null. |
+| `source` (v1) or each `sources` item (v2/v3): schema, revision, sha256, card_root | Supplied schema, exact byte pin and real input-parent coordinates. Freshness is `unknown`; `observed_at` is null. |
 | `query_observed_at` | Query UTC time, not card freshness or registration time. |
 
 `@station_beacon_orch:alpha.example` and
@@ -167,7 +179,7 @@ process can claim another valid local context; this mode cannot detect that
 impersonation. Self-only output and a card's desired role do not authorize an
 operation, filesystem access, account action or subordinate launch.
 
-Without discovery, `peers`, `direct_reports`, `descendants` and `superiors` are
+In the default and environment views, `peers`, `direct_reports`, `descendants` and `superiors` are
 empty. `hierarchy_status` is `self-only; hierarchy not disclosed`; empty lists do not
 prove that no such members exist. Runtime, registration, installed-profile and
 assignment observations remain `unknown`. A member without a declared project
@@ -184,7 +196,7 @@ do not invent a project or appointment.
 | Valid but unmatched local context | Exit 1, `RULE caller_unknown`, empty stdout. |
 | Valid card with two bindings matching that localpart on different homeservers | Exit 1, `RULE caller_ambiguous`, empty stdout; no implicit domain choice. |
 | Unsupported schema or invalid complete supplied graph | Exit 1 with `RULE unsupported_schema` or `RULE card_invalid`, no conversion or partial view. |
-| V4 selected with `--view environment` or as the primary discovery card | Exit 1, `RULE unsupported_schema`, empty stdout. V4 only supports the default self-only view. |
+| V4 selected with `--view environment` or as the primary discovery card | Exit 1, `RULE unsupported_schema`, empty stdout. V4 supports default self-only and explicit hierarchy. |
 | V4 declared in the discovery sources manifest | Exit 1, `RULE source_manifest_invalid`, empty stdout; the manifest's accepted schemas are unchanged. |
 | V4 aliases, merges, explicit tags, nulls, unknown fields or inconsistent local identity declarations | Exit 1, `RULE card_invalid`, empty stdout; strict v4 parsing uses the original pinned bytes. |
 | Unsafe, missing or unreadable input | Exit 1 with the applicable input rule; no substitute source or input writes. |

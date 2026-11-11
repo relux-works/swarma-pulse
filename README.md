@@ -8,9 +8,11 @@ The [specification](docs/specs/product-card-identity-pulse-v1.md), [v4 format](d
 The Go read-only validator implements static v4 validation and the v3.1 source-reading rules. An explicitly invoked
 [converter](docs/converter.md) preserves a supplied v3 card into a separately selected destination with atomic publication.
 The optional [desired-change checker](docs/change-check.md) verifies a pinned candidate and exact rollback without writing.
-The read-only [Pulse member query](docs/pulse.md) preserves its local unsigned v3 self-only default.
+The read-only [Pulse member query](docs/pulse.md) preserves its local unsigned v3/v4 self-only default.
 Add `--view environment` for the caller's declared profile, runtime and launch coordinates from one v3 product or v1 company card.
 Explicit `--view discovery` composes pinned local sources for same-level peers, superiors and reports, with unresolved boundaries.
+Use `--view hierarchy` for the same caller-relative relationships from one pinned v3 or v4 product card,
+returning `pulse-view/v3` with declared external parents left unresolved.
 Company cards inventory products and their card-relative host/card references; discovery never fetches remote inventory.
 It uses `A2A_AGENT` as unverified context and reports `caller not cryptographically verified; single-user local trust`.
 Account migration and service/session launch remain separate operations.
@@ -86,6 +88,7 @@ be confirmed; inspect the result before any retry. See [converter inputs and pub
 | Pulse query | `.temp/bin/pulse me --local-unsigned --card ABS --revision sha256:HASH --format json` | Self-only JSON or safe refusal; exact content pin and public `A2A_AGENT` context |
 | Declared environment | `.temp/bin/pulse me --local-unsigned --view environment --card ABS --revision sha256:HASH --format json` | Self-only v2 JSON with declared environment; no native-home lookup or launch |
 | Caller discovery | `.temp/bin/pulse me --local-unsigned --view discovery --card ABS --revision sha256:HASH --sources ABS --sources-revision sha256:HASH --root ABS --format json` | v2 JSON from explicitly pinned local cards; no remote retrieval |
+| One-card hierarchy | `.temp/bin/pulse me --local-unsigned --view hierarchy --card ABS --revision sha256:HASH --format json` | v3 JSON with caller-relative relationships from one v3/v4 product card |
 | Go tests | `go test -count=1 ./...` | All selected test lanes; isolated temporary fixtures |
 | Race checks | `go test -race -count=1 ./...` | Race-enabled results for all packages |
 | Go vet | `go vet ./...` | Static diagnostics |

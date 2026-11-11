@@ -178,10 +178,60 @@ cannot substitute for that verdict or authorize registration, deployment or laun
 | V4 with environment or as primary discovery card | Exit 1, `RULE unsupported_schema` |
 | V4 entry in discovery sources manifest | Exit 1, `RULE source_manifest_invalid` |
 
-V4 is limited to the default self-only view. Environment/discovery continue to
+V4 supports the default self-only and explicit hierarchy views. Environment/discovery continue to
 accept only their existing v3 product and v1 company schemas, including the
-discovery sources manifest. All hierarchy lists stay empty in the v4 result;
+discovery sources manifest. All hierarchy lists stay empty in the default v4 result;
 runtime, registration, installed profile and assignment observations stay unknown.
+
+## One-card hierarchy view
+
+Add `--view hierarchy` to the explicit unsigned invocation:
+
+```sh
+.temp/bin/pulse me --local-unsigned --view hierarchy \
+  --card /absolute/path/product-card.yaml \
+  --revision sha256:EXACT_LOWERCASE_64_HEX_DIGEST --format json
+```
+
+This view reads exactly one pinned `product-card/v3` or `product-card/v4` snapshot.
+It follows no file references, external parents or remote locations. Company cards
+refuse `unsupported_schema`; discovery source selectors refuse `usage` before input
+access. Default, environment and discovery behavior is unchanged.
+
+Output is `pulse-view/v3` with the same 17 root field names as v2:
+`schema`, `mode`, `caller`, `known_limit`, `query`, `sources`, `query_observed_at`,
+`self`, `peers`, `direct_reports`, `descendants`, `superiors`, `projects`, `products`,
+`boundaries`, `hierarchy_status`, `observations`. `query` is `{view: hierarchy}`.
+`sources` has one receipt with id, schema, revision, sha256, card_root, unknown
+freshness and null observed_at; v4 also keeps its existing `validation` limitation.
+Self has the baseline nine self fields plus responsibility `level`, without an
+environment. Related summaries have the same seven public fields as discovery.
+Others' profile, runtime, config, subscriptions and environment are not projected.
+
+Relationships reuse discovery's responsibility levels and ordering: same-level
+peers independently of parent, immediate direct reports, all reachable descendants
+including direct reports, and nearest-first superiors. Non-chat names stay null;
+parked and retired desired declarations remain present. V4 identities use the same
+`legacy-exact` or `domain-star-v1` resolution as the self-only reader.
+
+External parents remain `{source: CARD_ID, external: ALIAS}` boundaries; a v4
+product/member external parent uses `PRODUCT/MEMBER` for `external`. Nothing
+resolves that declaration. `hierarchy_status` is partial when a declared boundary
+exists. `projects` contains only self's and returned members' projects, sorted by
+qualified key. Locations retain `source`, `base: card` and the exact declared local
+or remote fields, without checking their existence. `products` is empty because
+one product card supplies no company inventory.
+
+The complete card is validated before projection; the default reader's v3 alias
+and extension semantics and strict v4 syntax/local-validation limits remain.
+Invalid graphs refuse `card_invalid`; duplicate full identities refuse
+`identity_conflict` when allowed by the source schema, while equal localparts on
+distinct servers refuse `caller_ambiguous` for that caller. Existing context, pin,
+safe-file and output-write refusals apply. The shared graph enforces its existing
+64-hop budget (`input_limit` above it); product role rules still apply and are not
+relaxed to admit arbitrary reporting chains. Query time and declarations establish
+no registration, JOIN, live runtime, cryptographic caller or transport authority.
+DM descriptors and paired room alias/ID declarations require their separate contracts.
 
 ## Declared environment view
 

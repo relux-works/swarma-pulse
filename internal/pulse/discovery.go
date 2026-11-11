@@ -8,6 +8,8 @@ import (
 	"time"
 	"unicode"
 	"unicode/utf8"
+
+	"github.com/relux-works/swarma-pulse/internal/cardv4"
 )
 
 type querySource struct {
@@ -168,11 +170,15 @@ func materialize(cards []*querySource) (map[string]*graphMember, error) {
 			}
 			n := &graphMember{source: s, member: m, key: key, level: level}
 			if parent, present := m["parent"]; present && parent != nil {
-				p := str(parent)
-				if local[p] {
-					n.parent = s.selection.id + "/" + p
+				if p := obj(parent); p != nil {
+					n.parent = object{"source": s.selection.id, "external": str(p["product"]) + "/" + str(p["member"])}
 				} else {
-					n.parent = object{"source": s.selection.id, "external": p}
+					p := str(parent)
+					if local[p] {
+						n.parent = s.selection.id + "/" + p
+					} else {
+						n.parent = object{"source": s.selection.id, "external": p}
+					}
 				}
 			}
 			if obj(m["a2a"]) != nil {
@@ -184,6 +190,10 @@ func materialize(cards []*querySource) (map[string]*graphMember, error) {
 				connection := obj(obj(s.card["connections"])[str(binding["connection"])])
 				n.agent = str(binding["identity_prefix"]) + str(m["id"])
 				mx := "@" + n.agent + ":" + str(connection["server_name"])
+				if s.selection.schema == "product-card/v4" {
+					mx = cardv4.DeclaredMXID(s.card, m)
+					n.agent, _, _ = strings.Cut(strings.TrimPrefix(mx, "@"), ":")
+				}
 				if identities[mx] != "" {
 					return nil, refusal("identity_conflict")
 				}
@@ -307,6 +317,12 @@ func memberSummary(n *graphMember) object {
 }
 
 func projectDiscovery(cards []*querySource, manifest object, agent string, now time.Time) ([]byte, error) {
+	return projectGraph(cards, manifest, agent, now, false)
+}
+
+// projectGraph shares traversal and ordering across explicitly supplied discovery
+// sources and a single hierarchy card. The existing discovery schema stays intact.
+func projectGraph(cards []*querySource, manifest object, agent string, now time.Time, hierarchy bool) ([]byte, error) {
 	if agent == "" || len(agent) > 512 || !utf8.ValidString(agent) || strings.ContainsFunc(agent, unicode.IsControl) {
 		return nil, refusal("caller_context")
 	}
@@ -338,13 +354,24 @@ func projectDiscovery(cards []*querySource, manifest object, agent string, now t
 		return nil, refusal("caller_ambiguous")
 	}
 	sort.Strings(keys)
-	base, err := projectView(self.source.raw, self.source.selection.revision, filepath.Dir(self.source.selection.path), agent, now, "environment")
+	baseView := "environment"
+	if hierarchy {
+		baseView = ""
+	}
+	base, err := projectView(self.source.raw, self.source.selection.revision, filepath.Dir(self.source.selection.path), agent, now, baseView)
 	if err != nil {
 		return nil, err
 	}
 	var result object
 	if err := json.Unmarshal(base, &result); err != nil {
 		return nil, refusal("output_encoding")
+	}
+	if hierarchy {
+		result["schema"] = "pulse-view/v3"
+		obj(result["self"])["level"] = self.level
+		delete(result, "source")
+		delete(result, "product")
+		delete(result, "member")
 	}
 	peers, reports, descendants, superiors := []any{}, []any{}, []any{}, []any{}
 	returned := map[string]bool{self.key: true}
@@ -400,7 +427,16 @@ func projectDiscovery(cards []*querySource, manifest object, agent string, now t
 			p := obj(value)
 			key := source.selection.id + "/" + str(p["id"])
 			if projectIDs[key] {
-				projects = append(projects, object{"key": key, "repo": p["repo"], "desired_state": p["desired_state"], "location": object{"source": source.selection.id, "base": "card", "kind": "local", "path": p["path"]}})
+				location := object{"source": source.selection.id, "base": "card", "kind": "local", "path": p["path"]}
+				if source.selection.schema == "product-card/v4" {
+					location = object{"source": source.selection.id, "base": "card"}
+					for _, field := range []string{"kind", "path", "operator", "execution_host", "project_locator", "checkout_path"} {
+						if value, present := obj(p["location"])[field]; present {
+							location[field] = value
+						}
+					}
+				}
+				projects = append(projects, object{"key": key, "repo": p["repo"], "desired_state": p["desired_state"], "location": location})
 			}
 		}
 	}
@@ -431,9 +467,16 @@ func projectDiscovery(cards []*querySource, manifest object, agent string, now t
 	})
 	receipts := []any{}
 	for _, s := range cards {
-		receipts = append(receipts, object{"id": s.selection.id, "schema": s.selection.schema, "revision": s.selection.revision, "sha256": digest(s.raw), "card_root": filepath.Dir(s.selection.path), "freshness": "unknown", "observed_at": nil})
+		receipt := object{"id": s.selection.id, "schema": s.selection.schema, "revision": s.selection.revision, "sha256": digest(s.raw), "card_root": filepath.Dir(s.selection.path), "freshness": "unknown", "observed_at": nil}
+		if s.selection.schema == "product-card/v4" {
+			receipt["validation"] = "local declarations only; source attestations and star reservations unverified"
+		}
+		receipts = append(receipts, receipt)
 	}
 	result["query"] = object{"view": "discovery", "sources": manifest}
+	if hierarchy {
+		result["query"] = object{"view": "hierarchy"}
+	}
 	result["sources"] = receipts
 	result["peers"] = peers
 	result["direct_reports"] = reports

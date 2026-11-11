@@ -81,6 +81,7 @@ be confirmed; inspect the result before any retry. See [converter inputs and pub
 | Pulse query | `.temp/bin/pulse me --local-unsigned --card ABS --revision sha256:HASH --format json` | Self-only JSON or safe refusal; exact content pin and public `A2A_AGENT` context |
 | Declared environment | `.temp/bin/pulse me --local-unsigned --view environment --card ABS --revision sha256:HASH --format json` | v2 self declarations from one product/company card |
 | Caller discovery | `.temp/bin/pulse me --local-unsigned --view discovery --card ABS --revision sha256:HASH --sources ABS --sources-revision sha256:HASH --root ABS --format json` | v2 caller-relative graph from explicit pinned local sources |
+| One-card hierarchy | `.temp/bin/pulse me --local-unsigned --view hierarchy --card ABS --revision sha256:HASH --format json` | v3 caller-relative graph from one pinned v3/v4 product card |
 | Go tests | `go test -count=1 ./...` | All selected test lanes; isolated temporary fixtures |
 | Race checks | `go test -race -count=1 ./...` | Race-enabled results for all packages |
 | Go vet | `go vet ./...` | Static diagnostics |

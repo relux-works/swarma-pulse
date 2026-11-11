@@ -11,6 +11,9 @@ for identity resolution and refusal behavior. V4 environment and discovery views
 remain unsupported. Existing v4 admission tools and the signed-caller design
 remain separate contracts.
 
+Explicit `--view hierarchy` adds a one-card v3/v4 hierarchy query. The default
+self-only view and the existing environment/discovery views keep their contracts.
+
 ## Build and invoke
 
 The initial target is a local Unix CLI, validated on macOS arm64. Use the module's
@@ -103,6 +106,22 @@ registration, installed profile and assignment observations are all `unknown`.
 observation provenance. `query_observed_at` is the actual query's UTC clock, kept
 separate. Changing hidden source bytes necessarily changes the mandatory source
 pin; no claim of hiding that fingerprint is made.
+
+## One-card hierarchy view
+
+Add `--view hierarchy` to the explicit unsigned invocation to return
+`pulse-view/v3` from one pinned v3 or v4 product card. The view reuses discovery's
+same-level peers, nearest-first superiors, direct reports and descendants, with
+exact full MXIDs and unresolved external-parent boundaries. It reads only the
+selected card; all supplied members are validated before projection. V4 retains
+its local-declarations-only validation limitation. See the
+[complete hierarchy output and refusal contract](../agents/skills/swarma-pulse/references/query-contract.md#one-card-hierarchy-view).
+
+```sh
+.temp/bin/pulse me --local-unsigned --view hierarchy \
+  --card /absolute/path/product-card.yaml \
+  --revision sha256:EXACT_LOWERCASE_64_HEX_DIGEST --format json
+```
 
 ## Declared environment view
 

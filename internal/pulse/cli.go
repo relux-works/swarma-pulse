@@ -52,7 +52,7 @@ func parseSelectors(args []string) (selectors, error) {
 	if !local || values["card"] == "" || values["format"] != "json" {
 		return s, refusal("usage")
 	}
-	if view, present := values["view"]; present && view != "environment" && view != "discovery" {
+	if view, present := values["view"]; present && view != "environment" && view != "discovery" && view != "hierarchy" {
 		return s, refusal("usage")
 	}
 	if !validRevision(values["revision"]) {
