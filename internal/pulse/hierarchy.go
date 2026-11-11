@@ -7,7 +7,7 @@ import (
 
 // projectHierarchy reads only the already supplied bytes. Neither an external
 // parent nor a v4 source attestation selects another file or transport operation.
-func projectHierarchy(raw []byte, revision, cardRoot, agent string, now time.Time) ([]byte, error) {
+func projectHierarchy(raw []byte, revision, cardRoot, agent string, now time.Time, view string) ([]byte, error) {
 	card, err := decodeQueryCard(raw, revision, false)
 	if err != nil {
 		return nil, err
@@ -20,5 +20,5 @@ func projectHierarchy(raw []byte, revision, cardRoot, agent string, now time.Tim
 		raw:       raw,
 		card:      card,
 	}
-	return projectGraph([]*querySource{source}, nil, agent, now, true)
+	return projectGraph([]*querySource{source}, nil, agent, now, view)
 }

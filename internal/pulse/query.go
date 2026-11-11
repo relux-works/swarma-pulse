@@ -1,4 +1,4 @@
-// Package pulse provides explicit local unsigned member, environment, discovery and hierarchy views.
+// Package pulse provides explicit local unsigned member, environment, discovery, hierarchy and route views.
 package pulse
 
 import (
@@ -32,8 +32,8 @@ func project(raw []byte, revision, cardRoot, agent string, now time.Time) ([]byt
 }
 
 func projectView(raw []byte, revision, cardRoot, agent string, now time.Time, view string) ([]byte, error) {
-	if view == "hierarchy" {
-		return projectHierarchy(raw, revision, cardRoot, agent, now)
+	if view == "hierarchy" || view == "routes" {
+		return projectHierarchy(raw, revision, cardRoot, agent, now, view)
 	}
 	if view != "" && view != "environment" {
 		return nil, refusal("usage")

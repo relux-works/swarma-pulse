@@ -320,15 +320,16 @@ func memberSummary(n *graphMember) object {
 }
 
 func projectDiscovery(cards []*querySource, manifest object, agent string, now time.Time) ([]byte, error) {
-	return projectGraph(cards, manifest, agent, now, false)
+	return projectGraph(cards, manifest, agent, now, "discovery")
 }
 
 // projectGraph shares traversal and ordering across explicitly supplied discovery
 // sources and a single hierarchy card. The existing discovery schema stays intact.
-func projectGraph(cards []*querySource, manifest object, agent string, now time.Time, hierarchy bool) ([]byte, error) {
+func projectGraph(cards []*querySource, manifest object, agent string, now time.Time, view string) ([]byte, error) {
 	if agent == "" || len(agent) > 512 || !utf8.ValidString(agent) || strings.ContainsFunc(agent, unicode.IsControl) {
 		return nil, refusal("caller_context")
 	}
+	hierarchy := view == "hierarchy" || view == "routes"
 	nodes, err := materialize(cards)
 	if err != nil {
 		return nil, err
@@ -491,6 +492,18 @@ func projectGraph(cards []*querySource, manifest object, agent string, now time.
 	result["hierarchy_status"] = "complete"
 	if len(boundaries) > 0 {
 		result["hierarchy_status"] = "partial"
+	}
+	if view == "routes" {
+		result["schema"] = "pulse-view/v4"
+		result["query"] = object{"view": "routes"}
+		result["dm_routes"], err = declaredDMRoutes(self, nodes, returned)
+		if err != nil {
+			return nil, err
+		}
+		result["room_routes"], err = currentRoomRoutes(self.source.card, projects)
+		if err != nil {
+			return nil, err
+		}
 	}
 	encoded, err := json.Marshal(result)
 	if err != nil {

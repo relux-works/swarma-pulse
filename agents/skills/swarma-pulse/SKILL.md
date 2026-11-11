@@ -15,7 +15,9 @@ views return `pulse-view/v2`; read their sections in the query contract before u
 Use `--view hierarchy` for caller-relative relationships from one pinned v3/v4
 product card, returning `pulse-view/v3`. See the query contract's
 [hierarchy section](references/query-contract.md#one-card-hierarchy-view).
-V4 supports the default self-only and explicit hierarchy views. Its complete local declaration is checked;
+Use `--view routes` for the same hierarchy plus declared DM descriptors and exact
+product/project room routes (`pulse-view/v4`). See the [route contract](references/query-contract.md#declared-routes-view).
+V4 supports the default self-only and explicit hierarchy/routes views. Its complete local declaration is checked;
 external source attestations and star reservations remain unverified and are
 marked in `source.validation`. The v4 admission tools remain separate.
 
@@ -101,10 +103,13 @@ unsigned mode to a request that intended a signed caller.
 ## Select an opt-in view
 
 For a one-card hierarchy, add `--view hierarchy` to the baseline invocation.
-It accepts v3/v4 product cards, validates every member, and returns full-MXID
+For declaration-only DM and room routes, select `--view routes` instead; it reads
+one pinned product card and performs no transport or membership operation.
+Both accept v3/v4 product cards, validate every member, and return full-MXID
 peers, direct reports, descendants and nearest-first superiors. External parents
-stay unresolved; non-chat names remain null. It reads no additional file or remote
-reference and refuses discovery source selectors. Output is `pulse-view/v3`;
+stay unresolved; non-chat names remain null. Both read no additional file or remote
+reference and refuse discovery source selectors. Hierarchy returns `pulse-view/v3`;
+routes returns `pulse-view/v4` with declared DM/room arrays. In both,
 self keeps its baseline fields plus level, related summaries keep their seven
 public fields, and related local/remote project locations retain their source base.
 No environment or DM provisioning is implied. Default/environment views remain
@@ -199,7 +204,7 @@ do not invent a project or appointment.
 | Valid but unmatched local context | Exit 1, `RULE caller_unknown`, empty stdout. |
 | Valid card with two bindings matching that localpart on different homeservers | Exit 1, `RULE caller_ambiguous`, empty stdout; no implicit domain choice. |
 | Unsupported schema or invalid complete supplied graph | Exit 1 with `RULE unsupported_schema` or `RULE card_invalid`, no conversion or partial view. |
-| V4 selected with `--view environment` or as the primary discovery card | Exit 1, `RULE unsupported_schema`, empty stdout. V4 supports default self-only and explicit hierarchy. |
+| V4 selected with `--view environment` or as the primary discovery card | Exit 1, `RULE unsupported_schema`, empty stdout. V4 supports default self-only and explicit hierarchy/routes. |
 | V4 declared in the discovery sources manifest | Exit 1, `RULE source_manifest_invalid`, empty stdout; the manifest's accepted schemas are unchanged. |
 | V4 aliases, merges, explicit tags, nulls, unknown fields or inconsistent local identity declarations | Exit 1, `RULE card_invalid`, empty stdout; strict v4 parsing uses the original pinned bytes. |
 | Unsafe, missing or unreadable input | Exit 1 with the applicable input rule; no substitute source or input writes. |

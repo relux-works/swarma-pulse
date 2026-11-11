@@ -220,7 +220,7 @@ func cardSchema(version int, company bool) validator {
 			taskFields["path"] = path
 		}
 		req["task_system"] = objv(taskFields, nil)
-		return objv(req, map[string]validator{"desired_state_ref": txt, "orchestrator_mode": enumeration("member keeper"), "orchestrator_ref": txt})(v, at)
+		return objv(req, map[string]validator{"desired_state_ref": txt, "orchestrator_mode": enumeration("member keeper"), "orchestrator_ref": txt, "rooms": roomCollection(version, "project_room")})(v, at)
 	}
 	member := func(v any, at string) *Issue {
 		m := obj(v)
@@ -293,6 +293,7 @@ func cardSchema(version int, company bool) validator {
 		productFields["host_project"] = sl
 	}
 	productFields["topology"] = topology
+	productOptional := map[string]validator{"rooms": roomCollection(version, "space lobby escalations")}
 	ext := validator(external)
 	if !closed {
 		ext = id
@@ -311,5 +312,5 @@ func cardSchema(version int, company bool) validator {
 			}, false),
 		}, nil, true)
 	}
-	return objv(map[string]validator{"schema": enumeration("product-card/v" + string(rune('0'+version))), "product": objv(productFields, nil), "external_members": array(ext, false), "connections": mapping(connection, true), "bindings": mapping(binding, true), "profiles_root": path, "profiles": mapping(profile, true), "projects": array(project, true), "members": array(member, true)}, nil)
+	return objv(map[string]validator{"schema": enumeration("product-card/v" + string(rune('0'+version))), "product": objv(productFields, productOptional), "external_members": array(ext, false), "connections": mapping(connection, true), "bindings": mapping(binding, true), "profiles_root": path, "profiles": mapping(profile, true), "projects": array(project, true), "members": array(member, true)}, nil)
 }

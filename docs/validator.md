@@ -46,7 +46,7 @@ Validation deliberately reports the first failure in this deterministic order:
 5. Optional local layout, only after static acceptance.
 
 Diagnostics contain implementation-owned rule names and indexed locations. Mapping keys controlled by the input never
-appear in them. V3 refusals map to FORMAT rule IDs R1–R16; malformed collections and documents retain exit 2. A refusal
+appear in them. Existing V3 refusals map to FORMAT rule IDs R1–R16; the optional room semantic invariant uses `room_declaration` in both versions; malformed collections and documents retain exit 2. A refusal
 returns no partial document/view and prints no input value, path, parser exception or backtrace. Tests assert exact
 rule/location/exit triples rather than accepting any failure. Future callers must not treat first-failure ordering as an
 exhaustive list of all problems in an invalid card.
@@ -114,3 +114,12 @@ service agent-launch refusal and conversational control require an external laun
 here. Static service acceptance does not claim that runtime pair passed. Pulse caller/admission and live migration are
 also outside this validator. Go's test runner executes every selected subtest after an earlier failure; a failed selected
 lane makes the overall test command fail. An unselected external integration lane is reported as skipped, never passed.
+
+## Optional room metadata
+
+The [room-declaration contract](format-v4.md#optional-room-declarations) applies to
+v3/v4 product cards. No metadata preserves legacy validity; opt-in requires the
+complete product and every-project set. Entries are closed and preserve opaque
+IDs and independently hosted aliases. Routing uses the selected connection.
+Local v4 snapshots enforce the same invariant, and conversion/preservation checks
+retain full arrays and values. This reads no transport state and performs no JOIN.

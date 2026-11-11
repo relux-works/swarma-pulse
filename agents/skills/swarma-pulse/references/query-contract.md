@@ -178,7 +178,7 @@ cannot substitute for that verdict or authorize registration, deployment or laun
 | V4 with environment or as primary discovery card | Exit 1, `RULE unsupported_schema` |
 | V4 entry in discovery sources manifest | Exit 1, `RULE source_manifest_invalid` |
 
-V4 supports the default self-only and explicit hierarchy views. Environment/discovery continue to
+V4 supports the default self-only and explicit hierarchy/routes views. Environment/discovery continue to
 accept only their existing v3 product and v1 company schemas, including the
 discovery sources manifest. All hierarchy lists stay empty in the default v4 result;
 runtime, registration, installed profile and assignment observations stay unknown.
@@ -235,7 +235,7 @@ safe-file and output-write refusals apply. The shared graph enforces its existin
 64-hop budget (`input_limit` above it); product role rules still apply and are not
 relaxed to admit arbitrary reporting chains. Query time and declarations establish
 no registration, JOIN, live runtime, cryptographic caller or transport authority.
-DM descriptors and paired room alias/ID declarations require their separate contracts.
+The separately selected routes view adds DM descriptors and room declarations.
 
 ## Declared environment view
 
@@ -535,3 +535,50 @@ company/product/member projections with partial inventory, explicit remote and
 missing-source refusals, source agreement, complete-graph validation, budget
 boundaries, summary privacy and stable ordering. Fixture evidence does not prove
 actual company/product adoption.
+
+## Declared routes view
+
+Add `--view routes` to the explicit unsigned invocation:
+
+```sh
+.temp/bin/pulse me --local-unsigned --view routes \
+  --card /absolute/path/product-card.yaml \
+  --revision sha256:EXACT_LOWERCASE_64_HEX_DIGEST --format json
+```
+
+This reads one pinned v3/v4 product card and returns `pulse-view/v4`: hierarchy's
+17 fields plus exactly `dm_routes` and `room_routes`, with `query.view=routes`.
+Existing views and their field sets are unchanged. Source selectors refuse usage
+before input access; company cards are unsupported. No credentials, pair mappings,
+external references or network operations are read or invoked.
+
+`dm_routes` contains one entry per unique related logical member, sorted by
+qualified key, excluding self. Each has `member`, `descriptor`, `reason`. For
+chat-declared keeper/orchestrator pairs, the descriptor has exactly `contract`,
+`sender_mxid`, `recipient_mxid`, `pair_key`, `room_id`, `state`. The contract is
+`a2a-agent-dm/v1`, IDs are exact full declared MXIDs, room_id is null, state is
+`unknown`, and reason is null. Unsupported entries have null descriptor and reason
+`non_chat`, `caller_class_unsupported`, or `target_class_unsupported`, in that
+precedence. Desired roles establish no actual stable-class admission.
+
+The symmetric pair key is lowercase SHA256 over UTF8 `a2a-agent-dm/v1` plus NUL,
+then the two exact full MXID byte strings sorted ascending, each preceded by its
+4-byte unsigned big-endian byte length. Direction changes sender/recipient, not
+pair_key. There is no case folding, localpart substitution or self-pair.
+
+`room_routes` entries have exactly `scope`, `key`, `role`, `server_name`, `alias`,
+`room_id`, `state`, `membership`. Product routes are always included; projects
+are limited to those returned in hierarchy. State is `declared`, membership is
+`unknown`. Product roles are space/lobby/escalations/upward_escalations/grouped_room;
+project role is team_room. A Space role implies no subscription instruction.
+Legacy scalar `!` references become room_id with null alias; `#` references become
+alias with null room_id. Product routing uses topology.connection; project routing
+uses the manager's validated effective binding. Foreign suffixes are preserved.
+
+When the complete optional [room declaration set](../../../../docs/format-v4.md#optional-room-declarations)
+is present, its entries replace the corresponding legacy roles and retain both
+references. `project_room` maps to team_room. Optional legacy upward/grouped routes
+remain. Entries sort by scope, key, role, server_name, alias, room_id, bytewise with
+null first. Only identical full eight-field entries collapse; role/scope differences
+survive. No declaration establishes alias resolution, existence, admission, JOIN,
+transport readiness or authority.

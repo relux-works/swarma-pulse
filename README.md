@@ -13,6 +13,9 @@ Add `--view environment` for the caller's declared profile, runtime and launch c
 Explicit `--view discovery` composes pinned local sources for same-level peers, superiors and reports, with unresolved boundaries.
 Use `--view hierarchy` for the same caller-relative relationships from one pinned v3 or v4 product card,
 returning `pulse-view/v3` with declared external parents left unresolved.
+Use `--view routes` for `pulse-view/v4`: the same hierarchy plus declaration-only
+DM descriptors and exact product/project room routes. Optional [room declarations](docs/format-v4.md#optional-room-declarations)
+preserve alias/ID pairs without resolving them or claiming membership.
 In hierarchy and discovery, a v3 product keeper's declared external parent stays
 external even when its alias matches a local member ID. Discovery now accepts
 these cards with an external boundary instead of reporting `relation_conflict`;
@@ -92,6 +95,7 @@ be confirmed; inspect the result before any retry. See [converter inputs and pub
 | Pulse query | `.temp/bin/pulse me --local-unsigned --card ABS --revision sha256:HASH --format json` | Self-only JSON or safe refusal; exact content pin and public `A2A_AGENT` context |
 | Declared environment | `.temp/bin/pulse me --local-unsigned --view environment --card ABS --revision sha256:HASH --format json` | Self-only v2 JSON with declared environment; no native-home lookup or launch |
 | Caller discovery | `.temp/bin/pulse me --local-unsigned --view discovery --card ABS --revision sha256:HASH --sources ABS --sources-revision sha256:HASH --root ABS --format json` | v2 JSON from explicitly pinned local cards; no remote retrieval |
+| Declared routes | `.temp/bin/pulse me --local-unsigned --view routes --card ABS --revision sha256:HASH --format json` | v4 JSON with hierarchy, declared DM descriptors and room routes |
 | One-card hierarchy | `.temp/bin/pulse me --local-unsigned --view hierarchy --card ABS --revision sha256:HASH --format json` | v3 JSON with caller-relative relationships from one v3/v4 product card |
 | Go tests | `go test -count=1 ./...` | All selected test lanes; isolated temporary fixtures |
 | Race checks | `go test -race -count=1 ./...` | Race-enabled results for all packages |

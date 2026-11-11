@@ -65,6 +65,9 @@ func validateDecoded(card Object, o Options, version int) *Issue {
 	return relations(card, o, version, false)
 }
 func legacyIssue(e *Issue) *Issue {
+	if e.Rule == "room_declaration" {
+		return e
+	}
 	if strings.HasPrefix(e.Location, "$.product.topology") {
 		return &Issue{"R15", e.Location, e.Exit}
 	}
@@ -397,7 +400,7 @@ func relations(c Object, o Options, version int, localSnapshot bool) *Issue {
 			}
 		}
 	}
-	return nil
+	return validateRoomDeclarations(c)
 }
 func sortedObjects(m map[string]Object) []string {
 	x := Object{}

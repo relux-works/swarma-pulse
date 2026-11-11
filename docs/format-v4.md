@@ -41,7 +41,8 @@ its declared order except where the specification explicitly sorts a query resul
 | Object | Required keys and types | Optional keys and types |
 | --- | --- | --- |
 | Card | schema: literal product-card/v4; product: Product; external_members: list External; connections: nonempty map Connection; bindings: nonempty map Binding; profiles_root: path; profiles: nonempty map Profile; projects: nonempty list Project; members: nonempty list Member | none |
-| Product | id: slug; description: text; privacy: text; keeper: local logical-id; default_binding: binding key; host_project: project id; topology: Topology | none |
+| Product | id: slug; description: text; privacy: text; keeper: local logical-id; default_binding: binding key; host_project: project id; topology: Topology | rooms: nonempty list RoomDeclaration |
+| RoomDeclaration | role: space, lobby or escalations for Product; project_room for Project; server_name: server | alias: full qualified room alias; room_id: opaque or legacy qualified room ID; at least one required |
 | External | product: slug; member: logical-id | none |
 | Connection | homeserver: HTTPS origin text; server_name: canonical DNS domain | none |
 | Binding | operator: text; host: text; connection: connection key; identity_domain: canonical DNS domain | none |
@@ -50,7 +51,7 @@ its declared order except where the specification explicitly sorts a query resul
 | Requirement | context: text; compatible: version-range text | none |
 | Selection | version: MAJOR.MINOR.PATCH string; source_rev: 7–40 lowercase hex; lock_sha256: sha256 | none |
 | Topology | connection: connection key; space: Room; lobby: Room; escalations: Room | grouped_rooms: list Room; upward_escalations: Room |
-| Project | id: slug; description: text; repo: Repository or literal local; location: Location; desired_state: State; orchestrator: local logical-id; task_system: TaskSystem; channels: Channels | desired_state_ref: ref; orchestrator_mode: literal member or keeper; orchestrator_ref: ref |
+| Project | id: slug; description: text; repo: Repository or literal local; location: Location; desired_state: State; orchestrator: local logical-id; task_system: TaskSystem; channels: Channels | desired_state_ref: ref; orchestrator_mode: literal member or keeper; orchestrator_ref: ref; rooms: nonempty list RoomDeclaration |
 | Local Location | kind: literal local; path: path | none |
 | Remote Location | kind: literal remote; operator: text; execution_host: text; project_locator: ref | checkout_path: path |
 | Local TaskSystem | kind: literal task-board or tasks-md; path: path | none |
@@ -224,3 +225,38 @@ rejects model/effort fields in the service runtime shape. service_session_forbid
 refusal for an otherwise valid service record. These labels specify future expected behavior, not a shipped error API.
 When several invariants fail, a later implementation must report every applicable safe rule/location or a separately
 reviewed deterministic diagnostic order; it must never claim success from an unrelated setup failure.
+
+## Optional room declarations
+
+Both `product-card/v3` and `product-card/v4` accept optional `product.rooms` and
+`projects[].rooms`. Entries are closed even in v3: required `role`, `server_name`;
+optional `alias`, `room_id`, with at least one reference. No null or empty values.
+Existing topology, channels, connections and bindings remain required.
+
+This is a complete optional set. If no scope has `rooms`, legacy cards keep their
+existing behavior. If any scope has it, the product must declare exactly one each
+of `space`, `lobby`, `escalations`, and every project exactly one `project_room`.
+Duplicate roles within a scope and duplicate exact full room IDs across scopes
+refuse. Different roles in the same scope may share an ID. Existing scalar
+references are not retroactively deduplicated or rejected.
+
+`server_name` uses the source version's server grammar and must equal the selected
+connection's server: product `topology.connection`, or the project's manager's
+effective binding connection (explicit member binding or product default).
+The manager's `a2a.connection` must match its binding as before. There is no fallback.
+An alias must be full `#local:server`; its hosting server is independent of the
+routing server. For example, routing `gr.example` with alias `#team:relux.works`
+is valid when the selected connection declares `gr.example`.
+
+Room IDs use the existing source-version room grammar. Domainless opaque IDs
+and legacy qualified IDs are preserved exactly. No suffix equality, case folding,
+server appending or alias resolution occurs. A paired alias/ID is an unverified
+declaration, not proof that one resolves to the other. Company cards are unchanged.
+
+The semantic invariant refuses with value-free `room_declaration` diagnostics in
+both versions; existing parser, shape, unknown-field and forbidden-fact diagnostics
+retain precedence and their existing v3 mappings. Conversion preserves the complete
+arrays and values; preservation checking rejects drops or edits. Existing query
+views do not disclose this metadata. An amended input still reports its truthful
+new source digest. Only the explicit [routes view](pulse.md#declared-routes-view)
+projects these fields; it observes no room existence, JOIN or membership.
