@@ -6,6 +6,7 @@ import (
 	"os"
 	"path/filepath"
 	"reflect"
+	"sort"
 	"strings"
 	"testing"
 )
@@ -34,7 +35,11 @@ func TestHierarchyProjection(t *testing.T) {
 				c = v4Fixture(t)
 			}
 			obj(arr(c["members"])[3])["desired_state"] = "parked"
+			obj(obj(arr(c["members"])[2])["runtime"])["model"] = "related-runtime-fixture"
 			keeper := hierarchyView(t, c, "station_aurora_keeper")
+			if bytes.Contains(encode(t, keeper), []byte("related-runtime-fixture")) {
+				t.Fatal("related runtime leaked")
+			}
 			if keeper["schema"] != "pulse-view/v3" || len(keeper) != 17 || keeper["hierarchy_status"] != "partial" || !reflect.DeepEqual(keeper["query"], object{"view": "hierarchy"}) {
 				t.Fatal(keeper)
 			}
@@ -53,7 +58,12 @@ func TestHierarchyProjection(t *testing.T) {
 			}
 			for _, field := range []string{"peers", "superiors", "direct_reports", "descendants"} {
 				for _, value := range arr(storage[field]) {
-					if len(obj(value)) != 7 {
+					keys := []string{}
+					for key := range obj(value) {
+						keys = append(keys, key)
+					}
+					sort.Strings(keys)
+					if !reflect.DeepEqual(keys, []string{"desired_state", "key", "level", "parent", "project", "resolved_name", "role"}) {
 						t.Fatal("related private fields", value)
 					}
 				}
@@ -82,6 +92,61 @@ func TestHierarchyProjection(t *testing.T) {
 			}
 		})
 	}
+}
+
+// V3 product keepers' parents are external by the source schema even if an
+// alias also names self, an orchestrator or a non-chat local member. Other local
+// edges and company keeper-to-keeper edges retain their own schema semantics.
+func TestHierarchyExternalParentAliasCollision(t *testing.T) {
+	for _, alias := range []string{"external_keeper", "beacon_orch", "aurora_keeper", "vault_dev"} {
+		t.Run(alias, func(t *testing.T) {
+			c := fixture(t)
+			c["external_members"] = []any{alias}
+			obj(arr(c["members"])[0])["parent"] = alias
+			_ = validBytes(t, c)
+			v := hierarchyView(t, c, "station_beacon_orch")
+			requireKeys(t, v["superiors"], "aurora/aurora_keeper")
+			requireKeys(t, v["peers"], "aurora/storage_orch")
+			want := []any{object{"from": "aurora/aurora_keeper", "relation": "parent", "target": object{"source": "aurora", "external": alias}, "reason": "external_unresolved"}}
+			if !reflect.DeepEqual(v["boundaries"], want) || v["hierarchy_status"] != "partial" {
+				t.Fatal(v)
+			}
+			u := writeUniverse(t, map[string]object{"aurora": c})
+			discovery, err := discoveryResult(t, u.selectSources(t, "aurora"), "station_beacon_orch")
+			if err != nil || !reflect.DeepEqual(discovery["boundaries"], want) || discovery["schema"] != "pulse-view/v2" || len(discovery) != 17 {
+				t.Fatal(discovery, err)
+			}
+			requireKeys(t, discovery["superiors"], "aurora/aurora_keeper")
+		})
+	}
+	c := companyFixture(t)
+	m := obj(arr(fixture(t)["members"])[1])
+	m["id"], m["role"], m["parent"] = "deputy", "keeper", "company_keeper"
+	delete(m, "project")
+	c["members"] = append(arr(c["members"]), m)
+	c["external_members"] = []any{"company_keeper"}
+	u := writeUniverse(t, map[string]object{"company": c})
+	v, err := discoveryResult(t, u.selectSources(t, "company"), "station_deputy")
+	if err != nil || v["hierarchy_status"] != "complete" || len(arr(v["boundaries"])) != 0 {
+		t.Fatal(v, err)
+	}
+	requireKeys(t, v["superiors"], "example-company/company_keeper")
+}
+
+// This graph-level control creates an actual cycle after materialization;
+// rejection therefore does not depend on violating a product-card role rule.
+func TestHierarchyNormalizedCycleControl(t *testing.T) {
+	c := fixture(t)
+	raw := validBytes(t, c)
+	nodes, err := materialize([]*querySource{{selection: sourceSelection{id: "aurora", schema: "product-card/v3"}, raw: raw, card: c}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := checkReportingGraph(nodes); err != nil {
+		t.Fatal(err)
+	}
+	nodes["aurora/aurora_keeper"].parent = "aurora/beacon_orch"
+	wantRule(t, checkReportingGraph(nodes), "relation_conflict")
 }
 
 // Strict v4 tuple names and legacy-exact federated names retain their domains;
@@ -207,6 +272,15 @@ func TestHierarchyCLIReadOnlyBoundary(t *testing.T) {
 			if code := Run(args, &out, &diagnostics); code != 0 || diagnostics.Len() != 0 || !json.Valid(out.Bytes()) {
 				t.Fatal(code, out.String(), diagnostics.String())
 			}
+			var result object
+			if err := json.Unmarshal(out.Bytes(), &result); err != nil {
+				t.Fatal(err)
+			}
+			if result["schema"] != "pulse-view/v3" || !reflect.DeepEqual(result["query"], object{"view": "hierarchy"}) {
+				t.Fatal(result)
+			}
+			requireKeys(t, result["direct_reports"], "aurora/beacon_orch", "aurora/storage_orch")
+			requireKeys(t, result["descendants"], "aurora/beacon_orch", "aurora/storage_orch", "aurora/vault_dev")
 			for _, flag := range []string{"--sources", "--sources-revision", "--root", "--view"} {
 				bad := append(append([]string{}, args...), flag, "/unread/fixture")
 				out.Reset()

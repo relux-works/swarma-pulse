@@ -174,7 +174,10 @@ func materialize(cards []*querySource) (map[string]*graphMember, error) {
 					n.parent = object{"source": s.selection.id, "external": str(p["product"]) + "/" + str(p["member"])}
 				} else {
 					p := str(parent)
-					if local[p] {
+					// V3 product keepers name an external parent, even when
+					// its alias also matches a local member ID.
+					externalKeeper := s.selection.schema == "product-card/v3" && m["role"] == "keeper"
+					if local[p] && !externalKeeper {
 						n.parent = s.selection.id + "/" + p
 					} else {
 						n.parent = object{"source": s.selection.id, "external": p}
