@@ -150,6 +150,67 @@ func TestPairKeyVectors(t *testing.T) {
 	}
 }
 
+// Legacy v3 prefixes remain valid source declarations and legacy views retain
+// admission. Routes reject unsupported full sender/recipient IDs without output,
+// while preserving valid punctuation and complete IDs rather than normalizing.
+func TestRoutesSupportedFullIdentities(t *testing.T) {
+	for _, memberIndex := range []int{0, 1} {
+		for _, prefix := range []string{"valid/=._-", "bad ", "bad@", "bad:", strings.Repeat("x", 256)} {
+			name := fmt.Sprintf("member-%d/prefix-%x", memberIndex, prefix[:min(len(prefix), 8)])
+			t.Run(name, func(t *testing.T) {
+				c := fixture(t)
+				binding := object{}
+				for k, v := range obj(obj(c["bindings"])["legacy"]) {
+					binding[k] = v
+				}
+				binding["identity_prefix"] = prefix
+				obj(c["bindings"])["selected-prefix"] = binding
+				member := obj(arr(c["members"])[memberIndex])
+				member["binding"] = "selected-prefix"
+				raw := validBytes(t, c)
+				agent := "station_aurora_keeper"
+				if memberIndex == 0 {
+					agent = prefix + str(member["id"])
+				}
+				for _, legacyView := range []string{"", "hierarchy"} {
+					if _, err := projectView(raw, "sha256:"+digest(raw), "/fixture/card", agent, fixedTime, legacyView); err != nil {
+						t.Fatal("legacy admission changed", err)
+					}
+				}
+				b, err := projectView(raw, "sha256:"+digest(raw), "/fixture/card", agent, fixedTime, "routes")
+				if prefix == "valid/=._-" {
+					if err != nil {
+						t.Fatal("valid outgoing form refused", err)
+					}
+					var v object
+					if err := json.Unmarshal(b, &v); err != nil {
+						t.Fatal(err)
+					}
+					d := obj(obj(arr(v["dm_routes"])[0])["descriptor"])
+					field := "recipient_mxid"
+					if memberIndex == 0 {
+						field = "sender_mxid"
+					}
+					if d[field] != "@"+prefix+str(member["id"])+":relux.works" {
+						t.Fatal("valid identity rewritten", d)
+					}
+					return
+				}
+				wantRule(t, err, "identity_conflict")
+				if b != nil {
+					t.Fatal("partial unsupported descriptor", string(b))
+				}
+				path := writeFixture(t, ownDirectory(t), raw)
+				var out, diagnostics bytes.Buffer
+				code := runSelected(selectors{card: path, revision: "sha256:" + digest(raw), view: "routes"}, os.Getuid(), os.Geteuid(), agent, fixedTime, &out, &diagnostics)
+				if code != 1 || out.Len() != 0 || diagnostics.String() != "RULE identity_conflict: $\n" {
+					t.Fatal(code, out.String(), diagnostics.String())
+				}
+			})
+		}
+	}
+}
+
 // A chat-enabled developer still has no manager-class descriptor. Non-chat
 // takes precedence; an impossible self-identity refuses with no partial array.
 func TestDMUnsupportedAndSelfPair(t *testing.T) {
@@ -183,8 +244,8 @@ func TestDMUnsupportedAndSelfPair(t *testing.T) {
 	}
 }
 
-// Explicit metadata replaces the corresponding scalar roles, retains both
-// references, and stays private in existing views except truthful source pins.
+// Explicit metadata replaces the corresponding scalar roles and retains both
+// references. The separate privacy test compares complete legacy receipts.
 func TestRoutesAmendedRooms(t *testing.T) {
 	for _, version := range []string{"v3", "v4"} {
 		t.Run(version, func(t *testing.T) {
@@ -192,7 +253,6 @@ func TestRoutesAmendedRooms(t *testing.T) {
 			if version == "v4" {
 				c = v4Fixture(t)
 			}
-			before := hierarchyView(t, c, "station_aurora_keeper")
 			addDeclaredRooms(c)
 			v := routesView(t, c, "station_aurora_keeper")
 			foundSpace := false
@@ -211,26 +271,6 @@ func TestRoutesAmendedRooms(t *testing.T) {
 			if !foundSpace {
 				t.Fatal("missing space")
 			}
-			after := hierarchyView(t, c, "station_aurora_keeper")
-			delete(before, "sources")
-			delete(after, "sources")
-			if !reflect.DeepEqual(before, after) {
-				t.Fatal("metadata leaked")
-			}
-			for _, view := range []string{"", "environment", "hierarchy"} {
-				raw := encode(t, c)
-				output, err := projectView(raw, "sha256:"+digest(raw), "/fixture/card", "station_aurora_keeper", fixedTime, view)
-				if version == "v4" && view == "environment" {
-					wantRule(t, err, "unsupported_schema")
-					if output != nil {
-						t.Fatal("partial unsupported environment")
-					}
-					continue
-				}
-				if err != nil || bytes.Contains(output, []byte("foreign.example")) {
-					t.Fatal("room metadata disclosed", view, err)
-				}
-			}
 			delete(obj(c["product"]), "rooms")
 			raw := encode(t, c)
 			output, err := projectView(raw, "sha256:"+digest(raw), "/fixture/card", "station_aurora_keeper", fixedTime, "routes")
@@ -239,6 +279,69 @@ func TestRoutesAmendedRooms(t *testing.T) {
 				t.Fatal("partial invalid set")
 			}
 		})
+	}
+}
+
+// Adding valid rooms changes only expected source revision/hash in every
+// admitted legacy view, including v3 discovery. Complete receipts remain in the
+// comparison, so both alias and opaque-ID disclosure or any extra field fails.
+func TestAmendedRoomLegacyPrivacy(t *testing.T) {
+	render := func(t *testing.T, c object, view string) object {
+		t.Helper()
+		raw := encode(t, c)
+		pin := "sha256:" + digest(raw)
+		var output []byte
+		var err error
+		if view == "discovery" {
+			card, decodeErr := decodeQueryCard(raw, pin, true)
+			if decodeErr != nil {
+				t.Fatal(decodeErr)
+			}
+			source := &querySource{selection: sourceSelection{id: cardID(card), schema: str(card["schema"]), path: "/fixture/card/product-card.yaml", revision: pin}, raw: raw, card: card}
+			manifest := object{"revision": "sha256:" + strings.Repeat("1", 64), "sha256": strings.Repeat("2", 64), "root": "/fixture"}
+			output, err = projectDiscovery([]*querySource{source}, manifest, "station_aurora_keeper", fixedTime)
+		} else {
+			output, err = projectView(raw, pin, "/fixture/card", "station_aurora_keeper", fixedTime, view)
+		}
+		if err != nil {
+			t.Fatal(view, err)
+		}
+		var v object
+		if err := json.Unmarshal(output, &v); err != nil {
+			t.Fatal(err)
+		}
+		return v
+	}
+	for _, version := range []string{"v3", "v4"} {
+		for _, view := range []string{"", "environment", "hierarchy", "discovery"} {
+			if version == "v4" && (view == "environment" || view == "discovery") {
+				continue
+			}
+			t.Run(version+"/"+view, func(t *testing.T) {
+				c := fixture(t)
+				if version == "v4" {
+					c = v4Fixture(t)
+				}
+				expected := render(t, c, view)
+				addDeclaredRooms(c)
+				raw := encode(t, c)
+				actual := render(t, c, view)
+				receipts := arr(expected["sources"])
+				if source := obj(expected["source"]); source != nil {
+					receipts = append(receipts, source)
+				}
+				if len(receipts) != 1 {
+					t.Fatal("unexpected legacy source count", len(receipts))
+				}
+				for _, value := range receipts {
+					source := obj(value)
+					source["revision"], source["sha256"] = "sha256:"+digest(raw), digest(raw)
+				}
+				if !reflect.DeepEqual(actual, expected) {
+					t.Fatal("new room metadata changed legacy output beyond source pin/hash")
+				}
+			})
+		}
 	}
 }
 

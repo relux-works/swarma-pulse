@@ -460,6 +460,9 @@ The symmetric pair key is lowercase SHA256 over UTF8 `a2a-agent-dm/v1` plus NUL,
 then the two exact full MXID byte strings sorted ascending, each preceded by its
 4-byte unsigned big-endian byte length. Direction changes sender/recipient, not
 pair_key. There is no case folding, localpart substitution or self-pair.
+Before a descriptor is constructed, both complete MXIDs must satisfy the supported
+outgoing identity grammar. Unsupported identities refuse `identity_conflict` with
+no partial result; legacy v3 source admission in existing views stays unchanged.
 
 `room_routes` entries have exactly `scope`, `key`, `role`, `server_name`, `alias`,
 `room_id`, `state`, `membership`. Product routes are always included; projects

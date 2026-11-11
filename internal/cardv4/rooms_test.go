@@ -71,6 +71,10 @@ func TestOptionalRoomDeclarations(t *testing.T) {
 				{"malformed-server", func(c Object) { obj(list(obj(c["product"])["rooms"])[0])["server_name"] = "bad server" }},
 				{"wrong-routing-server", func(c Object) { obj(list(obj(c["product"])["rooms"])[0])["server_name"] = "other.example" }},
 				{"duplicate-role", func(c Object) {
+					// Keep exactly three entries so cardinality cannot mask uniqueness.
+					obj(list(obj(c["product"])["rooms"])[1])["role"] = "space"
+				}},
+				{"too-many-rooms", func(c Object) {
 					obj(c["product"])["rooms"] = append(list(obj(c["product"])["rooms"]), list(obj(c["product"])["rooms"])[0])
 				}},
 				{"duplicate-cross-scope-id", func(c Object) {

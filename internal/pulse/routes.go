@@ -6,6 +6,8 @@ import (
 	"encoding/hex"
 	"sort"
 	"strings"
+
+	"github.com/relux-works/swarma-pulse/internal/cardv4"
 )
 
 // currentRoomRoutes consumes an already validated card and the graph's returned
@@ -126,7 +128,7 @@ func declaredDMRoutes(self *graphMember, nodes map[string]*graphMember, returned
 			entry["reason"] = "target_class_unsupported"
 		default:
 			sender, recipient := str(self.resolved), str(target.resolved)
-			if sender == "" || recipient == "" || sender == recipient {
+			if !cardv4.SupportedMXID(sender) || !cardv4.SupportedMXID(recipient) || sender == recipient {
 				return nil, refusal("identity_conflict")
 			}
 			entry["descriptor"] = object{"contract": pairContract, "sender_mxid": sender, "recipient_mxid": recipient, "pair_key": pairKey(sender, recipient), "room_id": nil, "state": "unknown"}

@@ -51,6 +51,10 @@ func mxid(v any) bool {
 	p := strings.Split(str(v), ":")
 	return len(p) == 2 && mxidLocal.MatchString(p[0]) && dns(p[1])
 }
+
+// SupportedMXID checks the strict full identity form used for outgoing route
+// descriptors. It does not normalize a value or grant transport admission.
+func SupportedMXID(value string) bool { return mxid(value) }
 func origin(v any) bool {
 	u, e := url.Parse(str(v))
 	return e == nil && !strings.Contains(str(v), "#") && u.Scheme == "https" && u.Host != "" && u.User == nil && u.RawQuery == "" && !u.ForceQuery && u.Fragment == "" && (u.Path == "" || u.Path == "/") && dns(u.Hostname()) && u.Opaque == ""
