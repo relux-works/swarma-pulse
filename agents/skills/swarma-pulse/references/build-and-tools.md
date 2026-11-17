@@ -11,9 +11,13 @@ remain separate from actual cards and independently admitted custody.
 
 Use Go 1.25.12 or a newer fixed toolchain (the Go 1.26 branch requires 1.26.5 or newer). This includes the rooted-filesystem fix for
 CVE-2026-39822 (golang/go issue 79005); the module directive makes an older local-only compiler
-refuse the build. Native validation is tested on macOS arm64 with Go 1.25.12. The only module dependency is
-go.yaml.in/yaml/v3 v3.0.5, the maintained YAML v3 Node API, pinned in
-go.mod/go.sum. No language adapter, child process or network client is used by the validator.
+refuse the build. Native validation is tested on macOS arm64 with Go 1.25.12.
+YAML decoding pins go.yaml.in/yaml/v3 v3.0.5. Governance public point decoding pins
+github.com/decred/dcrd/dcrec/secp256k1/v4 v4.4.1 and
+github.com/oasisprotocol/curve25519-voi v0.0.0-20251114093237-2ab5a27a1729,
+with indirect golang.org/x/sys v0.47.0, in go.mod/go.sum. Binary distributions
+include the repository's THIRD_PARTY_LICENSES.md. No language adapter, child
+process or network client is used by the validator.
 
 Before attributing a local executable to one reviewed commit, record the selected
 source's `git rev-parse HEAD` and `git status --porcelain`, build it, then inspect
@@ -85,7 +89,8 @@ be confirmed; inspect the result before any retry. See [converter inputs and pub
 | One-card hierarchy | `.temp/bin/pulse me --local-unsigned --view hierarchy --card ABS --revision sha256:HASH --format json` | v3 caller-relative graph from one pinned v3/v4 product card |
 | Go tests | `go test -count=1 ./...` | All selected test lanes; isolated temporary fixtures |
 | Race checks | `go test -race -count=1 ./...` | Race-enabled results for all packages |
-| Go vet | `go vet ./...` | Static diagnostics |
+| Declared governance | `.temp/bin/pulse me --local-unsigned --view governance --card ABS --revision sha256:HASH --format json` | v5 self-only JSON with declared owner public records/meta-keeper from one v3/v4/v5 card; no authority verification |
+| Go vet | `go vet -p 2 ./...` | Static diagnostics |
 | Coverage | `go test -coverprofile=.temp/coverage.out ./...` | `.temp/coverage.out`; inspect with `go tool cover -func=.temp/coverage.out` |
 | Git | `git diff --check`; `git verify-commit HEAD` | Whitespace/signature diagnostics |
 

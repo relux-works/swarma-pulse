@@ -1,6 +1,6 @@
 ---
 name: swarma-pulse
-description: Use the shipped Pulse CLI for local unsigned self, declared-environment or caller-discovery views, interpret identity/source boundaries, or select the product-card validator, converter and change checker. Use for these module interfaces; account registration, runtime launch and proposed signed or plugin interfaces are separate operations.
+description: Use the shipped Pulse CLI for local unsigned self, environment, discovery or declared-governance views, interpret identity/source boundaries, or select the product-card validator, converter and change checker. Account registration, runtime launch and proposed signed or plugin interfaces are separate operations.
 ---
 
 # Use Pulse
@@ -17,9 +17,13 @@ product card, returning `pulse-view/v3`. See the query contract's
 [hierarchy section](references/query-contract.md#one-card-hierarchy-view).
 Use `--view routes` for the same hierarchy plus declared DM descriptors and exact
 product/project room routes (`pulse-view/v4`). See the [route contract](references/query-contract.md#declared-routes-view).
-V4 supports the default self-only and explicit hierarchy/routes views. Its complete local declaration is checked;
+V4 supports the default self-only and explicit hierarchy/routes/governance views. Its complete local declaration is checked;
 external source attestations and star reservations remain unverified and are
 marked in `source.validation`. The v4 admission tools remain separate.
+Use `--view governance` for declared owners, public key records and the meta-keeper
+reference from one v3/v4/v5 product card (`pulse-view/v5`). Read the complete
+[governance contract](references/governance.md) before use. Existing selectors
+reject v5; public point validity proves no possession, identity or authority.
 
 The included references provide this skill's documentation without relying on
 files outside its folder. Their build and fixture commands run from an authorized
@@ -41,11 +45,13 @@ to a real card. Select those inputs separately before running a command.
   its path interpretation.
 - Use the invoking session's existing public `A2A_AGENT` localpart. Resolution is
   exact `binding.identity_prefix + member.id` for v3 chat members, through the
-  declared or default binding. For v4 chat members, match the exact localpart of
+  declared or default binding. For v4/v5 chat agents, match the exact localpart of
   `identity.mxid` (`legacy-exact`) or the declared domain/product/project/role/star
   tuple (`domain-star-v1`). Exactly one match is required across the selected card or
   supported discovery universe. A full MXID, normalized
   punctuation or an arbitrary member override is not a caller selector.
+  V5 uses `responsibility` for mechanical role/name/scope and `role` only as a
+  title. Human contacts and logical ids are not agent caller contexts.
 - Pass **all** selectors explicitly: `me --local-unsigned --card ABS
   --revision sha256:LOWERCASE64HEX --format json`. There is no query config file,
   implicit card search, `--member`, `--config`, signature,
@@ -101,6 +107,12 @@ stderr. Selector validation precedes file access. Do not retry by silently addin
 unsigned mode to a request that intended a signed caller.
 
 ## Select an opt-in view
+
+For declared owner public material and a meta-keeper reference, add
+`--view governance`. It reads one complete pinned v3/v4/v5 product card; company
+cards and discovery source selectors refuse. Governance is undeclared for v3/v4
+or absent v5 metadata. It returns the closed17-field self-only schema documented
+in [the governance reference](references/governance.md), with no hierarchy expansion.
 
 For a one-card hierarchy, add `--view hierarchy` to the baseline invocation.
 For declaration-only DM and room routes, select `--view routes` instead; it reads
@@ -167,9 +179,9 @@ hierarchy is complete only relative to supplied declarations.
 | --- | --- |
 | `self.resolved_name` | Full source-declared `@localpart:homeserver`; preserve the complete ID in shared display and account addressing/comparison. A friendly label may accompany it. |
 | `caller.agent` | Unverified local context; not a qualified account address or authenticated sender. |
-| `member` (v1), `self.key` | Logical `card-id/member-id`, separate from the Matrix account. |
+| `member`, `self.key` where present | Logical `card-id/member-id`, separate from the Matrix account. |
 | `self.execution_binding`, `self.profile`, `projects` | Declared desired facts, not current process, installed-profile or scheduling evidence. |
-| `source` (v1) or each `sources` item (v2/v3): schema, revision, sha256, card_root | Supplied schema, exact byte pin and real input-parent coordinates. Freshness is `unknown`; `observed_at` is null. |
+| `source` or each `sources` item: schema, revision, sha256, card_root | Supplied schema, exact byte pin and real input-parent coordinates. Freshness is `unknown`; `observed_at` is null. |
 | `query_observed_at` | Query UTC time, not card freshness or registration time. |
 
 `@station_beacon_orch:alpha.example` and
@@ -204,8 +216,10 @@ do not invent a project or appointment.
 | Valid but unmatched local context | Exit 1, `RULE caller_unknown`, empty stdout. |
 | Valid card with two bindings matching that localpart on different homeservers | Exit 1, `RULE caller_ambiguous`, empty stdout; no implicit domain choice. |
 | Unsupported schema or invalid complete supplied graph | Exit 1 with `RULE unsupported_schema` or `RULE card_invalid`, no conversion or partial view. |
-| V4 selected with `--view environment` or as the primary discovery card | Exit 1, `RULE unsupported_schema`, empty stdout. V4 supports default self-only and explicit hierarchy/routes. |
+| V4 selected with `--view environment` or as the primary discovery card | Exit 1, `RULE unsupported_schema`, empty stdout. V4 supports default self-only and explicit hierarchy/routes/governance. |
 | V4 declared in the discovery sources manifest | Exit 1, `RULE source_manifest_invalid`, empty stdout; the manifest's accepted schemas are unchanged. |
+| V5 as the primary card with a selector other than governance | Exit 1, `RULE unsupported_schema`, empty stdout; no implicit conversion. |
+| Invalid v5 metadata, including an unselected public key | Governance exits 1, `RULE card_invalid`, empty stdout; the complete card is checked before projection. |
 | V4 aliases, merges, explicit tags, nulls, unknown fields or inconsistent local identity declarations | Exit 1, `RULE card_invalid`, empty stdout; strict v4 parsing uses the original pinned bytes. |
 | Unsafe, missing or unreadable input | Exit 1 with the applicable input rule; no substitute source or input writes. |
 

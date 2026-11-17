@@ -24,6 +24,18 @@ func admittedSource(src []byte, cli bool, spy *processSpy) bool {
 		return false
 	}
 	pure := words("bytes crypto/sha256 encoding/hex encoding/json errors fmt io io/fs net/url path/filepath reflect regexp sort strconv strings unicode unicode/utf8 go.yaml.in/yaml/v3")
+	// These dependencies expose only the exact public-decoder/type entry
+	// points used by the governance contract, not signer or ambient-clock APIs.
+	publicAPIs := map[string]map[string]bool{
+		"crypto/elliptic": words("P256 UnmarshalCompressed MarshalCompressed"),
+		"encoding/base64": words("RawURLEncoding"),
+		"time":            words("Time Parse"),
+		"github.com/decred/dcrd/dcrec/secp256k1/v4":     words("ParsePubKey"),
+		"github.com/oasisprotocol/curve25519-voi/curve": words("CompressedEdwardsY EdwardsPoint"),
+	}
+	for path := range publicAPIs {
+		pure[path] = true
+	}
 	if cli {
 		for _, p := range []string{"os", "flag", "github.com/relux-works/swarma-pulse/internal/cardv4"} {
 			pure[p] = true
@@ -37,6 +49,9 @@ func admittedSource(src []byte, cli bool, spy *processSpy) bool {
 			return false
 		}
 		name := filepath.Base(p)
+		if p == "github.com/decred/dcrd/dcrec/secp256k1/v4" {
+			name = "secp256k1"
+		}
 		if i.Name != nil {
 			name = i.Name.Name
 		}
@@ -63,6 +78,9 @@ func admittedSource(src []byte, cli bool, spy *processSpy) bool {
 			return true
 		}
 		p := aliases[id.Name]
+		if allowed, constrained := publicAPIs[p]; constrained && !allowed[sel.Sel.Name] {
+			accepted = false
+		}
 		if !cli && p == "fmt" && strings.HasPrefix(sel.Sel.Name, "Print") {
 			accepted = false
 		}
@@ -75,6 +93,40 @@ func admittedSource(src []byte, cli bool, spy *processSpy) bool {
 		return true
 	})
 	return accepted
+}
+
+// The extended AST boundary admits each required public entry point and
+// detects planted private-key, ambient-clock and unlisted-module capabilities.
+// It does not type-check or trace dependency machine code.
+func TestPublicDecoderEffectAdmission(t *testing.T) {
+	for _, tc := range []struct {
+		path, alias, selector string
+		valid                 bool
+	}{
+		{"crypto/elliptic", "elliptic", "P256", true},
+		{"crypto/elliptic", "elliptic", "UnmarshalCompressed", true},
+		{"crypto/elliptic", "elliptic", "MarshalCompressed", true},
+		{"encoding/base64", "base64", "RawURLEncoding", true},
+		{"time", "time", "Time", true},
+		{"time", "time", "Parse", true},
+		{"github.com/decred/dcrd/dcrec/secp256k1/v4", "secp256k1", "ParsePubKey", true},
+		{"github.com/decred/dcrd/dcrec/secp256k1/v4", "decoder", "ParsePubKey", true},
+		{"github.com/oasisprotocol/curve25519-voi/curve", "curve", "CompressedEdwardsY", true},
+		{"github.com/oasisprotocol/curve25519-voi/curve", "curve", "EdwardsPoint", true},
+		{"crypto/elliptic", "elliptic", "GenerateKey", false},
+		{"time", "time", "Now", false},
+		{"time", "time", "AfterFunc", false},
+		{"github.com/decred/dcrd/dcrec/secp256k1/v4", "secp256k1", "PrivKeyFromBytes", false},
+		{"github.com/oasisprotocol/curve25519-voi/curve", "curve", "NewEdwardsBasepointTable", false},
+		{"crypto/ed25519", "ed25519", "GenerateKey", false},
+	} {
+		t.Run(tc.alias+"/"+tc.selector, func(t *testing.T) {
+			source := "package p\nimport " + tc.alias + " " + strconv.Quote(tc.path) + "\nvar _ = " + tc.alias + "." + tc.selector + "\n"
+			if got := admittedSource([]byte(source), false, &processSpy{}); got != tc.valid {
+				t.Fatalf("want admitted=%v, got %v", tc.valid, got)
+			}
+		})
+	}
 }
 
 // All production units retain the no-write/no-network/no-process API surface.

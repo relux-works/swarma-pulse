@@ -1,5 +1,8 @@
 # swarma-pulse
 
+Third-party module notices are collected in [THIRD_PARTY_LICENSES.md](THIRD_PARTY_LICENSES.md)
+and accompany binary distributions.
+
 Swarma-pulse defines product cards, stable member identities and the Pulse query for a member's peers, reports and
 superiors. Product cards describe desired teams and project locations; they do not launch members or store live state.
 
@@ -16,6 +19,9 @@ returning `pulse-view/v3` with declared external parents left unresolved.
 Use `--view routes` for `pulse-view/v4`: the same hierarchy plus declaration-only
 DM descriptors and exact product/project room routes. Optional [room declarations](docs/format-v4.md#optional-room-declarations)
 preserve alias/ID pairs without resolving them or claiming membership.
+Use `--view governance` for [declared owners, public keys and the meta-keeper](docs/pulse-governance.md)
+with `pulse-view/v5`. This selector accepts v3, v4 and [v5 product cards](docs/format-v5.md),
+validating the complete declaration before projection. Existing selectors retain their formats and reject v5 cards.
 In hierarchy and discovery, a v3 product keeper's declared external parent stays
 external even when its alias matches a local member ID. Discovery now accepts
 these cards with an external boundary instead of reporting `relation_conflict`;
@@ -40,9 +46,13 @@ Product-specific cards belong in their declared host project; the swarm host pro
 
 Use Go 1.25.12 or a newer fixed toolchain (the Go 1.26 branch requires 1.26.5 or newer). This includes the rooted-filesystem fix for
 [CVE-2026-39822](https://github.com/golang/go/issues/79005); the module directive makes an older local-only compiler
-refuse the build. Native validation is tested on macOS arm64 with Go 1.25.12. The only module dependency is
-[go.yaml.in/yaml/v3 v3.0.5](https://pkg.go.dev/go.yaml.in/yaml/v3@v3.0.5), the maintained YAML v3 Node API, pinned in
-go.mod/go.sum. No language adapter, child process or network client is used by the validator.
+refuse the build. Native validation is tested on macOS arm64 with Go 1.25.12.
+YAML decoding uses [go.yaml.in/yaml/v3 v3.0.5](https://pkg.go.dev/go.yaml.in/yaml/v3@v3.0.5).
+Public point decoding pins `github.com/decred/dcrd/dcrec/secp256k1/v4 v4.4.1` and
+`github.com/oasisprotocol/curve25519-voi v0.0.0-20251114093237-2ab5a27a1729`,
+with indirect `golang.org/x/sys v0.47.0`, in go.mod/go.sum.
+See the [point-validation contract](docs/format-v5.md#canonical-public-descriptors) and
+[third-party notices](THIRD_PARTY_LICENSES.md). No language adapter, child process or network client is used by the validator.
 
 ```sh
 mkdir -p .temp/bin
@@ -97,9 +107,10 @@ be confirmed; inspect the result before any retry. See [converter inputs and pub
 | Caller discovery | `.temp/bin/pulse me --local-unsigned --view discovery --card ABS --revision sha256:HASH --sources ABS --sources-revision sha256:HASH --root ABS --format json` | v2 JSON from explicitly pinned local cards; no remote retrieval |
 | Declared routes | `.temp/bin/pulse me --local-unsigned --view routes --card ABS --revision sha256:HASH --format json` | v4 JSON with hierarchy, declared DM descriptors and room routes |
 | One-card hierarchy | `.temp/bin/pulse me --local-unsigned --view hierarchy --card ABS --revision sha256:HASH --format json` | v3 JSON with caller-relative relationships from one v3/v4 product card |
-| Go tests | `go test -count=1 ./...` | All selected test lanes; isolated temporary fixtures |
-| Race checks | `go test -race -count=1 ./...` | Race-enabled results for all packages |
-| Go vet | `go vet ./...` | Static diagnostics |
+| Declared governance | `.temp/bin/pulse me --local-unsigned --view governance --card ABS --revision sha256:HASH --format json` | v5 JSON with declared owner public records and meta-keeper reference from one v3/v4/v5 product card; no authority verification |
+| Go tests | `go test -p 2 -count=1 ./...` | All selected test lanes; isolated temporary fixtures |
+| Race checks | `go test -race -p 2 -count=1 ./...` | Race-enabled results for all packages |
+| Go vet | `go vet -p 2 ./...` | Static diagnostics |
 | Coverage | `go test -coverprofile=.temp/coverage.out ./...` | `.temp/coverage.out`; inspect with `go tool cover -func=.temp/coverage.out` |
 | Git | `git diff --check`; `git verify-commit HEAD` | Whitespace/signature diagnostics |
 

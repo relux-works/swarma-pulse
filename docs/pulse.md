@@ -17,6 +17,12 @@ v3 product keeper's external parent even when its alias matches a local member
 ID, returning an external boundary instead of `relation_conflict`. All other
 discovery output remains unchanged.
 
+For declared owners, public key records and a meta-keeper reference from one
+pinned v3/v4/v5 product card, select the explicit
+[governance view](pulse-governance.md), returning `pulse-view/v5`.
+Existing selectors retain their formats and reject v5 cards. Public records
+remain declarations, not verified identity or signing authority.
+
 ## Build and invoke
 
 The initial target is a local Unix CLI, validated on macOS arm64. Use the module's

@@ -114,7 +114,7 @@ func combine(a, b map[string]validator) map[string]validator {
 func schema(version int) validator { return cardSchema(version, false) }
 
 func cardSchema(version int, company bool) validator {
-	closed := version == 4
+	closed := version >= 4
 	txt := scalar(text, "text_format")
 	if !closed {
 		txt = scalar(logical, "text_format")
@@ -224,9 +224,17 @@ func cardSchema(version int, company bool) validator {
 	}
 	member := func(v any, at string) *Issue {
 		m := obj(v)
-		service := closed && m["role"] == "service"
+		if version == 5 && m["kind"] == "human" {
+			return humanMemberSchema(parent, state, role)(v, at)
+		}
+		service := closed && mechanicalRole(m, version) == "service"
 		req := map[string]validator{"id": id, "role": role, "parent": id, "lifecycle": enumeration("persistent on-demand"), "desired_state": state, "context_mode": enumeration("continue fresh"), "runtime": objv(map[string]validator{"kind": enumeration("codex_cli claude_code"), "model": txt}, map[string]validator{"effort": txt})}
 		opt := combine(fields("desired_state_ref station binding project", txt), map[string]validator{"capabilities": array(role, false), "clone": path, "git_dir": path})
+		if version == 5 {
+			req["kind"] = enumeration("agent")
+			req["role"] = scalar(title, "title_format")
+			req["responsibility"] = role
+		}
 		if closed {
 			req["project"] = sl
 			req["binding"] = txt
@@ -294,6 +302,12 @@ func cardSchema(version int, company bool) validator {
 	}
 	productFields["topology"] = topology
 	productOptional := map[string]validator{"rooms": roomCollection(version, "space lobby escalations")}
+	if version == 5 {
+		productOptional["governance"] = object(map[string]validator{
+			"owners":      array(scalar(func(v any) bool { return portable.MatchString(str(v)) }, "principal_id_format"), true),
+			"meta_keeper": parent,
+		}, nil, true)
+	}
 	ext := validator(external)
 	if !closed {
 		ext = id
@@ -312,5 +326,9 @@ func cardSchema(version int, company bool) validator {
 			}, false),
 		}, nil, true)
 	}
-	return objv(map[string]validator{"schema": enumeration("product-card/v" + string(rune('0'+version))), "product": objv(productFields, productOptional), "external_members": array(ext, false), "connections": mapping(connection, true), "bindings": mapping(binding, true), "profiles_root": path, "profiles": mapping(profile, true), "projects": array(project, true), "members": array(member, true)}, nil)
+	required := map[string]validator{"schema": enumeration("product-card/v" + string(rune('0'+version))), "product": objv(productFields, productOptional), "external_members": array(ext, false), "connections": mapping(connection, true), "bindings": mapping(binding, true), "profiles_root": path, "profiles": mapping(profile, true), "projects": array(project, true), "members": array(member, true)}
+	if version == 5 {
+		required["principals"] = array(principalSchema(), false)
+	}
+	return objv(required, nil)
 }

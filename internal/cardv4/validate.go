@@ -91,7 +91,7 @@ func legacyIssue(e *Issue) *Issue {
 	return &Issue{r, e.Location, e.Exit}
 }
 func relations(c Object, o Options, version int, localSnapshot bool) *Issue {
-	v4 := version == 4
+	v4 := version >= 4
 	product := obj(c["product"])
 	members := list(c["members"])
 	projects := list(c["projects"])
@@ -134,7 +134,7 @@ func relations(c Object, o Options, version int, localSnapshot bool) *Issue {
 		return fail("topology_contract", "$.product.topology.connection")
 	}
 	keeper := mi[str(product["keeper"])]
-	if keeper == nil || keeper["role"] != "keeper" {
+	if keeper == nil || mechanicalRole(keeper, version) != "keeper" {
 		return fail("reporting_line", "$.product.keeper")
 	}
 	if v4 {
@@ -165,7 +165,8 @@ func relations(c Object, o Options, version int, localSnapshot bool) *Issue {
 		m := obj(v)
 		at := index("$.members", i)
 		id := str(m["id"])
-		role := str(m["role"])
+		role := mechanicalRole(m, version)
+		human := version == 5 && m["kind"] == "human"
 		manager := role == "keeper" || role == "orchestrator"
 		service := role == "service"
 		bkey := str(m["binding"])
@@ -184,7 +185,7 @@ func relations(c Object, o Options, version int, localSnapshot bool) *Issue {
 				}
 			}
 		}
-		if !service && profiles[str(m["profile"])] == nil {
+		if !human && !service && profiles[str(m["profile"])] == nil {
 			return fail("profile_reference", at+".profile")
 		}
 		p := pi[str(m["project"])]
@@ -240,6 +241,11 @@ func relations(c Object, o Options, version int, localSnapshot bool) *Issue {
 				return fail("reporting_line", at+".parent")
 			}
 			edges[id] = parent
+		}
+		if human {
+			// Human reporting is structural. No execution or chat state is
+			// fabricated to satisfy the agent admission branches below.
+			continue
 		}
 		if role == "reviewer" && (m["context_mode"] != "fresh" || m["independent_of_producer"] != true) {
 			return fail("reviewer_independence", at)
@@ -390,12 +396,12 @@ func relations(c Object, o Options, version int, localSnapshot bool) *Issue {
 				return fail("reporting_line", at+".orchestrator")
 			}
 			for _, m := range mi {
-				if m["project"] == p["id"] && m["role"] == "orchestrator" && m["desired_state"] == "active" {
+				if m["project"] == p["id"] && mechanicalRole(m, version) == "orchestrator" && m["desired_state"] == "active" {
 					return fail("reporting_line", at+".orchestrator")
 				}
 			}
 		} else {
-			if manager["role"] != "orchestrator" || manager["project"] != p["id"] {
+			if mechanicalRole(manager, version) != "orchestrator" || manager["project"] != p["id"] {
 				return fail("reporting_line", at+".orchestrator")
 			}
 		}

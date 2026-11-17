@@ -31,6 +31,9 @@ func ParseLocalSnapshot(raw []byte) (Object, *Issue) {
 // DeclaredMXID returns the declared chat name from a checked local snapshot.
 // It neither proves ownership nor admits a prospective Matrix identity.
 func DeclaredMXID(card, member Object) string {
+	if member["kind"] == "human" {
+		return ""
+	}
 	identity := obj(member["identity"])
 	if identity["scheme"] == "legacy-exact" {
 		return str(identity["mxid"])
@@ -38,6 +41,6 @@ func DeclaredMXID(card, member Object) string {
 	binding := obj(obj(card["bindings"])[str(member["binding"])])
 	domain := str(binding["identity_domain"])
 	return "@" + domain + "_" + str(obj(card["product"])["id"]) + "_" +
-		str(member["project"]) + "_" + roleCodes[str(member["role"])] + "_" +
+		str(member["project"]) + "_" + roleCodes[mechanicalRole(member, cardVersion(card))] + "_" +
 		str(identity["star"]) + ":" + domain
 }

@@ -1,0 +1,401 @@
+{
+  "schema": "product-card/v5",
+  "product": {
+    "id": "aurora",
+    "description": "Synthetic preservation fixture",
+    "privacy": "private",
+    "keeper": "aurora_keeper",
+    "default_binding": "legacy",
+    "topology": {
+      "connection": "legacy-example",
+      "space": "!auroraSpace01:example.org",
+      "lobby": "#aurora-lobby:example.org",
+      "escalations": "#aurora-escalations:example.org"
+    },
+    "host_project": "aurora-host",
+    "governance": {
+      "owners": [
+        "example-participant",
+        "example-owner"
+      ],
+      "meta_keeper": {
+        "product": "constellation",
+        "member": "external_keeper"
+      }
+    }
+  },
+  "external_members": [
+    {
+      "product": "constellation",
+      "member": "external_keeper"
+    }
+  ],
+  "connections": {
+    "legacy-example": {
+      "homeserver": "https://matrix.example.org",
+      "server_name": "example.org"
+    },
+    "target-gr": {
+      "homeserver": "https://gr.example.org/",
+      "server_name": "gr.example.org"
+    }
+  },
+  "bindings": {
+    "legacy": {
+      "operator": "fixture",
+      "host": "station",
+      "connection": "legacy-example",
+      "identity_domain": "example.org"
+    },
+    "gr": {
+      "operator": "fixture",
+      "host": "station",
+      "connection": "target-gr",
+      "identity_domain": "gr.example.org"
+    }
+  },
+  "profiles_root": "../profiles",
+  "profiles": {
+    "control": {
+      "path": "control",
+      "requirement": {
+        "context": "fixture-context",
+        "compatible": ">=0.1.0 <0.2.0"
+      },
+      "selected": {
+        "version": "0.1.0",
+        "source_rev": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "lock_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+      }
+    }
+  },
+  "projects": [
+    {
+      "id": "aurora-host",
+      "description": "Synthetic aurora-host project",
+      "repo": "local",
+      "desired_state": "active",
+      "orchestrator": "aurora_keeper",
+      "task_system": {
+        "kind": "tasks-md",
+        "path": "tasks.md"
+      },
+      "channels": {
+        "mode": "shared",
+        "team_room": "#aurora-host:example.org"
+      },
+      "orchestrator_mode": "keeper",
+      "orchestrator_ref": "Synthetic fixture combined management",
+      "location": {
+        "kind": "local",
+        "path": "."
+      }
+    },
+    {
+      "id": "beacon",
+      "description": "Synthetic beacon project",
+      "repo": "local",
+      "desired_state": "active",
+      "orchestrator": "beacon_orch",
+      "task_system": {
+        "kind": "tasks-md",
+        "path": "tasks.md"
+      },
+      "channels": {
+        "mode": "shared",
+        "team_room": "#beacon:example.org"
+      },
+      "location": {
+        "kind": "local",
+        "path": "../beacon"
+      }
+    },
+    {
+      "id": "vault",
+      "description": "Synthetic vault project",
+      "repo": "local",
+      "desired_state": "active",
+      "orchestrator": "storage_orch",
+      "task_system": {
+        "kind": "tasks-md",
+        "path": "tasks.md"
+      },
+      "channels": {
+        "mode": "shared",
+        "team_room": "#vault:example.org"
+      },
+      "location": {
+        "kind": "local",
+        "path": "../vault"
+      }
+    }
+  ],
+  "members": [
+    {
+      "id": "aurora_keeper",
+      "role": "keeper",
+      "parent": {
+        "product": "constellation",
+        "member": "external_keeper"
+      },
+      "profile": "control",
+      "runtime": {
+        "kind": "codex_cli",
+        "model": "fixture-model",
+        "effort": "high"
+      },
+      "lifecycle": "persistent",
+      "desired_state": "active",
+      "context_mode": "continue",
+      "clone": ".",
+      "a2a": {
+        "connection": "legacy-example",
+        "parent_route": "#aurora-host:example.org",
+        "rooms": [
+          "#aurora-host:example.org"
+        ],
+        "subscriptions": {
+          "required": [
+            {
+              "rooms": [
+                "#aurora-host:example.org"
+              ],
+              "kinds": [
+                "system",
+                "owner-needed",
+                "decision"
+              ]
+            },
+            {
+              "from_mxid": "@owner:example.org"
+            },
+            {
+              "from_mxid": "@owner:gr.example.org"
+            }
+          ],
+          "self": []
+        }
+      },
+      "project": "aurora-host",
+      "scope": "product",
+      "binding": "legacy",
+      "identity": {
+        "scheme": "legacy-exact",
+        "mxid": "@station_aurora_keeper:example.org",
+        "source_ref": {
+          "kind": "v3-card",
+          "revision": "fixture-v3-001",
+          "sha256": "70ec21346a86efda80dfcf0433b0405acf41ab25751b00b1fdcad25ee504fc11",
+          "member": "aurora/aurora_keeper"
+        }
+      },
+      "kind": "agent",
+      "responsibility": "keeper"
+    },
+    {
+      "id": "beacon_orch",
+      "role": "orchestrator",
+      "parent": "aurora_keeper",
+      "profile": "control",
+      "runtime": {
+        "kind": "codex_cli",
+        "model": "fixture-model",
+        "effort": "high"
+      },
+      "lifecycle": "persistent",
+      "desired_state": "active",
+      "context_mode": "continue",
+      "clone": "../beacon",
+      "project": "beacon",
+      "a2a": {
+        "connection": "legacy-example",
+        "parent_route": "#beacon:example.org",
+        "rooms": [
+          "#beacon:example.org"
+        ],
+        "subscriptions": {
+          "required": [
+            {
+              "rooms": [
+                "#beacon:example.org"
+              ],
+              "kinds": [
+                "system",
+                "owner-needed",
+                "decision"
+              ]
+            },
+            {
+              "from_mxid": "@owner:example.org"
+            },
+            {
+              "from_mxid": "@owner:gr.example.org"
+            }
+          ],
+          "self": []
+        }
+      },
+      "binding": "legacy",
+      "station": "registered-task-board-station",
+      "scope": "project",
+      "identity": {
+        "scheme": "legacy-exact",
+        "mxid": "@station_beacon_orch:example.org",
+        "source_ref": {
+          "kind": "v3-card",
+          "revision": "fixture-v3-001",
+          "sha256": "70ec21346a86efda80dfcf0433b0405acf41ab25751b00b1fdcad25ee504fc11",
+          "member": "aurora/beacon_orch"
+        }
+      },
+      "kind": "agent",
+      "responsibility": "orchestrator"
+    },
+    {
+      "id": "storage_orch",
+      "role": "orchestrator",
+      "parent": "aurora_keeper",
+      "profile": "control",
+      "runtime": {
+        "kind": "codex_cli",
+        "model": "fixture-model",
+        "effort": "high"
+      },
+      "lifecycle": "persistent",
+      "desired_state": "active",
+      "context_mode": "continue",
+      "clone": "../vault",
+      "project": "vault",
+      "a2a": {
+        "connection": "legacy-example",
+        "parent_route": "#vault:example.org",
+        "rooms": [
+          "#vault:example.org"
+        ],
+        "subscriptions": {
+          "required": [
+            {
+              "rooms": [
+                "#vault:example.org"
+              ],
+              "kinds": [
+                "system",
+                "owner-needed",
+                "decision"
+              ]
+            },
+            {
+              "from_mxid": "@owner:example.org"
+            },
+            {
+              "from_mxid": "@owner:gr.example.org"
+            }
+          ],
+          "self": []
+        }
+      },
+      "scope": "project",
+      "binding": "legacy",
+      "identity": {
+        "scheme": "legacy-exact",
+        "mxid": "@station_storage_orch:example.org",
+        "source_ref": {
+          "kind": "v3-card",
+          "revision": "fixture-v3-001",
+          "sha256": "70ec21346a86efda80dfcf0433b0405acf41ab25751b00b1fdcad25ee504fc11",
+          "member": "aurora/storage_orch"
+        }
+      },
+      "kind": "agent",
+      "responsibility": "orchestrator"
+    },
+    {
+      "id": "vault_dev",
+      "role": "developer",
+      "parent": "storage_orch",
+      "profile": "control",
+      "runtime": {
+        "kind": "codex_cli",
+        "model": "fixture-model",
+        "effort": "high"
+      },
+      "lifecycle": "persistent",
+      "desired_state": "active",
+      "context_mode": "continue",
+      "clone": "../vault",
+      "project": "vault",
+      "result_route": "parent-native",
+      "scope": "member",
+      "binding": "gr",
+      "identity": {
+        "scheme": "domain-star-v1",
+        "star": "vega"
+      },
+      "kind": "agent",
+      "responsibility": "developer"
+    },
+    {
+      "id": "human_researcher",
+      "kind": "human",
+      "role": "Research contributor",
+      "responsibility": "researcher",
+      "project": "beacon",
+      "parent": "beacon_orch",
+      "scope": "member",
+      "desired_state": "active",
+      "principal": "example-participant"
+    }
+  ],
+  "principals": [
+    {
+      "id": "example-owner",
+      "kind": "human",
+      "name": "Example owner",
+      "contacts": [
+        {
+          "kind": "matrix",
+          "mxid": "@owner:example.org"
+        }
+      ],
+      "keys": [
+        {
+          "purpose": "identity",
+          "algorithm": "Ed25519",
+          "encoding": "ed25519-raw",
+          "public_bytes": "11qYAYKxCrfVS_7TyWQHOg7hcvPapiMlrwIaaPcHURo",
+          "key_id": "ed25519:11qYAYKxCrfVS_7TyWQHOg7hcvPapiMlrwIaaPcHURo",
+          "public_sha256": "21fe31dfa154a261626bf854046fd2271b7bed4b6abe45aa58877ef47f9721b9",
+          "declared_state": "active",
+          "declared_state_at": "2026-11-17T00:00:00Z"
+        },
+        {
+          "purpose": "grant-authority",
+          "algorithm": "P-256",
+          "encoding": "sec1-compressed",
+          "public_bytes": "A2sX0fLhLEJH-Lzm5WOkQPJ3A32BLeszoPShOUXYmMKW",
+          "key_id": "p256:A2sX0fLhLEJH-Lzm5WOkQPJ3A32BLeszoPShOUXYmMKW",
+          "public_sha256": "5baff89de7de5c1d7b6193a1567ceeeb397cbda88f03f725c8de328591bfc194",
+          "declared_state": "active",
+          "declared_state_at": "2026-11-17T00:00:00Z"
+        },
+        {
+          "purpose": "identity",
+          "algorithm": "BIP-340",
+          "encoding": "secp256k1-x-only",
+          "public_bytes": "-TCKAZJYwxBJNE-F-J1SKbUxyEWDb5mwhgHxE7zgNvk",
+          "key_id": "bip340:-TCKAZJYwxBJNE-F-J1SKbUxyEWDb5mwhgHxE7zgNvk",
+          "public_sha256": "7c79f3071e28344e8153bf6c73c294ebe3754aec4e2cb8cb4471b2f44cb5f22d",
+          "declared_state": "active",
+          "declared_state_at": "2026-11-17T00:00:00Z"
+        }
+      ]
+    },
+    {
+      "id": "example-participant",
+      "kind": "human",
+      "name": "Example participant",
+      "contacts": [],
+      "keys": []
+    }
+  ]
+}

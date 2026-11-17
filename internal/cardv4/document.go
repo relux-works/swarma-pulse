@@ -77,7 +77,7 @@ func nodeValue(n *yaml.Node, at string, depth, version int, active map[*yaml.Nod
 	}
 	active[n] = true
 	defer delete(active, n)
-	if version == 4 {
+	if version >= 4 {
 		if e := v4NodeRestriction(n, at); e != nil {
 			return nil, e
 		}
@@ -122,7 +122,7 @@ func nodeValue(n *yaml.Node, at string, depth, version int, active map[*yaml.Nod
 		for i := 0; i < len(n.Content); i += 2 {
 			k := n.Content[i]
 			loc := index(at, i/2)
-			if version == 4 {
+			if version >= 4 {
 				if e := v4NodeRestriction(k, loc); e != nil {
 					return nil, e
 				}
@@ -171,7 +171,7 @@ func nodeValue(n *yaml.Node, at string, depth, version int, active map[*yaml.Nod
 			}
 			return v, nil
 		case "!!null":
-			if version == 4 {
+			if version >= 4 {
 				return nil, shape("null_value", at)
 			}
 			return nil, nil

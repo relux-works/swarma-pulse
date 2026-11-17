@@ -35,7 +35,7 @@ func projectView(raw []byte, revision, cardRoot, agent string, now time.Time, vi
 	if view == "hierarchy" || view == "routes" {
 		return projectHierarchy(raw, revision, cardRoot, agent, now, view)
 	}
-	if view != "" && view != "environment" {
+	if view != "" && view != "environment" && view != "governance" {
 		return nil, refusal("usage")
 	}
 	if revision != "sha256:"+digest(raw) {
@@ -44,20 +44,33 @@ func projectView(raw []byte, revision, cardRoot, agent string, now time.Time, vi
 	if agent == "" || len(agent) > 512 || !utf8.ValidString(agent) || strings.ContainsFunc(agent, unicode.IsControl) {
 		return nil, refusal("caller_context")
 	}
-	card, err := decodeQueryCard(raw, revision, view == "environment")
+	var card object
+	var err error
+	if view == "governance" {
+		card, err = decodeGovernanceCard(raw, revision, now)
+	} else {
+		card, err = decodeQueryCard(raw, revision, view == "environment")
+	}
 	if err != nil {
 		return nil, err
 	}
+	return projectCheckedCard(card, raw, revision, cardRoot, agent, now, view)
+}
+
+// Both entry paths validate the original complete document before sharing this
+// self-only projection. No version relabeling or partial-card validation occurs.
+func projectCheckedCard(card object, raw []byte, revision, cardRoot, agent string, now time.Time, view string) ([]byte, error) {
 	product := cardHeader(card)
 	bindings := obj(card["bindings"])
 	connections := obj(card["connections"])
-	v4 := card["schema"] == "product-card/v4"
+	v5 := card["schema"] == "product-card/v5"
+	modern := card["schema"] == "product-card/v4" || v5
 	var self, binding, connection object
 	bindingKey := ""
 	matches := 0
 	for _, value := range arr(card["members"]) {
 		member := obj(value)
-		if obj(member["a2a"]) == nil {
+		if obj(member["a2a"]) == nil || v5 && member["kind"] == "human" {
 			continue
 		}
 		key := str(member["binding"])
@@ -66,7 +79,7 @@ func projectView(raw []byte, revision, cardRoot, agent string, now time.Time, vi
 		}
 		b := obj(bindings[key])
 		localpart := str(b["identity_prefix"]) + str(member["id"])
-		if v4 {
+		if modern {
 			name := cardv4.DeclaredMXID(card, member)
 			localpart, _, _ = strings.Cut(strings.TrimPrefix(name, "@"), ":")
 		}
@@ -87,7 +100,11 @@ func projectView(raw []byte, revision, cardRoot, agent string, now time.Time, vi
 	}
 	key := str(product["id"]) + "/" + str(self["id"])
 	scope := "member"
-	switch self["role"] {
+	role := self["role"]
+	if v5 {
+		role = self["responsibility"]
+	}
+	switch role {
 	case "keeper":
 		scope = "product"
 	case "orchestrator":
@@ -103,6 +120,12 @@ func projectView(raw []byte, revision, cardRoot, agent string, now time.Time, vi
 		"execution_binding": object{"key": bindingKey, "operator": binding["operator"], "host": binding["host"], "connection": binding["connection"]},
 		"profile":           object{"requirement": object{"context": requirement["context"], "compatible": requirement["compatible"]}, "selected": object{"version": selected["version"], "source_rev": selected["source_rev"], "lock_sha256": selected["lock_sha256"]}},
 		"project":           nil, "project_state": "undeclared"}
+	if view == "governance" {
+		viewSelf["kind"], viewSelf["responsibility"] = "agent", role
+		if role == "service" {
+			viewSelf["profile"] = nil
+		}
+	}
 	projects := []any{}
 	if projectID := str(self["project"]); projectID != "" {
 		for _, value := range arr(card["projects"]) {
@@ -114,7 +137,7 @@ func projectView(raw []byte, revision, cardRoot, agent string, now time.Time, vi
 			viewSelf["project"] = pkey
 			viewSelf["project_state"] = "declared"
 			location := object{"kind": "local", "path": p["path"]}
-			if v4 {
+			if modern {
 				declared := obj(p["location"])
 				location = object{"kind": declared["kind"]}
 				for _, k := range []string{"path", "operator", "execution_host", "project_locator", "checkout_path"} {
@@ -136,8 +159,12 @@ func projectView(raw []byte, revision, cardRoot, agent string, now time.Time, vi
 		// This constant does not reveal hidden node counts or edge existence.
 		"hierarchy_status": "self-only; hierarchy not disclosed",
 		"observations":     object{"runtime": object{"state": "unknown"}, "registration": object{"state": "unknown"}, "installed_profile": object{"state": "unknown"}, "assignment": object{"state": "unknown"}}}
-	if v4 {
+	if modern {
 		obj(result["source"])["validation"] = "local declarations only; source attestations and star reservations unverified"
+	}
+	if view == "governance" {
+		result["schema"] = "pulse-view/v5"
+		result["governance"] = declaredGovernance(card)
 	}
 	if view == "environment" {
 		environment, err := declaredEnvironment(card, self, binding, connection, bindingKey, agent)

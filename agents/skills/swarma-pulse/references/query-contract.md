@@ -8,6 +8,12 @@ input. V4 uses strict parsing and checks the complete local declaration; externa
 attestations remain unverified. Existing v4 admission tools and the signed-caller
 design remain separate contracts.
 
+The explicit `--view governance` selector additionally accepts product-card/v5
+and returns self-only declared owners/public material plus the meta-keeper
+reference as `pulse-view/v5`. Read the complete [governance contract](governance.md)
+for its closed output, public-key checks and refusals. Existing selectors retain
+their formats and reject v5; no owner identity or authority is verified.
+
 ## Build and invoke
 
 The initial target is a local Unix CLI, validated on macOS arm64. Use the module's
