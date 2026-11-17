@@ -2,6 +2,8 @@ package pulse
 
 import (
 	"bytes"
+	"encoding/base64"
+	"encoding/hex"
 	"encoding/json"
 	"os"
 	"path/filepath"
@@ -461,5 +463,111 @@ func TestGovernanceCLIAndPreservation(t *testing.T) {
 	entriesAfter, err := os.ReadDir(dir)
 	if err != nil || !reflect.DeepEqual(entriesBefore, entriesAfter) {
 		t.Fatal("query changed source directory", err)
+	}
+}
+
+// Real Run accepts nearby legal declarations, then collapses each new whole-card
+// violation to card_invalid with empty stdout and unchanged file/directory state.
+func TestGovernanceReviewRefusals(t *testing.T) {
+	key := func(c object, n int) object { return obj(arr(obj(arr(c["principals"])[0])["keys"])[n]) }
+	check := func(t *testing.T, c object, want string) {
+		t.Helper()
+		for _, p := range arr(c["principals"]) {
+			for _, k := range arr(obj(p)["keys"]) {
+				obj(k)["declared_state_at"] = "2020-01-01T00:00:00Z"
+			}
+		}
+		raw := encode(t, c)
+		dir := ownDirectory(t)
+		path := writeFixture(t, dir, raw)
+		before, err := os.Stat(path)
+		if err != nil {
+			t.Fatal(err)
+		}
+		entries, err := os.ReadDir(dir)
+		if err != nil {
+			t.Fatal(err)
+		}
+		t.Setenv("A2A_AGENT", "station_beacon_orch")
+		args := []string{"me", "--local-unsigned", "--view", "governance", "--card", path, "--revision", "sha256:" + digest(raw), "--format", "json"}
+		var out, diagnostics bytes.Buffer
+		code := Run(args, &out, &diagnostics)
+		if want == "" {
+			if code != 0 || diagnostics.Len() != 0 {
+				t.Fatal(code, diagnostics.String())
+			}
+			var result object
+			if err := json.Unmarshal(out.Bytes(), &result); err != nil {
+				t.Fatal(err)
+			}
+			governanceClosedShape(t, result, true)
+		} else if code != 1 || out.Len() != 0 || diagnostics.String() != "RULE "+want+": $\n" {
+			t.Fatal(code, diagnostics.String(), "stdout bytes", out.Len())
+		}
+		after, err := os.Stat(path)
+		if err != nil {
+			t.Fatal(err)
+		}
+		actual, err := os.ReadFile(path)
+		if err != nil || !bytes.Equal(raw, actual) || !bytes.Equal(raw, encode(t, c)) || before.Mode() != after.Mode() || !before.ModTime().Equal(after.ModTime()) {
+			t.Fatal("query changed input", err)
+		}
+		afterEntries, err := os.ReadDir(dir)
+		if err != nil || !reflect.DeepEqual(entries, afterEntries) {
+			t.Fatal("query changed directory", err)
+		}
+	}
+	for _, purpose := range []string{"identity", "grant-authority"} {
+		t.Run("valid-p256-"+purpose, func(t *testing.T) {
+			c := governanceCard(t)
+			if obj(arr(c["members"])[1])["kind"] != "agent" || obj(arr(c["members"])[4])["kind"] != "human" {
+				t.Fatal("missing valid member-kind neighbors")
+			}
+			key(c, 1)["purpose"] = purpose
+			check(t, c, "")
+		})
+	}
+	t.Run("valid-unselected-public-record", func(t *testing.T) {
+		c := governanceCard(t)
+		obj(obj(c["product"])["governance"])["owners"] = []any{"example-participant"}
+		check(t, c, "")
+	})
+	for _, tc := range []struct {
+		name string
+		edit func(*testing.T, object)
+	}{
+		{"missing-member-kind", func(t *testing.T, c object) { delete(obj(arr(c["members"])[1]), "kind") }},
+		{"unknown-member-kind", func(t *testing.T, c object) { obj(arr(c["members"])[1])["kind"] = "machine" }},
+		{"unselected-p256-no-lift", func(t *testing.T, c object) {
+			obj(obj(c["product"])["governance"])["owners"] = []any{"example-participant"}
+			point, err := hex.DecodeString("02fd4bf61763b46581fd9174d623516cf3c81edd40e29ffa2777fb6cb0ae3ce535")
+			if err != nil {
+				t.Fatal(err)
+			}
+			value := base64.RawURLEncoding.EncodeToString(point)
+			k := key(c, 1)
+			k["public_bytes"], k["key_id"], k["public_sha256"] = value, "p256:"+value, digest(point)
+		}},
+		{"nonzero-unused-bits", func(t *testing.T, c object) {
+			k := key(c, 0)
+			value := str(k["public_bytes"])
+			alphabet := "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_"
+			last := strings.IndexByte(alphabet, value[len(value)-1])
+			if len(value)%4 != 3 || last < 0 || last%4 != 0 {
+				t.Fatal("missing canonical trailing-bit neighbor")
+			}
+			noncanonical := value[:len(value)-1] + string(alphabet[last|1])
+			k["public_bytes"], k["key_id"] = noncanonical, "ed25519:"+noncanonical
+		}},
+		{"reversed-window", func(t *testing.T, c object) {
+			k := key(c, 0)
+			k["not_before"], k["not_after"] = "2026-11-18T00:00:00Z", "2026-11-17T00:00:00Z"
+		}},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			c := governanceCard(t)
+			tc.edit(t, c)
+			check(t, c, "card_invalid")
+		})
 	}
 }

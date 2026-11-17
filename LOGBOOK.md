@@ -5,6 +5,14 @@
 
 ## 2026-11-17
 
+### 2208 — Acceptance controls isolate their required predicates
+
+- ROOT CAUSE: Existing witnesses did not isolate compressed P-256 curve membership, unused encoding bits, required member kinds, UTF-8 byte limits or reversed validity intervals.
+- FIX: Add coherent in-field no-lift and canonical-encoding neighbors, exact discriminator refusals, printable 255/256-byte title/name pairs and reversed-window checks, with safe public-query and input-preservation assertions.
+- EVIDENCE: Complete ordinary/race suites and vet pass. Six isolated replacements are rejected by the intended assertions: range-only point admission, lax encoding, default/extra kinds, rune-count limits and equality-only windows.
+- SCOPE: internal/cardv4/v5_test.go; internal/pulse/governance_test.go.
+- LIMIT: These finite controls establish the named witnesses; public records remain declarations.
+
 ### 2101 — Governance view preserves the explicit declaration boundary
 
 - RESULT: The opt-in governance selector returns the closed 17-field v5 view while legacy selectors keep their prior schemas and reject v5 sources.

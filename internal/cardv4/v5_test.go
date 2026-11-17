@@ -49,8 +49,9 @@ func TestGovernanceV5Valid(t *testing.T) {
 				obj(p)["keys"] = []any{}
 			}
 		},
-		"local-meta": func(c Object) { obj(obj(c["product"])["governance"])["meta_keeper"] = "beacon_orch" },
-		"free-title": func(c Object) { obj(list(c["members"])[0])["role"] = "Human-readable product lead" },
+		"local-meta":    func(c Object) { obj(obj(c["product"])["governance"])["meta_keeper"] = "beacon_orch" },
+		"free-title":    func(c Object) { obj(list(c["members"])[0])["role"] = "Human-readable product lead" },
+		"p256-identity": func(c Object) { governanceKey(c, 1)["purpose"] = "identity" },
 		"same-id-separate-namespaces": func(c Object) {
 			obj(list(c["principals"])[1])["id"] = "beacon_orch"
 			obj(obj(c["product"])["governance"])["owners"] = []any{"example-owner", "beacon_orch"}
@@ -92,6 +93,8 @@ func TestGovernanceV5Rejects(t *testing.T) {
 		edit       func(Object)
 	}{
 		{"missing-principals", "missing_field", func(c Object) { delete(c, "principals") }},
+		{"missing-member-kind", "missing_field", func(c Object) { delete(obj(list(c["members"])[1]), "kind") }},
+		{"unknown-member-kind", "enum_value", func(c Object) { obj(list(c["members"])[1])["kind"] = "machine" }},
 		{"unknown-root", "unknown_field", func(c Object) { c["station_registry"] = Object{} }},
 		{"unknown-key", "unknown_field", func(c Object) { governanceKey(c, 0)["proof"] = "untrusted" }},
 		{"duplicate-principal", "duplicate_principal", func(c Object) { c["principals"] = append(list(c["principals"]), list(c["principals"])[0]) }},
@@ -120,7 +123,7 @@ func TestGovernanceV5Rejects(t *testing.T) {
 			m["role"] = "keeper"
 			m["responsibility"] = "developer"
 		}},
-		{"long-title", "title_format", func(c Object) { obj(list(c["members"])[0])["role"] = string(make([]byte, 256)) }},
+		{"title-control-character", "title_format", func(c Object) { obj(list(c["members"])[0])["role"] = "invalid\x00title" }},
 		{"bip-authority", "public_key_combination", func(c Object) { governanceKey(c, 2)["purpose"] = "grant-authority" }},
 		{"algorithm-case", "enum_value", func(c Object) { governanceKey(c, 0)["algorithm"] = "ed25519" }},
 		{"encoding-mismatch", "public_key_combination", func(c Object) { governanceKey(c, 0)["encoding"] = "sec1-compressed" }},
@@ -138,6 +141,11 @@ func TestGovernanceV5Rejects(t *testing.T) {
 			k["not_before"] = "2026-11-17T00:00:00Z"
 			k["not_after"] = k["not_before"]
 		}},
+		{"reversed-window", "public_key_validity", func(c Object) {
+			k := governanceKey(c, 0)
+			k["not_before"] = "2026-11-18T00:00:00Z"
+			k["not_after"] = "2026-11-17T00:00:00Z"
+		}},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
@@ -146,6 +154,76 @@ func TestGovernanceV5Rejects(t *testing.T) {
 			_, e := ParseGovernanceSnapshot(encoded(t, c), governanceNow)
 			if e == nil || e.Rule != tc.rule {
 				t.Fatalf("want %s, got %v", tc.rule, e)
+			}
+		})
+	}
+}
+
+// Each title branch accepts printable text at 255 UTF-8 bytes and rejects 256
+// bytes, including a pair with equal rune counts. Control characters are separate.
+func TestGovernanceTitleByteBounds(t *testing.T) {
+	for _, field := range []string{"agent-role", "human-role", "principal-name"} {
+		for _, tc := range []struct {
+			name, value string
+			bytes       int
+			valid       bool
+		}{
+			{"ascii-limit", strings.Repeat("a", 255), 255, true},
+			{"ascii-over", strings.Repeat("a", 256), 256, false},
+			{"utf8-limit", strings.Repeat("é", 127) + "a", 255, true},
+			{"utf8-over", strings.Repeat("é", 128), 256, false},
+		} {
+			t.Run(field+"/"+tc.name, func(t *testing.T) {
+				if len(tc.value) != tc.bytes || !text(tc.value) {
+					t.Fatal("invalid printable byte-boundary control")
+				}
+				c := governanceFixture(t)
+				switch field {
+				case "agent-role":
+					obj(list(c["members"])[1])["role"] = tc.value
+				case "human-role":
+					obj(list(c["members"])[4])["role"] = tc.value
+				case "principal-name":
+					obj(list(c["principals"])[0])["name"] = tc.value
+				}
+				_, e := ParseGovernanceSnapshot(encoded(t, c), governanceNow)
+				if tc.valid && e != nil {
+					t.Fatal(e)
+				}
+				if !tc.valid && (e == nil || e.Rule != "title_format") {
+					t.Fatalf("want title_format, got %v", e)
+				}
+			})
+		}
+	}
+}
+
+// Nonzero unused base64url bits refuse even when lax decoding yields the same
+// valid public point; padding and point validity do not prove this property.
+func TestGovernanceNonzeroTrailingBits(t *testing.T) {
+	for _, n := range []int{0, 2} {
+		c := governanceFixture(t)
+		k := governanceKey(c, n)
+		t.Run(str(k["algorithm"]), func(t *testing.T) {
+			if _, e := ParseGovernanceSnapshot(encoded(t, c), governanceNow); e != nil {
+				t.Fatal(e)
+			}
+			canonical := str(k["public_bytes"])
+			alphabet := "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_"
+			last := strings.IndexByte(alphabet, canonical[len(canonical)-1])
+			if len(canonical)%4 != 3 || last < 0 || last%4 != 0 {
+				t.Fatal("missing two unused trailing-bit control")
+			}
+			noncanonical := canonical[:len(canonical)-1] + string(alphabet[last|1])
+			want, e1 := base64.RawURLEncoding.DecodeString(canonical)
+			got, e2 := base64.RawURLEncoding.DecodeString(noncanonical)
+			if e1 != nil || e2 != nil || !bytes.Equal(want, got) || noncanonical == canonical {
+				t.Fatal("mutation does not isolate unused encoding bits")
+			}
+			k["public_bytes"] = noncanonical
+			k["key_id"] = strings.TrimSuffix(str(k["key_id"]), canonical) + noncanonical
+			if _, e := ParseGovernanceSnapshot(encoded(t, c), governanceNow); e == nil || e.Rule != "public_key_encoding" {
+				t.Fatalf("want public_key_encoding, got %v", e)
 			}
 		})
 	}
@@ -170,6 +248,9 @@ func TestGovernancePublicPoints(t *testing.T) {
 		{"p256-uncompressed-tag", 1, "046b17d1f2e12c4247f8bce6e563a440f277037d812deb33a0f4a13945d898c296", false},
 		{"p256-overflow", 1, "02ffffffff00000001000000000000000000000000ffffffffffffffffffffffff", false},
 		{"p256-infinity", 1, "00", false},
+		// Go's compressed-point negative has an in-field x but no curve lift:
+		// https://github.com/golang/go/blob/go1.25.14/src/crypto/elliptic/elliptic_test.go
+		{"p256-in-range-no-lift", 1, "02fd4bf61763b46581fd9174d623516cf3c81edd40e29ffa2777fb6cb0ae3ce535", false},
 		{"bip340-vector0", 2, "f9308a019258c31049344f85f89d5229b531c845836f99b08601f113bce036f9", true},
 		{"bip340-field-overflow", 2, "fffffffffffffffffffffffffffffffffffffffffffffffffffffffefffffc2f", false},
 		{"bip340-no-lift", 2, "0000000000000000000000000000000000000000000000000000000000000000", false},
@@ -181,6 +262,9 @@ func TestGovernancePublicPoints(t *testing.T) {
 			raw, err := hex.DecodeString(tc.hex)
 			if err != nil {
 				t.Fatal(err)
+			}
+			if tc.name == "p256-in-range-no-lift" && (len(raw) != 33 || raw[0] != 2 || bytes.Compare(raw[1:], elliptic.P256().Params().P.Bytes()) >= 0) {
+				t.Fatal("no-lift control must have a compressed tag and in-field x")
 			}
 			setPublicBytes(governanceKey(c, tc.n), raw)
 			_, e := ParseGovernanceSnapshot(encoded(t, c), governanceNow)
