@@ -269,6 +269,88 @@ func TestV5EnvironmentRootsAndMissing(t *testing.T) {
 	}
 }
 
+// Each absent optional declaration is isolated from the others. A missing pulse
+// root uses the declared clone; only a remote project without a clone leaves the
+// effective root null. No case may substitute a different missing marker.
+func TestV5EnvironmentIndependentMissingFields(t *testing.T) {
+	for _, tc := range []struct {
+		name, absent string
+		remote       bool
+		missing      []any
+	}{
+		{"complete", "", false, []any{}},
+		{"config-only", "a2a_config_profile", false, []any{"a2a.config_profile"}},
+		{"network-only", "network", false, []any{"network"}},
+		{"pulse-root-only-with-clone", "working_root", false, []any{}},
+		{"remote-root-only", "working_root", true, []any{"working_root"}},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			c := v5EnvironmentFixture(t)
+			m := obj(arr(c["members"])[2])
+			if tc.absent != "" {
+				delete(obj(m["pulse"]), tc.absent)
+			}
+			if tc.remote {
+				delete(m, "clone")
+				p := obj(arr(c["projects"])[2])
+				p["location"] = object{"kind": "remote", "operator": "remote-operator", "execution_host": "remote-host", "project_locator": "opaque/project", "checkout_path": "../not-a-fallback"}
+				p["task_system"] = object{"kind": "tasks-md", "locator": "opaque/tasks"}
+			}
+			for _, member := range []string{"", "storage_orch"} {
+				v := v5EnvironmentResult(t, c, "station_storage_orch", member)
+				subject := "self"
+				if member != "" {
+					subject = "target"
+				}
+				e := obj(obj(v[subject])["environment"])
+				state := "complete"
+				if len(tc.missing) != 0 {
+					state = "incomplete"
+				}
+				var config any = "Config-storage_orch"
+				if tc.absent == "a2a_config_profile" {
+					config = nil
+				}
+				var network any = object{"mode": "proxy", "ref": "Proxy-storage_orch"}
+				if tc.absent == "network" {
+					network = nil
+				}
+				var root any = object{"source": "aurora", "base": "card", "path": "../unopened/storage_orch", "origin": "pulse.working_root"}
+				if tc.absent == "working_root" {
+					root = object{"source": "aurora", "base": "card", "path": "../vault", "origin": "member.clone"}
+				}
+				if tc.remote {
+					root = nil
+				}
+				if e["state"] != state || !reflect.DeepEqual(e["missing"], tc.missing) || !reflect.DeepEqual(obj(e["a2a"])["config_profile"], config) || !reflect.DeepEqual(e["network"], network) || !reflect.DeepEqual(e["working_root"], root) {
+					t.Fatalf("independent missing-field projection %q: %v", member, e)
+				}
+			}
+		})
+	}
+}
+
+// The registry source is a valid v5 alternative to local profiles_root/path.
+// Self and explicit self preserve every registry coordinate and remain complete.
+func TestV5EnvironmentRegistrySource(t *testing.T) {
+	c := v5EnvironmentFixture(t)
+	p := obj(obj(c["profiles"])["control"])
+	delete(p, "path")
+	p["registry"] = object{"repo": "github.com/example/profiles", "directory": "roles/control"}
+	for _, member := range []string{"", "storage_orch"} {
+		v := v5EnvironmentResult(t, c, "station_storage_orch", member)
+		subject := "self"
+		if member != "" {
+			subject = "target"
+		}
+		e := obj(obj(v[subject])["environment"])
+		want := object{"source": "aurora", "base": "registry", "repo": "github.com/example/profiles", "directory": "roles/control"}
+		if e["state"] != "complete" || !reflect.DeepEqual(e["missing"], []any{}) || !reflect.DeepEqual(obj(e["profile"])["source"], want) {
+			t.Fatalf("v5 registry projection %q: %v", member, e)
+		}
+	}
+}
+
 // A target ID is the complete case-sensitive source string, including legacy
 // slash IDs. Neither prefix splitting, a full MXID nor title privilege works.
 func TestV5EnvironmentExactTargetAndTitle(t *testing.T) {

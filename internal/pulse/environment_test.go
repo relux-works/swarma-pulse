@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"os"
+	"path/filepath"
 	"reflect"
 	"strings"
 	"testing"
@@ -73,6 +74,42 @@ func TestEnvironmentCompleteShape(t *testing.T) {
 		if !reflect.DeepEqual(observation, object{"state": "unknown"}) {
 			t.Fatal(observation)
 		}
+	}
+}
+
+// These complete fixed-time bytes come from the pre-v5-environment reader.
+// They pin the v3 project and company projections, including fields that the
+// neighboring shape checks do not inspect. V4 environment remains unsupported.
+func TestLegacyEnvironmentByteCompatibility(t *testing.T) {
+	v3 := fixture(t)
+	obj(arr(v3["members"])[1])["pulse"] = completeExtension()
+	for _, tc := range []struct {
+		name, root, agent string
+		card              object
+	}{
+		{"legacy-v3-environment", "/fixture/card", "station_beacon_orch", v3},
+		{"legacy-company-environment", "/fixture/company", "station_company_keeper", companyFixture(t)},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			raw := encode(t, tc.card)
+			actual, err := projectView(raw, "sha256:"+digest(raw), tc.root, tc.agent, fixedTime, "environment")
+			if err != nil {
+				t.Fatal(err)
+			}
+			expected, err := os.ReadFile(filepath.Join("testdata", tc.name+".json"))
+			if err != nil {
+				t.Fatal(err)
+			}
+			if !bytes.Equal(actual, expected) {
+				t.Fatal("legacy environment golden mismatch")
+			}
+		})
+	}
+	raw := encode(t, v4Fixture(t))
+	actual, err := projectView(raw, "sha256:"+digest(raw), "/fixture/card", "station_beacon_orch", fixedTime, "environment")
+	wantRule(t, err, "unsupported_schema")
+	if len(actual) != 0 {
+		t.Fatal("v4 environment emitted partial output")
 	}
 }
 
