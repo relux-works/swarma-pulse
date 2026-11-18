@@ -95,12 +95,23 @@ No local field arithmetic or custom curve implementation. Product wrapper contro
 
 Governance checks the whole document/graph, including unselected principals/keys, before output. Referenced logical sources/reservations remain unverified in a local snapshot; none is fetched. Existing v3/v4 admission tools and converter retain their versions and refuse v5. This MVP introduces no automatic migration/publication command.
 
-An explicit reviewed v4-to-v5 authoring transformation preserves every original agent field and exact logical id, Matrix name, path and role mechanic: change schema, add principals=[], keep governance absent, copy old role to responsibility and initial title, add kind=agent. Existing service branches remain unchanged. Infer no person, owner, contact or key. V3 authoring first uses the existing v3-to-v4 conversion with its required premises; unsupported extensions refuse rather than being lost. Read-only legacy governance normalization is not written conversion.
+An explicit reviewed v4-to-v5 authoring transformation preserves every original agent field and exact logical id, Matrix name, path and role mechanic: change schema, add principals=[], keep governance absent, copy old role to responsibility and initial title, add kind=agent. Existing service branches remain unchanged. Infer no person, owner, contact or key. V3 authoring may first use the existing v3-to-v4 conversion with its required premises; unsupported extensions still refuse there. A source with the supported pulse extension instead requires the separately reviewed, complete lossless v3-to-v5 authoring ledger described in the environment contract below. No converter drops those facts. Read-only legacy governance normalization is not written conversion.
 
-Existing modes keep their closed v1-v4 outputs and refuse v5. Only the explicit governance selector accepts v5 in this slice. Legacy v3/v4 governance is undeclared, even when permissive v3 extension names resemble new fields. Humans are never agent callers; no override or fallback is added.
+Default, hierarchy, routes and discovery keep their existing outputs and refuse v5. Explicit governance and environment accept v5 with their documented distinct output discriminators. Legacy v3/v4 governance is undeclared, even when permissive v3 extension names resemble new fields. Humans are never agent callers; no override or fallback is added.
 
 ## Privacy, changes and refusal
 
 Credential/live-state prohibition remains. Only public_bytes and key_id of fully validated v5 PublicKey descriptors are governed by the typed public codec instead of the prose secret-value heuristic. After a first secret_value_forbidden result, validate the entire original card, make a validation-only copy replacing just those two validated values, and rerun the full privacy scanner. No other first-pass error is deferred. Every remaining violation refuses; no output or effect occurs between passes. Keep the original card for projection and never emit the scan copy. Field names, all other values, unselected records and v3/v4 privacy checks retain their prohibitions. Declared key state uses declared_state/declared_state_at, preserving the live status ban. Refusal emits one implementation-owned rule/indexed location, no failed value, and no partial view or mutation. A transport stdout-write failure remains separate and may leave partial bytes.
 
 An owner authenticates their public data/change through the admitted intake. Product custody, source review and signed publication remain separate. A self-signature, listed contact, display title or signed Git commit is not grant authority. Card replacement never refreshes a protected issuer pin. Same-exchange authenticated pinning binds the exact product/card/owner/purpose/key and recipient encryption key. Landing signer selection remains a separate owner decision.
+
+## Optional conversational environment declarations
+
+Conversational agents may declare the closed `pulse-member-environment/v1`
+extension; human and service branches forbid it. Both governance and environment
+readers validate every supplied extension before selection. The
+[complete environment contract](../agents/skills/swarma-pulse/references/environment-v5.md)
+defines selectors, source issues, coordinate syntax and the distinct self/target
+outputs. No execution, account registration or referenced-resource access follows
+from these declarations. Existing v3/v4 validation and conversion contracts are
+unchanged.

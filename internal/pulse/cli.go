@@ -9,7 +9,7 @@ import (
 	"time"
 )
 
-type selectors struct{ card, revision, view, sources, sourcesRevision, root string }
+type selectors struct{ card, revision, view, sources, sourcesRevision, root, member string }
 
 func parseSelectors(args []string) (selectors, error) {
 	var s selectors
@@ -31,7 +31,7 @@ func parseSelectors(args []string) (selectors, error) {
 			return s, refusal("usage")
 		}
 		key, value, hasValue := strings.Cut(strings.TrimPrefix(arg, "--"), "=")
-		if key != "card" && key != "revision" && key != "format" && key != "view" && key != "sources" && key != "sources-revision" && key != "root" {
+		if key != "card" && key != "revision" && key != "format" && key != "view" && key != "sources" && key != "sources-revision" && key != "root" && key != "member" {
 			return s, refusal("usage")
 		}
 		if _, duplicate := values[key]; duplicate {
@@ -58,6 +58,9 @@ func parseSelectors(args []string) (selectors, error) {
 	if !validRevision(values["revision"]) {
 		return s, refusal("usage")
 	}
+	if values["member"] != "" && values["view"] != "environment" {
+		return s, refusal("usage")
+	}
 	if values["view"] == "discovery" {
 		if values["sources"] == "" || !validRevision(values["sources-revision"]) || !cleanAbsolute(values["root"]) {
 			return s, refusal("usage")
@@ -65,7 +68,7 @@ func parseSelectors(args []string) (selectors, error) {
 	} else if values["sources"] != "" || values["sources-revision"] != "" || values["root"] != "" {
 		return s, refusal("usage")
 	}
-	return selectors{card: values["card"], revision: values["revision"], view: values["view"], sources: values["sources"], sourcesRevision: values["sources-revision"], root: values["root"]}, nil
+	return selectors{card: values["card"], revision: values["revision"], view: values["view"], sources: values["sources"], sourcesRevision: values["sources-revision"], root: values["root"], member: values["member"]}, nil
 }
 
 // Run requires affirmative unsigned mode before reading OS context or any file.
@@ -100,7 +103,7 @@ func runSelected(s selectors, uid, euid int, agent string, now time.Time, out, d
 		var raw []byte
 		raw, err = readCard(s.card, uid)
 		if err == nil {
-			result, err = projectView(raw, s.revision, filepath.Dir(s.card), agent, now, s.view)
+			result, err = projectSelectedView(raw, s.revision, filepath.Dir(s.card), agent, now, s.view, s.member)
 		}
 	}
 	if err != nil {

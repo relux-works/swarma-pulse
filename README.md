@@ -12,7 +12,9 @@ The Go read-only validator implements static v4 validation and the v3.1 source-r
 [converter](docs/converter.md) preserves a supplied v3 card into a separately selected destination with atomic publication.
 The optional [desired-change checker](docs/change-check.md) verifies a pinned candidate and exact rollback without writing.
 The read-only [Pulse member query](docs/pulse.md) preserves its local unsigned v3/v4 self-only default.
-Add `--view environment` for the caller's declared profile, runtime and launch coordinates from one v3 product or v1 company card.
+Add `--view environment` for declared profile, runtime and launch coordinates from one v3/v5 product or v1 company card.
+V5 also supports an [explicit self or direct-child target](agents/skills/swarma-pulse/references/environment-v5.md)
+with `--member EXACT_ID`, keeping the actual caller separate from the selected subject.
 Explicit `--view discovery` composes pinned local sources for same-level peers, superiors and reports, with unresolved boundaries.
 Use `--view hierarchy` for the same caller-relative relationships from one pinned v3 or v4 product card,
 returning `pulse-view/v3` with declared external parents left unresolved.
@@ -21,7 +23,7 @@ DM descriptors and exact product/project room routes. Optional [room declaration
 preserve alias/ID pairs without resolving them or claiming membership.
 Use `--view governance` for [declared owners, public keys and the meta-keeper](docs/pulse-governance.md)
 with `pulse-view/v5`. This selector accepts v3, v4 and [v5 product cards](docs/format-v5.md),
-validating the complete declaration before projection. Existing selectors retain their formats and reject v5 cards.
+validating the complete declaration before projection. Default, hierarchy, routes and discovery retain their formats and reject v5 cards.
 In hierarchy and discovery, a v3 product keeper's declared external parent stays
 external even when its alias matches a local member ID. Discovery now accepts
 these cards with an external boundary instead of reporting `relation_conflict`;
@@ -103,7 +105,8 @@ be confirmed; inspect the result before any retry. See [converter inputs and pub
 | Pulse build | `GOTOOLCHAIN=local go build -trimpath -mod=readonly -p 2 -o .temp/bin/pulse ./cmd/pulse` | Ignored `.temp/bin/` executable |
 | Build provenance | `git rev-parse HEAD`; `git status --porcelain`; `go version -m .temp/bin/pulse` | For an exact-commit claim, require `-trimpath=true`, clean source before/after build and `vcs.revision` matching the selected head with `vcs.modified=false`; a mismatching or missing stamp leaves attribution unverified |
 | Pulse query | `.temp/bin/pulse me --local-unsigned --card ABS --revision sha256:HASH --format json` | Self-only JSON or safe refusal; exact content pin and public `A2A_AGENT` context |
-| Declared environment | `.temp/bin/pulse me --local-unsigned --view environment --card ABS --revision sha256:HASH --format json` | Self-only v2 JSON with declared environment; no native-home lookup or launch |
+| Declared environment | `.temp/bin/pulse me --local-unsigned --view environment --card ABS --revision sha256:HASH --format json` | Self-only v2 (legacy) or v6 (v5) declarations; no native-home lookup or launch |
+| Declared v5 target | `.temp/bin/pulse me --local-unsigned --view environment --member EXACT_ID --card ABS --revision sha256:HASH --format json` | v7 target-only declarations, actual caller unchanged; direct manager or explicit self only |
 | Caller discovery | `.temp/bin/pulse me --local-unsigned --view discovery --card ABS --revision sha256:HASH --sources ABS --sources-revision sha256:HASH --root ABS --format json` | v2 JSON from explicitly pinned local cards; no remote retrieval |
 | Declared routes | `.temp/bin/pulse me --local-unsigned --view routes --card ABS --revision sha256:HASH --format json` | v4 JSON with hierarchy, declared DM descriptors and room routes |
 | One-card hierarchy | `.temp/bin/pulse me --local-unsigned --view hierarchy --card ABS --revision sha256:HASH --format json` | v3 JSON with caller-relative relationships from one v3/v4 product card |

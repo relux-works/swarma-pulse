@@ -1,25 +1,13 @@
 package pulse
 
 import (
-	"regexp"
 	"sort"
-	"strings"
-	"unicode"
-	"unicode/utf8"
+
+	"github.com/relux-works/swarma-pulse/internal/cardv4"
 )
 
-var (
-	environmentSelector = regexp.MustCompile(`^[a-zA-Z0-9][a-zA-Z0-9._-]{0,127}$`)
-	pathScheme          = regexp.MustCompile(`^[a-zA-Z][a-zA-Z0-9+.-]*:`)
-)
-
-// Declared paths are coordinates, never files to open. In particular, sibling
-// paths may leave the card directory; the eventual consumer admits its own root.
-func declaredRelative(v any) bool {
-	s, ok := v.(string)
-	return ok && s != "" && utf8.ValidString(s) && !strings.ContainsFunc(s, unicode.IsControl) &&
-		!strings.HasPrefix(s, "/") && !strings.ContainsRune(s, '\\') && !strings.HasPrefix(s, "~") && !pathScheme.MatchString(s)
-}
+// A shared predicate keeps legacy and strict-v5 declaration syntax identical.
+func declaredRelative(v any) bool { return cardv4.EnvironmentRelative(v) }
 
 func onlyKeys(m object, allowed ...string) bool {
 	for k := range m {
@@ -35,35 +23,8 @@ func onlyKeys(m object, allowed ...string) bool {
 }
 
 func validEnvironmentExtension(member object) bool {
-	v, present := member["pulse"]
-	if !present {
-		return true
-	}
-	p := obj(v)
-	if p == nil || p["schema"] != "pulse-member-environment/v1" || !onlyKeys(p, "schema", "a2a_config_profile", "working_root", "network") {
-		return false
-	}
-	if v, present := p["a2a_config_profile"]; present && !environmentSelector.MatchString(str(v)) {
-		return false
-	}
-	if v, present := p["working_root"]; present && !declaredRelative(v) {
-		return false
-	}
-	if v, present := p["network"]; present {
-		n := obj(v)
-		if n == nil {
-			return false
-		}
-		switch n["mode"] {
-		case "direct":
-			return len(n) == 1
-		case "proxy":
-			return len(n) == 2 && environmentSelector.MatchString(str(n["ref"]))
-		default:
-			return false
-		}
-	}
-	return true
+	value, present := member["pulse"]
+	return !present || cardv4.CheckEnvironmentExtension(value, "$") == nil
 }
 
 func declaredEnvironment(card, member, binding, connection object, bindingKey, agent string) (object, error) {
@@ -94,7 +55,14 @@ func declaredEnvironment(card, member, binding, connection object, bindingKey, a
 		for _, value := range arr(card["projects"]) {
 			project := obj(value)
 			if project["id"] == member["project"] {
-				path, origin = project["path"], "project.path"
+				if card["schema"] == "product-card/v5" {
+					location := obj(project["location"])
+					if location["kind"] == "local" {
+						path, origin = location["path"], "project.location.path"
+					}
+				} else {
+					path, origin = project["path"], "project.path"
+				}
 			}
 		}
 	}
@@ -131,4 +99,22 @@ func declaredEnvironment(card, member, binding, connection object, bindingKey, a
 			"connection": binding["connection"], "server_name": connection["server_name"], "config_profile": pulse["a2a_config_profile"]},
 		"working_root": root, "network": pulse["network"],
 	}, nil
+}
+
+// Target mode has a distinct nullable-identity schema. Prospective binding facts
+// are preserved without manufacturing chat admission from a declared identity.
+func targetedEnvironment(card, member, binding, connection object, bindingKey, subjectAgent string) (object, error) {
+	environment, err := declaredEnvironment(card, member, binding, connection, bindingKey, subjectAgent)
+	if err != nil {
+		return nil, err
+	}
+	environment["schema"] = "pulse-environment/v2"
+	if obj(member["a2a"]) == nil {
+		a2a := obj(environment["a2a"])
+		a2a["agent"], a2a["resolved_name"] = nil, nil
+		missing := append(environment["missing"].([]string), "a2a.agent", "a2a.resolved_name")
+		sort.Strings(missing)
+		environment["missing"], environment["state"] = missing, "incomplete"
+	}
+	return environment, nil
 }

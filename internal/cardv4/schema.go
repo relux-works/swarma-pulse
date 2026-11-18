@@ -274,6 +274,9 @@ func cardSchema(version int, company bool) validator {
 			opt["selector_policy_ref"] = txt
 		} else {
 			req["profile"] = txt
+			if version == 5 {
+				opt["pulse"] = CheckEnvironmentExtension
+			}
 			opt["a2a"] = a2a(false)
 			opt["staffing"] = array(slot, false)
 			opt["independent_of_producer"] = boolean

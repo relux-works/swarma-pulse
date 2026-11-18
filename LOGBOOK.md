@@ -3,6 +3,15 @@
 > Institutional memory. Concise, factual, high-signal.
 > Newest entries first. One block per insight.
 
+## 2026-11-18
+
+### 0113 — V5 environment targets preserve the invoking caller
+
+- RESULT: The strict v5 environment selector returns self v6 or explicit target v7 with nullable-identity environment v2. A different target requires an exact direct-parent manager declaration; the caller context remains separate.
+- EVIDENCE: Focused source/projection tests pass. Seven bounded plants fail their intended assertions: skipped unselected validation, legacy root fallback, same-count subject rename, manager-value substitution, caller mutation, target-path read and loss of an unselected pulse field. Original bytes are restored after each plant.
+- SCOPE: internal/cardv4/environment.go; internal/pulse/environment.go; internal/pulse/query.go; environment source, target, preservation and receipt tests.
+- LIMIT: Declarations and fixture receipts prove no chat admission, canonical adoption or actual launch. The source-effect control is finite AST admission, not a dependency-machine-code sandbox.
+
 ## 2026-11-17
 
 ### 2208 — Acceptance controls isolate their required predicates

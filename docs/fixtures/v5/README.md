@@ -24,3 +24,15 @@ Required nearby controls:
 These are contract fixtures and expected claims. Runtime test evidence is supplied separately; this file does not claim that the new implementation already passes them.
 
 All domains, owner contacts and rooms are neutral example values. Legacy source pins illustrate local-snapshot declarations only; the reader does not fetch or attest them. This fixture is not an exact migration-preservation oracle.
+
+## Declared-environment preservation pair
+
+`environment-source-v3.json` and `environment-authored-v5.json` are a synthetic,
+explicitly authored pair. `environment-preservation-ledger.json` fixes original
+pins, host/external/path premises, the two preserved pulse declarations and the
+new prospective non-chat binding/identity/reservation premises. The test oracle
+accounts for these additions separately before comparing the remaining complete
+inventory through the unchanged preservation checker. The pair preserves the
+keeper's explicit clone coordinate; an invented root from a previously absent
+keeper root is a required refusal. These fixtures do not replace real-card
+custodian review, canonical readback or actual runtime evidence.

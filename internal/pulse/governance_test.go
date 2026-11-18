@@ -350,7 +350,7 @@ func TestGovernanceQueryRefusals(t *testing.T) {
 			t.Fatal("strict YAML refusal leaked output")
 		}
 	}
-	for _, view := range []string{"", "environment", "hierarchy", "routes"} {
+	for _, view := range []string{"", "hierarchy", "routes"} {
 		out, err := projectView(raw, "sha256:"+digest(raw), "/fixture/card", "station_beacon_orch", governanceTime, view)
 		wantRule(t, err, "unsupported_schema")
 		if len(out) != 0 {

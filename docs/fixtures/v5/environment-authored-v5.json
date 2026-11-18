@@ -1,0 +1,345 @@
+{
+  "schema": "product-card/v5",
+  "product": {
+    "id": "aurora",
+    "description": "Synthetic preservation fixture",
+    "privacy": "private",
+    "keeper": "aurora_keeper",
+    "default_binding": "legacy",
+    "topology": {
+      "connection": "legacy-relux",
+      "space": "!auroraSpace01:example.org",
+      "lobby": "#aurora-lobby:example.org",
+      "escalations": "#aurora-escalations:example.org"
+    },
+    "host_project": "aurora-host"
+  },
+  "external_members": [
+    {
+      "product": "constellation",
+      "member": "external_keeper"
+    }
+  ],
+  "connections": {
+    "legacy-relux": {
+      "homeserver": "https://matrix.example.org",
+      "server_name": "example.org"
+    },
+    "target-gr": {
+      "homeserver": "https://gr.example.org/",
+      "server_name": "gr.example.org"
+    }
+  },
+  "bindings": {
+    "legacy": {
+      "operator": "fixture",
+      "host": "station",
+      "connection": "legacy-relux",
+      "identity_domain": "example.org"
+    },
+    "gr": {
+      "operator": "fixture",
+      "host": "station",
+      "connection": "target-gr",
+      "identity_domain": "gr.example.org"
+    }
+  },
+  "profiles_root": "../profiles",
+  "profiles": {
+    "control": {
+      "path": "control",
+      "requirement": {
+        "context": "fixture-context",
+        "compatible": ">=0.1.0 <0.2.0"
+      },
+      "selected": {
+        "version": "0.1.0",
+        "source_rev": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "lock_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+      }
+    }
+  },
+  "projects": [
+    {
+      "id": "aurora-host",
+      "description": "Synthetic aurora-host project",
+      "repo": "local",
+      "desired_state": "active",
+      "orchestrator": "aurora_keeper",
+      "task_system": {
+        "kind": "tasks-md",
+        "path": "tasks.md"
+      },
+      "channels": {
+        "mode": "shared",
+        "team_room": "#aurora-host:example.org"
+      },
+      "orchestrator_mode": "keeper",
+      "orchestrator_ref": "Synthetic fixture combined management",
+      "location": {
+        "kind": "local",
+        "path": "."
+      }
+    },
+    {
+      "id": "beacon",
+      "description": "Synthetic beacon project",
+      "repo": "local",
+      "desired_state": "active",
+      "orchestrator": "beacon_orch",
+      "task_system": {
+        "kind": "tasks-md",
+        "path": "tasks.md"
+      },
+      "channels": {
+        "mode": "shared",
+        "team_room": "#beacon:example.org"
+      },
+      "location": {
+        "kind": "local",
+        "path": "../beacon"
+      }
+    },
+    {
+      "id": "vault",
+      "description": "Synthetic vault project",
+      "repo": "local",
+      "desired_state": "active",
+      "orchestrator": "storage_orch",
+      "task_system": {
+        "kind": "tasks-md",
+        "path": "tasks.md"
+      },
+      "channels": {
+        "mode": "shared",
+        "team_room": "#vault:example.org"
+      },
+      "location": {
+        "kind": "local",
+        "path": "../vault"
+      }
+    }
+  ],
+  "members": [
+    {
+      "id": "aurora_keeper",
+      "role": "keeper",
+      "parent": {
+        "product": "constellation",
+        "member": "external_keeper"
+      },
+      "profile": "control",
+      "runtime": {
+        "kind": "codex_cli",
+        "model": "fixture-model",
+        "effort": "high"
+      },
+      "lifecycle": "persistent",
+      "desired_state": "active",
+      "context_mode": "continue",
+      "clone": ".",
+      "a2a": {
+        "connection": "legacy-relux",
+        "parent_route": "#aurora-host:example.org",
+        "rooms": [
+          "#aurora-host:example.org"
+        ],
+        "subscriptions": {
+          "required": [
+            {
+              "rooms": [
+                "#aurora-host:example.org"
+              ],
+              "kinds": [
+                "system",
+                "owner-needed",
+                "decision"
+              ]
+            },
+            {
+              "from_mxid": "@alexis:example.org"
+            },
+            {
+              "from_mxid": "@alexis:gr.example.org"
+            }
+          ],
+          "self": []
+        }
+      },
+      "project": "aurora-host",
+      "scope": "product",
+      "binding": "legacy",
+      "identity": {
+        "scheme": "legacy-exact",
+        "mxid": "@station_aurora_keeper:example.org",
+        "source_ref": {
+          "kind": "v3-card",
+          "revision": "environment-fixture-v3-001",
+          "sha256": "980ca1dbf3d27df5d57c4b00fcefc4722d85e06a02126b755ec32d509704d934",
+          "member": "aurora/aurora_keeper"
+        }
+      },
+      "kind": "agent",
+      "responsibility": "keeper",
+      "pulse": {
+        "schema": "pulse-member-environment/v1",
+        "a2a_config_profile": "Keeper-config",
+        "network": {
+          "mode": "direct"
+        }
+      }
+    },
+    {
+      "id": "beacon_orch",
+      "role": "orchestrator",
+      "parent": "aurora_keeper",
+      "profile": "control",
+      "runtime": {
+        "kind": "codex_cli",
+        "model": "fixture-model",
+        "effort": "high"
+      },
+      "lifecycle": "persistent",
+      "desired_state": "active",
+      "context_mode": "continue",
+      "clone": "../beacon",
+      "project": "beacon",
+      "a2a": {
+        "connection": "legacy-relux",
+        "parent_route": "#beacon:example.org",
+        "rooms": [
+          "#beacon:example.org"
+        ],
+        "subscriptions": {
+          "required": [
+            {
+              "rooms": [
+                "#beacon:example.org"
+              ],
+              "kinds": [
+                "system",
+                "owner-needed",
+                "decision"
+              ]
+            },
+            {
+              "from_mxid": "@alexis:example.org"
+            },
+            {
+              "from_mxid": "@alexis:gr.example.org"
+            }
+          ],
+          "self": []
+        }
+      },
+      "binding": "legacy",
+      "station": "registered-task-board-station",
+      "scope": "project",
+      "identity": {
+        "scheme": "legacy-exact",
+        "mxid": "@station_beacon_orch:example.org",
+        "source_ref": {
+          "kind": "v3-card",
+          "revision": "environment-fixture-v3-001",
+          "sha256": "980ca1dbf3d27df5d57c4b00fcefc4722d85e06a02126b755ec32d509704d934",
+          "member": "aurora/beacon_orch"
+        }
+      },
+      "kind": "agent",
+      "responsibility": "orchestrator",
+      "pulse": {
+        "schema": "pulse-member-environment/v1",
+        "a2a_config_profile": "Orch-config",
+        "working_root": "../unopened/beacon",
+        "network": {
+          "mode": "proxy",
+          "ref": "Proxy-main"
+        }
+      }
+    },
+    {
+      "id": "storage_orch",
+      "role": "orchestrator",
+      "parent": "aurora_keeper",
+      "profile": "control",
+      "runtime": {
+        "kind": "codex_cli",
+        "model": "fixture-model",
+        "effort": "high"
+      },
+      "lifecycle": "persistent",
+      "desired_state": "active",
+      "context_mode": "continue",
+      "clone": "../vault",
+      "project": "vault",
+      "a2a": {
+        "connection": "legacy-relux",
+        "parent_route": "#vault:example.org",
+        "rooms": [
+          "#vault:example.org"
+        ],
+        "subscriptions": {
+          "required": [
+            {
+              "rooms": [
+                "#vault:example.org"
+              ],
+              "kinds": [
+                "system",
+                "owner-needed",
+                "decision"
+              ]
+            },
+            {
+              "from_mxid": "@alexis:example.org"
+            },
+            {
+              "from_mxid": "@alexis:gr.example.org"
+            }
+          ],
+          "self": []
+        }
+      },
+      "scope": "project",
+      "binding": "legacy",
+      "identity": {
+        "scheme": "legacy-exact",
+        "mxid": "@station_storage_orch:example.org",
+        "source_ref": {
+          "kind": "v3-card",
+          "revision": "environment-fixture-v3-001",
+          "sha256": "980ca1dbf3d27df5d57c4b00fcefc4722d85e06a02126b755ec32d509704d934",
+          "member": "aurora/storage_orch"
+        }
+      },
+      "kind": "agent",
+      "responsibility": "orchestrator"
+    },
+    {
+      "id": "vault_dev",
+      "role": "developer",
+      "parent": "storage_orch",
+      "profile": "control",
+      "runtime": {
+        "kind": "codex_cli",
+        "model": "fixture-model",
+        "effort": "high"
+      },
+      "lifecycle": "persistent",
+      "desired_state": "active",
+      "context_mode": "continue",
+      "clone": "../vault",
+      "project": "vault",
+      "result_route": "parent-native",
+      "scope": "member",
+      "binding": "gr",
+      "identity": {
+        "scheme": "domain-star-v1",
+        "star": "vega"
+      },
+      "kind": "agent",
+      "responsibility": "developer"
+    }
+  ],
+  "principals": []
+}

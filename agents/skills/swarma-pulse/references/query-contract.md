@@ -11,8 +11,10 @@ design remain separate contracts.
 The explicit `--view governance` selector additionally accepts product-card/v5
 and returns self-only declared owners/public material plus the meta-keeper
 reference as `pulse-view/v5`. Read the complete [governance contract](governance.md)
-for its closed output, public-key checks and refusals. Existing selectors retain
-their formats and reject v5; no owner identity or authority is verified.
+for its closed output, public-key checks and refusals. The explicit
+[v5 environment contract](environment-v5.md) additionally admits v5 self/target
+declarations. Default, hierarchy, routes and discovery reject v5; no owner
+identity or authority is verified.
 
 ## Build and invoke
 
@@ -73,7 +75,8 @@ The invoking session supplies its existing public `A2A_AGENT` localpart. Pulse
 compares that string exactly with each chat member's declared/default
 `binding.identity_prefix + member.id`. Exactly one match is required in the one
 card. It uses the declared connection's server name for the full Matrix name.
-There is no punctuation normalization, account-store lookup or `--member` override.
+There is no punctuation normalization, account-store lookup or caller override.
+The [v5 environment contract](environment-v5.md) alone admits an exact same-card `--member` projection subject, without changing the caller.
 Missing, empty, unknown and ambiguous context refuse; non-chat members cannot be
 selected through this context.
 

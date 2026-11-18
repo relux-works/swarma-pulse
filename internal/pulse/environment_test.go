@@ -270,7 +270,7 @@ func TestEnvironmentCLIAndPreservation(t *testing.T) {
 	for _, selector := range []string{"discovery", "unknown", ""} {
 		bad = append(bad, []string{"me", "--local-unsigned", "--view=" + selector, "--card", "/absent", "--revision", "sha256:" + digest(raw), "--format", "json"})
 	}
-	for _, flag := range []string{"--sources", "--sources-revision", "--root", "--member"} {
+	for _, flag := range []string{"--sources", "--sources-revision", "--root"} {
 		bad = append(bad, append(append([]string{}, args...), flag, "/absent"))
 	}
 	for _, args := range bad {

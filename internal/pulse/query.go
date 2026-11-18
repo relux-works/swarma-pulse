@@ -32,6 +32,13 @@ func project(raw []byte, revision, cardRoot, agent string, now time.Time) ([]byt
 }
 
 func projectView(raw []byte, revision, cardRoot, agent string, now time.Time, view string) ([]byte, error) {
+	return projectSelectedView(raw, revision, cardRoot, agent, now, view, "")
+}
+
+func projectSelectedView(raw []byte, revision, cardRoot, agent string, now time.Time, view, memberID string) ([]byte, error) {
+	if memberID != "" && view != "environment" {
+		return nil, refusal("usage")
+	}
 	if view == "hierarchy" || view == "routes" {
 		return projectHierarchy(raw, revision, cardRoot, agent, now, view)
 	}
@@ -48,18 +55,20 @@ func projectView(raw []byte, revision, cardRoot, agent string, now time.Time, vi
 	var err error
 	if view == "governance" {
 		card, err = decodeGovernanceCard(raw, revision, now)
+	} else if view == "environment" {
+		card, err = decodeEnvironmentCard(raw, revision, now, memberID != "")
 	} else {
 		card, err = decodeQueryCard(raw, revision, view == "environment")
 	}
 	if err != nil {
 		return nil, err
 	}
-	return projectCheckedCard(card, raw, revision, cardRoot, agent, now, view)
+	return projectCheckedCard(card, raw, revision, cardRoot, agent, now, view, memberID)
 }
 
 // Both entry paths validate the original complete document before sharing this
 // self-only projection. No version relabeling or partial-card validation occurs.
-func projectCheckedCard(card object, raw []byte, revision, cardRoot, agent string, now time.Time, view string) ([]byte, error) {
+func projectCheckedCard(card object, raw []byte, revision, cardRoot, agent string, now time.Time, view, memberID string) ([]byte, error) {
 	product := cardHeader(card)
 	bindings := obj(card["bindings"])
 	connections := obj(card["connections"])
@@ -98,6 +107,42 @@ func projectCheckedCard(card object, raw []byte, revision, cardRoot, agent strin
 	if matches != 1 {
 		return nil, refusal("caller_ambiguous")
 	}
+	// The invoking caller remains fixed. A declared target changes only the
+	// projection subject, after complete validation and caller eligibility.
+	if view == "environment" && v5 && self["responsibility"] == "service" {
+		return nil, refusal("environment_invalid")
+	}
+	subjectAgent := agent
+	var resolvedName any = "@" + agent + ":" + str(connection["server_name"])
+	if memberID != "" {
+		var target object
+		for _, value := range arr(card["members"]) {
+			if member := obj(value); member["id"] == memberID {
+				target = member
+				break
+			}
+		}
+		if target == nil {
+			return nil, refusal("target_unknown")
+		}
+		if target["kind"] != "agent" || target["responsibility"] == "service" {
+			return nil, refusal("target_ineligible")
+		}
+		manager := self["responsibility"] == "keeper" || self["responsibility"] == "orchestrator"
+		if target["id"] != self["id"] && (!manager || target["parent"] != self["id"]) {
+			return nil, refusal("target_forbidden")
+		}
+		self = target
+		bindingKey = str(self["binding"])
+		binding = obj(bindings[bindingKey])
+		connection = obj(connections[str(binding["connection"])])
+		subjectAgent, resolvedName = "", nil
+		if obj(self["a2a"]) != nil {
+			name := cardv4.DeclaredMXID(card, self)
+			subjectAgent, _, _ = strings.Cut(strings.TrimPrefix(name, "@"), ":")
+			resolvedName = name
+		}
+	}
 	key := str(product["id"]) + "/" + str(self["id"])
 	scope := "member"
 	role := self["role"]
@@ -116,11 +161,11 @@ func projectCheckedCard(card object, raw []byte, revision, cardRoot, agent strin
 	profile := obj(obj(card["profiles"])[str(self["profile"])])
 	requirement, selected := obj(profile["requirement"]), obj(profile["selected"])
 	viewSelf := object{"key": key, "role": self["role"], "scope": scope, "desired_state": self["desired_state"],
-		"resolved_name":     "@" + agent + ":" + str(connection["server_name"]),
+		"resolved_name":     resolvedName,
 		"execution_binding": object{"key": bindingKey, "operator": binding["operator"], "host": binding["host"], "connection": binding["connection"]},
 		"profile":           object{"requirement": object{"context": requirement["context"], "compatible": requirement["compatible"]}, "selected": object{"version": selected["version"], "source_rev": selected["source_rev"], "lock_sha256": selected["lock_sha256"]}},
 		"project":           nil, "project_state": "undeclared"}
-	if view == "governance" {
+	if view == "governance" || view == "environment" && v5 {
 		viewSelf["kind"], viewSelf["responsibility"] = "agent", role
 		if role == "service" {
 			viewSelf["profile"] = nil
@@ -167,7 +212,11 @@ func projectCheckedCard(card object, raw []byte, revision, cardRoot, agent strin
 		result["governance"] = declaredGovernance(card)
 	}
 	if view == "environment" {
-		environment, err := declaredEnvironment(card, self, binding, connection, bindingKey, agent)
+		projectEnvironment := declaredEnvironment
+		if memberID != "" {
+			projectEnvironment = targetedEnvironment
+		}
+		environment, err := projectEnvironment(card, self, binding, connection, bindingKey, subjectAgent)
 		if err != nil {
 			return nil, err
 		}
@@ -179,7 +228,17 @@ func projectCheckedCard(card object, raw []byte, revision, cardRoot, agent strin
 		delete(result, "product")
 		delete(result, "member")
 		result["schema"] = "pulse-view/v2"
+		if v5 {
+			result["schema"] = "pulse-view/v6"
+		}
 		result["query"] = object{"view": "environment"}
+		if memberID != "" {
+			result["schema"] = "pulse-view/v7"
+			result["query"] = object{"view": "environment", "member": memberID}
+			result["target"] = viewSelf
+			delete(result, "self")
+			result["hierarchy_status"] = "target-only; hierarchy not disclosed"
+		}
 		result["sources"] = []any{source}
 		result["products"] = []any{}
 		result["boundaries"] = []any{}

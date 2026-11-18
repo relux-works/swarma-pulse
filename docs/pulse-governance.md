@@ -14,7 +14,10 @@ Input is product-card/v3, product-card/v4 or [product-card/v5](format-v5.md). Co
 
 The same UID/effective-UID, invoking-owner regular-file, no-write-by-others, safe nonsymlink path and1MiB bounds from the [query contract](../agents/skills/swarma-pulse/references/query-contract.md) apply. All selectors are explicit. Discovery source/root selectors refuse for governance. No referenced path, public-key store, network, account or runtime is accessed. The query performs no write.
 
-Existing selectors keep their v1-v4 schemas and acceptance. They reject v5 cards. Only the explicit governance selector accepts v5 in this first slice; no old decoder silently receives the new shape.
+Default, hierarchy, routes and discovery keep their versions and reject v5.
+The explicit [environment view](../agents/skills/swarma-pulse/references/environment-v5.md)
+also accepts strict v5 with distinct self/target schemas. Governance output is unchanged;
+valid pulse declarations are checked but never projected here.
 
 ## Exact closed output
 

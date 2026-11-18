@@ -20,7 +20,8 @@ discovery output remains unchanged.
 For declared owners, public key records and a meta-keeper reference from one
 pinned v3/v4/v5 product card, select the explicit
 [governance view](pulse-governance.md), returning `pulse-view/v5`.
-Existing selectors retain their formats and reject v5 cards. Public records
+The default, hierarchy, routes and discovery selectors retain their formats and reject v5 cards.
+The explicit environment view additionally supports the [v5 self/target contract](../agents/skills/swarma-pulse/references/environment-v5.md). Public records
 remain declarations, not verified identity or signing authority.
 
 ## Build and invoke
@@ -48,7 +49,8 @@ The invoking session supplies its existing public `A2A_AGENT` localpart. Pulse
 compares that string exactly with each chat member's declared/default
 `binding.identity_prefix + member.id`. Exactly one match is required in the one
 card. It uses the declared connection's server name for the full Matrix name.
-There is no punctuation normalization, account-store lookup or `--member` override.
+There is no punctuation normalization, account-store lookup or caller override.
+Only the v5 environment view admits `--member EXACT_ID` as a separate projection subject; it never changes the caller.
 Missing, empty, unknown and ambiguous context refuse; non-chat members cannot be
 selected through this context.
 
@@ -134,7 +136,10 @@ its local-declarations-only validation limitation. See the
 
 ## Declared environment view
 
-Add `--view environment` to the same invocation to request `pulse-view/v2`:
+Add `--view environment` to the same invocation. Legacy v3/company inputs return `pulse-view/v2`;
+strict v5 returns `pulse-view/v6`, or `pulse-view/v7` with an explicit `--member EXACT_ID`.
+The complete [v5 extension, shapes, selection and refusal contract](../agents/skills/swarma-pulse/references/environment-v5.md)
+uses a distinct target environment schema for nullable chat identities. The legacy contract below is unchanged:
 
 ```sh
 .temp/bin/pulse me --local-unsigned --view environment \

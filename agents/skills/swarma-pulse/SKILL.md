@@ -10,8 +10,11 @@ and output boundary. Use the shipped `pulse me --local-unsigned` command for a
 self-only view of one explicitly selected `product-card/v3` or `product-card/v4` snapshot, with output
 schema `pulse-view/v1`. Add `--view environment` for self declarations from one
 v3 product or v1 company card. Explicit `--view discovery` returns caller-relative
-peers, reports and superiors from a pinned local source universe. Both opt-in
-views return `pulse-view/v2`; read their sections in the query contract before use.
+peers, reports and superiors from a pinned local source universe. Legacy environment and discovery
+return `pulse-view/v2`; read their sections in the query contract before use.
+For strict v5 environment self/target declarations, read the complete
+[v5 environment contract](references/environment-v5.md): self returns `pulse-view/v6`,
+optional `--member EXACT_ID` returns target-only `pulse-view/v7` under the direct-manager/explicit-self predicate.
 Use `--view hierarchy` for caller-relative relationships from one pinned v3/v4
 product card, returning `pulse-view/v3`. See the query contract's
 [hierarchy section](references/query-contract.md#one-card-hierarchy-view).
@@ -22,7 +25,7 @@ external source attestations and star reservations remain unverified and are
 marked in `source.validation`. The v4 admission tools remain separate.
 Use `--view governance` for declared owners, public key records and the meta-keeper
 reference from one v3/v4/v5 product card (`pulse-view/v5`). Read the complete
-[governance contract](references/governance.md) before use. Existing selectors
+[governance contract](references/governance.md) before use. Default, hierarchy, routes and discovery selectors
 reject v5; public point validity proves no possession, identity or authority.
 
 The included references provide this skill's documentation without relying on
@@ -54,9 +57,9 @@ to a real card. Select those inputs separately before running a command.
   title. Human contacts and logical ids are not agent caller contexts.
 - Pass **all** selectors explicitly: `me --local-unsigned --card ABS
   --revision sha256:LOWERCASE64HEX --format json`. There is no query config file,
-  implicit card search, `--member`, `--config`, signature,
+  implicit card search, caller override, `--config`, signature,
   policy, trust or clock override. Additional cards require the explicit discovery
-  selectors below. Missing mode refuses instead of falling back.
+  selectors below. Only the v5 environment view additionally admits an exact same-card `--member` projection subject; the actual caller stays unchanged. Missing mode refuses instead of falling back.
 
 The card must be an invoking-UID-owned regular file of at most 1 MiB. Real and
 effective UIDs must match. The complete path must have nonsymlink ancestors owned
@@ -218,7 +221,7 @@ do not invent a project or appointment.
 | Unsupported schema or invalid complete supplied graph | Exit 1 with `RULE unsupported_schema` or `RULE card_invalid`, no conversion or partial view. |
 | V4 selected with `--view environment` or as the primary discovery card | Exit 1, `RULE unsupported_schema`, empty stdout. V4 supports default self-only and explicit hierarchy/routes/governance. |
 | V4 declared in the discovery sources manifest | Exit 1, `RULE source_manifest_invalid`, empty stdout; the manifest's accepted schemas are unchanged. |
-| V5 as the primary card with a selector other than governance | Exit 1, `RULE unsupported_schema`, empty stdout; no implicit conversion. |
+| V5 as the primary card with a selector other than governance or environment | Exit 1, `RULE unsupported_schema`, empty stdout; no implicit conversion. |
 | Invalid v5 metadata, including an unselected public key | Governance exits 1, `RULE card_invalid`, empty stdout; the complete card is checked before projection. |
 | V4 aliases, merges, explicit tags, nulls, unknown fields or inconsistent local identity declarations | Exit 1, `RULE card_invalid`, empty stdout; strict v4 parsing uses the original pinned bytes. |
 | Unsafe, missing or unreadable input | Exit 1 with the applicable input rule; no substitute source or input writes. |
