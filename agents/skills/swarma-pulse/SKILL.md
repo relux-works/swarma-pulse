@@ -1,6 +1,6 @@
 ---
 name: swarma-pulse
-description: Use the shipped Pulse CLI for local unsigned self, environment, discovery or declared-governance views, interpret identity/source boundaries, or select the product-card validator, converter and change checker. Account registration, runtime launch and proposed signed or plugin interfaces are separate operations.
+description: Use the shipped Pulse CLI for local unsigned self, environment, discovery or declared-governance views, apply naming rules for new agents, interpret identity/source boundaries, or select the product-card validator, converter and change checker. Account registration, runtime launch and proposed signed or plugin interfaces are separate operations.
 ---
 
 # Use Pulse
@@ -33,6 +33,13 @@ files outside its folder. Their build and fixture commands run from an authorize
 Pulse source checkout, not from an installed skill directory. This documentation
 package supplies no binary, source checkout or fixture files and grants no access
 to a real card. Select those inputs separately before running a command.
+
+## Plan a new agent name
+
+Keepers and orchestrators use the owner-selected full name and compact Matrix
+name for new agents. Read [Naming](references/naming.md) before preparing the
+member declaration or changing an existing seat. The query inputs below still
+use the naming schemes supported by the selected card and installed reader.
 
 ## Select the interface and inputs
 
@@ -266,7 +273,8 @@ skill, change a selected profile, register an identity or prove runtime adoption
 Use the chosen environment's supported reviewed packaging/adoption route for
 those separate changes; this product supplies no profile-install command.
 
-Signed callers, authenticated visibility, v5 composition, compact naming/migration and
-remote/plugin interfaces in the design documents remain proposals. Do not invoke
+Signed callers, authenticated visibility, v5 composition, compact-name
+resolution/migration and remote/plugin interfaces in the design documents remain
+proposals. Do not invoke
 unimplemented `pulse verify` or treat illustrative future pins as executable
 fixtures or as a production canonical-JSON rule.
